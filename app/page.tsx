@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { format } from "date-fns";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 // ISR 설정 (1시간마다 재생성)
 export const revalidate = 3600;
@@ -20,7 +21,10 @@ export default async function Home() {
 
   return (
     <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <header className="mb-12 text-center">
+      <header className="mb-12 text-center relative">
+        <div className="absolute right-0 top-0">
+          <ThemeToggle />
+        </div>
         <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl mb-4">Byungsker Log</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">개발, 기술, 그리고 일상에 대한 기록들</p>
       </header>
