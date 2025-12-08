@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { useUser, useStackApp } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,8 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 export default function WritePage() {
+  const user = useUser({ or: "redirect" }); // 로그인하지 않으면 자동 리다이렉트
+  const app = useStackApp();
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [excerpt, setExcerpt] = useState("");
@@ -56,7 +58,8 @@ export default function WritePage() {
   };
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: "/" });
+    await app.signOut();
+    router.push("/");
   };
 
   return (

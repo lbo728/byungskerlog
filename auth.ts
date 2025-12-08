@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { prisma } from "@/lib/prisma";
+import * as bcrypt from "bcryptjs";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -12,15 +14,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const username = credentials?.username as string;
         const password = credentials?.password as string;
 
-        if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
-          return {
-            id: "admin",
-            name: "Admin",
-            email: "admin@blog.com",
-          };
+        if (!username || !password) {
+          return null;
         }
 
-        return null;
+        // 데이터베이스에서 관리자 계정 조회
+        const admin = await prisma.admin.findUnique({
+          where: { username },
+        });
+
+        if (!admin) {
+          return null;
+        }
+
+        // 비밀번호 검증
+        const isValidPassword = await bcrypt.compare(password, admin.password);
+
+        if (!isValidPassword) {
+          return null;
+        }
+
+        return {
+          id: admin.id,
+          name: admin.name || "Admin",
+          email: admin.email || "admin@blog.com",
+        };
       },
     }),
   ],

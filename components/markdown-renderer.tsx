@@ -46,7 +46,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         </h3>
       );
     },
-    code: ({ inline, className, children }) => {
+    code: ({ node, inline, className, children, ...props }: any) => {
       const match = /language-(\w+)/.exec(className || "");
       return !inline && match ? (
         <SyntaxHighlighter style={vscDarkPlus as any} language={match[1]} PreTag="div" className="rounded-lg !my-6">
@@ -55,6 +55,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       ) : (
         <code
           className={cn("relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold", className)}
+          {...props}
         >
           {children}
         </code>
