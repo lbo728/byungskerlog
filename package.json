@@ -17,6 +17,7 @@
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
+    "@stackframe/stack": "^2.8.54",
     "@types/react-syntax-highlighter": "^15.5.13",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",

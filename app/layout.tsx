@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { StackProvider, StackTheme } from "@stackframe/stack";
+import { stackClientApp } from "../stack/client";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -27,11 +29,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={cn("min-h-screen bg-background font-sans antialiased", geistSans.variable, geistMono.variable)}>
+      <body className={cn("min-h-screen bg-background font-sans antialiased", geistSans.variable, geistMono.variable)}><StackProvider app={stackClientApp}><StackTheme>
         <ThemeProvider>
           <main className="relative flex min-h-screen flex-col">{children}</main>
         </ThemeProvider>
-      </body>
+      </StackTheme></StackProvider></body>
     </html>
   );
 }
