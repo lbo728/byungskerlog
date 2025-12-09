@@ -17,7 +17,8 @@ export default function WritePage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [title, setTitle] = useState("");
-  const [tags, setTags] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -29,6 +30,28 @@ export default function WritePage() {
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
       .trim();
+  };
+
+  // 태그 추가
+  const addTag = (tag: string) => {
+    const trimmedTag = tag.trim();
+    if (trimmedTag && !tags.includes(trimmedTag)) {
+      setTags([...tags, trimmedTag]);
+    }
+    setTagInput("");
+  };
+
+  // 태그 삭제
+  const removeTag = (indexToRemove: number) => {
+    setTags(tags.filter((_, index) => index !== indexToRemove));
+  };
+
+  // 태그 입력 처리
+  const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && tagInput.trim()) {
+      e.preventDefault();
+      addTag(tagInput);
+    }
   };
 
   const insertMarkdown = (text: string) => {
@@ -69,7 +92,7 @@ export default function WritePage() {
       const { title: draftTitle, tags: draftTags, content: draftContent } = JSON.parse(draft);
       if (confirm("임시저장된 글이 있습니다. 불러오시겠습니까?")) {
         setTitle(draftTitle || "");
-        setTags(draftTags || "");
+        setTags(draftTags || []);
         setContent(draftContent || "");
       }
     }
@@ -159,14 +182,28 @@ export default function WritePage() {
                 className="text-6xl font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
                 disabled={isLoading}
               />
-              <Textarea
-                placeholder="태그를 입력하세요 (엔터로 구분)"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                className="mt-4 border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-muted-foreground bg-transparent resize-none"
-                disabled={isLoading}
-                rows={2}
-              />
+              <div className="mt-4 p-4">
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      onClick={() => removeTag(index)}
+                      className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm cursor-pointer hover:bg-primary/20 transition-colors"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <Input
+                  type="text"
+                  placeholder="태그를 입력하세요 (엔터로 등록)"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleTagInput}
+                  className="border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-muted-foreground bg-transparent"
+                  disabled={isLoading}
+                />
+              </div>
             </div>
 
             <MarkdownToolbar onInsert={insertMarkdown} />
@@ -184,19 +221,7 @@ export default function WritePage() {
           {/* 오른쪽: 미리보기 */}
           <div className="bg-muted/20 overflow-y-auto">
             <div className="p-8">
-              <h1 className="text-4xl font-bold mb-4">{title || "제목 없음"}</h1>
-              {tags && (
-                <div className="flex flex-wrap gap-2 mb-8">
-                  {tags
-                    .split("\n")
-                    .filter((tag) => tag.trim())
-                    .map((tag, index) => (
-                      <span key={index} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                        {tag.trim()}
-                      </span>
-                    ))}
-                </div>
-              )}
+              <h1 className="text-4xl font-bold mb-8">{title || "제목 없음"}</h1>
               <div className="prose prose-lg dark:prose-invert max-w-none">
                 {content ? (
                   <MarkdownRenderer content={content} />
