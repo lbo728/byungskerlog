@@ -3,9 +3,11 @@ import { format } from "date-fns";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 import { prisma } from "@/lib/prisma";
+import { stackServerApp } from "@/stack/server";
 import type { PostPreview } from "@/lib/types";
 
 export const revalidate = 3600;
@@ -28,11 +30,19 @@ async function getPosts(): Promise<PostPreview[]> {
 
 export default async function Home() {
   const posts = await getPosts();
+  const user = await stackServerApp.getUser();
 
   return (
     <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <header className="mb-12 text-center relative">
-        <div className="absolute right-0 top-0">
+        <div className="absolute right-0 top-0 flex items-center gap-3">
+          {user && (
+            <Link href="/admin/write">
+              <Button variant="default" size="sm">
+                글쓰기
+              </Button>
+            </Link>
+          )}
           <ThemeToggle />
         </div>
         <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl mb-4">Byungsker Log</h1>
