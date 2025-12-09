@@ -9,17 +9,15 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import type { Post } from "@/lib/types";
 
-// ISR 설정 (1시간마다 재생성)
 export const revalidate = 3600;
 
-// 동적 경로 생성을 위한 generateStaticParams
 export async function generateStaticParams() {
   const posts = await prisma.post.findMany({
     where: { published: true },
     select: { slug: true },
   });
 
-  return posts.map((post) => ({
+  return posts.map((post: Post) => ({
     slug: post.slug,
   }));
 }
