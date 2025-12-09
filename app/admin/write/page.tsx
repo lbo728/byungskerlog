@@ -31,7 +31,6 @@ export default function WritePage() {
       .trim();
   };
 
-  // 마크다운 삽입 헬퍼
   const insertMarkdown = (text: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -42,7 +41,6 @@ export default function WritePage() {
 
     let newText = text;
 
-    // 선택된 텍스트가 있으면 대체
     if (selectedText && text.includes("텍스트")) {
       newText = text.replace("텍스트", selectedText);
     }
@@ -53,7 +51,6 @@ export default function WritePage() {
 
     setContent(newContent);
 
-    // 커서 위치 조정
     setTimeout(() => {
       textarea.focus();
       const newCursorPos = start + newText.length;
@@ -61,13 +58,11 @@ export default function WritePage() {
     }, 0);
   };
 
-  // 임시저장
   const handleTempSave = () => {
     localStorage.setItem("draft", JSON.stringify({ title, tags, content }));
     alert("임시저장되었습니다.");
   };
 
-  // 임시저장 불러오기
   useEffect(() => {
     const draft = localStorage.getItem("draft");
     if (draft) {
@@ -80,7 +75,6 @@ export default function WritePage() {
     }
   }, []);
 
-  // 출간하기
   const handlePublish = async () => {
     if (!title.trim()) {
       alert("제목을 입력해주세요.");
@@ -95,7 +89,10 @@ export default function WritePage() {
 
     try {
       const slug = generateSlug(title);
-      const excerpt = content.substring(0, 150).replace(/[#*`>\[\]]/g, "").trim();
+      const excerpt = content
+        .substring(0, 150)
+        .replace(/[#*`>\[\]]/g, "")
+        .trim();
 
       const response = await fetch("/api/posts", {
         method: "POST",
@@ -133,59 +130,42 @@ export default function WritePage() {
       <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push("/")}
-              className="gap-2"
-            >
+            <Button variant="ghost" size="sm" onClick={() => router.push("/")} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               나가기
             </Button>
             <h1 className="text-lg font-semibold">글쓰기</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleTempSave}
-              disabled={isLoading}
-            >
+            <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading}>
               임시저장
             </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handlePublish}
-              disabled={isLoading}
-            >
+            <Button variant="default" size="sm" onClick={handlePublish} disabled={isLoading}>
               {isLoading ? "출간 중..." : "출간하기"}
             </Button>
           </div>
         </div>
       </header>
 
-      {/* 메인 컨텐츠 */}
       <div className="container mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-3.5rem)]">
-          {/* 왼쪽: 에디터 */}
           <div className="border-r border-border flex flex-col">
-            <div className="p-8 pb-4">
+            <div>
               <Input
                 type="text"
                 placeholder="제목을 입력하세요"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="text-4xl font-bold border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50"
+                className="text-6xl font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
                 disabled={isLoading}
               />
-              <Input
-                type="text"
-                placeholder="태그를 입력하세요 (쉼표로 구분)"
+              <Textarea
+                placeholder="태그를 입력하세요 (엔터로 구분)"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
-                className="mt-4 border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-muted-foreground"
+                className="mt-4 border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-muted-foreground bg-transparent resize-none"
                 disabled={isLoading}
+                rows={2}
               />
             </div>
 
@@ -207,23 +187,21 @@ export default function WritePage() {
               <h1 className="text-4xl font-bold mb-4">{title || "제목 없음"}</h1>
               {tags && (
                 <div className="flex flex-wrap gap-2 mb-8">
-                  {tags.split(",").map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
-                    >
-                      {tag.trim()}
-                    </span>
-                  ))}
+                  {tags
+                    .split("\n")
+                    .filter((tag) => tag.trim())
+                    .map((tag, index) => (
+                      <span key={index} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                        {tag.trim()}
+                      </span>
+                    ))}
                 </div>
               )}
               <div className="prose prose-lg dark:prose-invert max-w-none">
                 {content ? (
                   <MarkdownRenderer content={content} />
                 ) : (
-                  <p className="text-muted-foreground italic">
-                    여기에 미리보기가 표시됩니다...
-                  </p>
+                  <p className="text-muted-foreground italic">여기에 미리보기가 표시됩니다...</p>
                 )}
               </div>
             </div>
