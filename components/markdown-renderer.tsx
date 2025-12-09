@@ -1,4 +1,7 @@
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { cn } from "@/lib/utils";
@@ -75,15 +78,30 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
     img: ({ src, alt, ...props }) => <img src={src} alt={alt || ""} className="rounded-lg shadow-md my-6" {...props} />,
     blockquote: ({ children, ...props }) => (
-      <blockquote className="border-l-4 border-primary/50 pl-4 italic my-6 text-muted-foreground" {...props}>
+      <blockquote
+        className="border-l-4 border-primary/50 pl-4 italic my-6 text-muted-foreground before:content-[''] after:content-['']"
+        {...props}
+      >
         {children}
       </blockquote>
+    ),
+    br: () => <br className="my-2" />,
+    p: ({ children, ...props }) => (
+      <p className="my-4" {...props}>
+        {children}
+      </p>
     ),
   };
 
   return (
     <div className="prose prose-lg dark:prose-invert max-w-none">
-      <ReactMarkdown components={components}>{content}</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        components={components}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }
