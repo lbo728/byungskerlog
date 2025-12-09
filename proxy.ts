@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const config = {
-  runtime: "nodejs",
-  matcher: ["/admin/:path*"],
-};
-
 export default async function proxy(request: NextRequest) {
   const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
 
