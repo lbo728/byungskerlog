@@ -1,36 +1,102 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
 import { useUser, useStackApp } from "@stackframe/stack";
-
-import ReactMarkdown from "react-markdown";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MarkdownToolbar } from "@/components/markdown-toolbar";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
+import { ArrowLeft } from "lucide-react";
 
 export default function WritePage() {
-  const user = useUser({ or: "redirect" }); // 로그인하지 않으면 자동 리다이렉트
+  const user = useUser({ or: "redirect" });
   const app = useStackApp();
-  const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
-  const [excerpt, setExcerpt] = useState("");
-  const [content, setContent] = useState("");
-  const [isPreview, setIsPreview] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [title, setTitle] = useState("");
+  const [tags, setTags] = useState("");
+  const [content, setContent] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 자동 슬러그 생성
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9가-힣\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
+  };
+
+  // 마크다운 삽입 헬퍼
+  const insertMarkdown = (text: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = content.substring(start, end);
+
+    let newText = text;
+
+    // 선택된 텍스트가 있으면 대체
+    if (selectedText && text.includes("텍스트")) {
+      newText = text.replace("텍스트", selectedText);
+    }
+
+    const before = content.substring(0, start);
+    const after = content.substring(end);
+    const newContent = before + newText + after;
+
+    setContent(newContent);
+
+    // 커서 위치 조정
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + newText.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+
+  // 임시저장
+  const handleTempSave = () => {
+    localStorage.setItem("draft", JSON.stringify({ title, tags, content }));
+    alert("임시저장되었습니다.");
+  };
+
+  // 임시저장 불러오기
+  useEffect(() => {
+    const draft = localStorage.getItem("draft");
+    if (draft) {
+      const { title: draftTitle, tags: draftTags, content: draftContent } = JSON.parse(draft);
+      if (confirm("임시저장된 글이 있습니다. 불러오시겠습니까?")) {
+        setTitle(draftTitle || "");
+        setTags(draftTags || "");
+        setContent(draftContent || "");
+      }
+    }
+  }, []);
+
+  // 출간하기
+  const handlePublish = async () => {
+    if (!title.trim()) {
+      alert("제목을 입력해주세요.");
+      return;
+    }
+    if (!content.trim()) {
+      alert("내용을 입력해주세요.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      const slug = generateSlug(title);
+      const excerpt = content.substring(0, 150).replace(/[#*`>\[\]]/g, "").trim();
+
       const response = await fetch("/api/posts", {
         method: "POST",
         headers: {
@@ -50,6 +116,7 @@ export default function WritePage() {
       }
 
       const data = await response.json();
+      localStorage.removeItem("draft");
       router.push(`/posts/${data.slug}`);
       router.refresh();
     } catch (error) {
@@ -60,129 +127,107 @@ export default function WritePage() {
     }
   };
 
-  const handleLogout = async () => {
-    await app.signOut();
-    router.push("/");
-  };
-
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">새 글 작성</h1>
-          <Button variant="outline" onClick={handleLogout}>
-            로그아웃
-          </Button>
+    <div className="min-h-screen bg-background">
+      {/* 헤더 */}
+      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
+        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/")}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              나가기
+            </Button>
+            <h1 className="text-lg font-semibold">글쓰기</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleTempSave}
+              disabled={isLoading}
+            >
+              임시저장
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handlePublish}
+              disabled={isLoading}
+            >
+              {isLoading ? "출간 중..." : "출간하기"}
+            </Button>
+          </div>
         </div>
+      </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Editor */}
-          <Card>
-            <CardHeader>
-              <CardTitle>에디터</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">제목</Label>
-                  <Input
-                    id="title"
-                    type="text"
-                    placeholder="글 제목을 입력하세요"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
+      {/* 메인 컨텐츠 */}
+      <div className="container mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-3.5rem)]">
+          {/* 왼쪽: 에디터 */}
+          <div className="border-r border-border flex flex-col">
+            <div className="p-8 pb-4">
+              <Input
+                type="text"
+                placeholder="제목을 입력하세요"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="text-4xl font-bold border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50"
+                disabled={isLoading}
+              />
+              <Input
+                type="text"
+                placeholder="태그를 입력하세요 (쉼표로 구분)"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                className="mt-4 border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-muted-foreground"
+                disabled={isLoading}
+              />
+            </div>
+
+            <MarkdownToolbar onInsert={insertMarkdown} />
+
+            <Textarea
+              ref={textareaRef}
+              placeholder="당신의 이야기를 적어보세요..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="flex-1 border-none rounded-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-8 font-mono text-base"
+              disabled={isLoading}
+            />
+          </div>
+
+          {/* 오른쪽: 미리보기 */}
+          <div className="bg-muted/20 overflow-y-auto">
+            <div className="p-8">
+              <h1 className="text-4xl font-bold mb-4">{title || "제목 없음"}</h1>
+              {tags && (
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {tags.split(",").map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
+                    >
+                      {tag.trim()}
+                    </span>
+                  ))}
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="slug">슬러그 (URL)</Label>
-                  <Input
-                    id="slug"
-                    type="text"
-                    placeholder="my-first-post"
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
-                  <p className="text-xs text-muted-foreground">URL: /posts/{slug || "slug"}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="excerpt">요약</Label>
-                  <Textarea
-                    id="excerpt"
-                    placeholder="글 요약을 입력하세요 (선택사항)"
-                    value={excerpt}
-                    onChange={(e) => setExcerpt(e.target.value)}
-                    rows={3}
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="content">본문 (Markdown)</Label>
-                  <Textarea
-                    id="content"
-                    placeholder="마크다운으로 글을 작성하세요..."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    rows={20}
-                    required
-                    disabled={isLoading}
-                    className="font-mono"
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={isLoading} className="flex-1">
-                    {isLoading ? "발행 중..." : "발행하기"}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => setIsPreview(!isPreview)}>
-                    {isPreview ? "에디터" : "미리보기"}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Preview */}
-          <Card className="lg:sticky lg:top-8 lg:h-fit">
-            <CardHeader>
-              <CardTitle>미리보기</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="prose dark:prose-invert max-w-none">
-                <h1>{title || "제목 없음"}</h1>
-                {excerpt && <p className="lead text-muted-foreground">{excerpt}</p>}
-                <ReactMarkdown
-                  components={{
-                    code(props) {
-                      const { inline, className, children, ...rest } = props as {
-                        inline?: boolean;
-                        className?: string;
-                        children?: React.ReactNode;
-                      };
-                      const match = /language-(\w+)/.exec(className || "");
-                      return !inline && match ? (
-                        <SyntaxHighlighter style={oneDark as any} language={match[1]} PreTag="div" {...rest}>
-                          {String(children).replace(/\n$/, "")}
-                        </SyntaxHighlighter>
-                      ) : (
-                        <code className={className} {...rest}>
-                          {children}
-                        </code>
-                      );
-                    },
-                  }}
-                >
-                  {content || "*여기에 미리보기가 표시됩니다*"}
-                </ReactMarkdown>
+              )}
+              <div className="prose prose-lg dark:prose-invert max-w-none">
+                {content ? (
+                  <MarkdownRenderer content={content} />
+                ) : (
+                  <p className="text-muted-foreground italic">
+                    여기에 미리보기가 표시됩니다...
+                  </p>
+                )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
