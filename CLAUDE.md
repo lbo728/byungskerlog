@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Next.js 16-based personal blog application with admin capabilities. The blog supports markdown content with syntax highlighting, has a PostgreSQL database via Prisma, and uses NextAuth for admin authentication.
+This is a Next.js 16-based personal blog application with admin capabilities. The blog supports markdown content with syntax highlighting, uses Neon PostgreSQL database via Prisma, and Stack Auth for authentication. Deployed on Vercel.
 
 ## Development Commands
 
@@ -39,31 +39,24 @@ npm run create-admin        # Generate SQL for creating admin account
 - **Singleton Pattern**: Prisma client is exported from `lib/prisma.ts` to prevent multiple instances in development
 - **Models**:
   - `Post`: Blog posts with slug-based routing, markdown content, published status
-  - `Admin`: Admin users with bcrypt-hashed passwords
 
 ### Authentication System
 
-The application uses **dual authentication setup**:
-
-1. **NextAuth (Database-based)**: Primary authentication for admin panel
-   - Configuration in `auth.ts`
-   - Credentials provider with bcrypt password verification
-   - Queries `Admin` model from Prisma
-   - Custom sign-in page at `/admin/login`
-   - Protected routes via `authorized` callback
-
-2. **Stack Auth (@stackframe/stack)**: Alternative auth system
-   - Client config in `stack/client.tsx`
-   - Server config in `stack/server.tsx`
-   - Handler route at `app/handler/[...stack]/page.tsx`
-
-**Note**: The dual auth setup may indicate a transition or experimentation. Verify which system is actively used before making changes.
+The application uses **Stack Auth** (@stackframe/stack):
+- Client configuration in `stack/client.tsx`
+- Server configuration in `stack/server.tsx`
+- Auth handler route at `app/handler/[...stack]/page.tsx`
+- Uses `nextjs-cookie` token store
+- Requires three environment variables:
+  - `NEXT_PUBLIC_STACK_PROJECT_ID`
+  - `NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY`
+  - `STACK_SECRET_SERVER_KEY`
 
 ### Middleware & Route Protection
 
-- `middleware.ts` exports NextAuth's `auth` as middleware
+- `middleware.ts` uses Stack Auth's server API to check authentication
 - Protects all `/admin/*` routes
-- Unauthenticated users redirected to `/admin/login`
+- Unauthenticated users redirected to `/handler/sign-in` with return URL
 
 ### Application Structure
 
@@ -74,10 +67,8 @@ The application uses **dual authentication setup**:
 - `/admin/write` - Post creation/editing page
 
 **API Routes**:
-- `POST /api/posts` - Create new post (authenticated)
+- `POST /api/posts` - Create new post (authenticated with Stack Auth)
 - `GET /api/posts` - List published posts
-- `/api/auth/[...nextauth]` - NextAuth endpoints
-- `/api/setup-admin` - Admin account setup
 
 **Key Features**:
 - Markdown rendering with syntax highlighting (react-markdown + react-syntax-highlighter)
@@ -87,15 +78,10 @@ The application uses **dual authentication setup**:
 
 ### Admin Account Management
 
-Admin accounts cannot be created through the UI. Use one of these methods:
-
-1. **Script Method**: Run `npm run create-admin` to generate SQL with bcrypt hash
-2. **SQL Direct**: Execute generated SQL in Neon SQL Editor or database client
-3. **API Method**: POST to `/api/setup-admin` endpoint (check if enabled)
-
-Default script credentials:
-- Username: `admin`
-- Password: `qwer1234!!` (change in production)
+Admin authentication is managed entirely through Stack Auth:
+- Create admin accounts in Stack Auth dashboard (https://app.stack-auth.com)
+- No database-level admin accounts
+- All users authenticated through Stack Auth can access admin routes
 
 ### Important Conventions
 
@@ -117,10 +103,11 @@ Default script credentials:
 ### Environment Setup
 
 Required environment variables:
-- `DATABASE_URL` - PostgreSQL connection string (pooled)
+- `DATABASE_URL` - Neon PostgreSQL connection string (pooled)
 - `DATABASE_URL_UNPOOLED` - Direct connection for migrations
-- Stack Auth credentials (if using Stack Auth)
-- NextAuth secret (auto-generated in development)
+- `NEXT_PUBLIC_STACK_PROJECT_ID` - Stack Auth project ID
+- `NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY` - Stack Auth publishable key
+- `STACK_SECRET_SERVER_KEY` - Stack Auth secret key (server-side only)
 
 ### Database Provider
 
