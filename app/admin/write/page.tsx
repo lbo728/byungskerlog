@@ -48,6 +48,9 @@ export default function WritePage() {
 
   // 태그 입력 처리
   const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // 한글 입력 조합 중일 때는 무시
+    if (e.nativeEvent.isComposing) return;
+
     if (e.key === "Enter" && tagInput.trim()) {
       e.preventDefault();
       addTag(tagInput);
