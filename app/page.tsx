@@ -1,17 +1,27 @@
-import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { format } from "date-fns";
+
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-// ISR 설정 (1시간마다 재생성)
+import { prisma } from "@/lib/prisma";
+import type { PostPreview } from "@/lib/types";
+
 export const revalidate = 3600;
 
-async function getPosts() {
+async function getPosts(): Promise<PostPreview[]> {
   const posts = await prisma.post.findMany({
     where: { published: true },
     orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      excerpt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
   return posts;
 }
@@ -35,7 +45,7 @@ export default async function Home() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {posts.map((post) => (
+          {posts.map((post: PostPreview) => (
             <Link href={`/posts/${post.slug}`} key={post.id} className="block group h-full">
               <Card className="h-full flex flex-col overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50">
                 <CardHeader>
@@ -51,9 +61,9 @@ export default async function Home() {
                     {post.title}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="flex-grow">
+                <CardContent className="grow">
                   <CardDescription className="line-clamp-3 text-base">
-                    {post.excerpt || post.content.slice(0, 150).replace(/[#*`]/g, "") + "..."}
+                    {post.excerpt || ""}
                   </CardDescription>
                 </CardContent>
                 <CardFooter className="pt-0 mt-auto">

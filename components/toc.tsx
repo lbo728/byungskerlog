@@ -14,7 +14,6 @@ export function TableOfContents({ content }: { content: string }) {
   const [activeId, setActiveId] = useState<string>("");
 
   useEffect(() => {
-    // 마크다운에서 헤딩 추출
     const headingRegex = /^(#{1,3})\s+(.+)$/gm;
     const headings: TocItem[] = [];
     let match;
@@ -34,7 +33,6 @@ export function TableOfContents({ content }: { content: string }) {
   }, [content]);
 
   useEffect(() => {
-    // Intersection Observer로 현재 보이는 섹션 추적
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -46,7 +44,6 @@ export function TableOfContents({ content }: { content: string }) {
       { rootMargin: "-80px 0px -80% 0px" }
     );
 
-    // 모든 헤딩 요소 관찰
     const headingElements = document.querySelectorAll("h1, h2, h3");
     headingElements.forEach((element) => observer.observe(element));
 

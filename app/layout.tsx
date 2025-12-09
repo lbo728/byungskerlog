@@ -29,11 +29,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={cn("min-h-screen bg-background font-sans antialiased", geistSans.variable, geistMono.variable)}><StackProvider app={stackClientApp}><StackTheme>
-        <ThemeProvider>
-          <main className="relative flex min-h-screen flex-col">{children}</main>
-        </ThemeProvider>
-      </StackTheme></StackProvider></body>
+      <body className={cn("min-h-screen bg-background font-sans antialiased", geistSans.variable, geistMono.variable)}>
+        <StackProvider app={stackClientApp}>
+          <StackTheme>
+            <ThemeProvider>
+              <main className="relative flex min-h-screen flex-col">{children}</main>
+            </ThemeProvider>
+          </StackTheme>
+        </StackProvider>
+      </body>
     </html>
   );
 }
