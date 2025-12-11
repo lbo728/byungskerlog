@@ -59,7 +59,7 @@ async function getPrevNextPosts(createdAt: Date) {
 }
 
 async function getRelatedPosts(tags: string[], currentSlug: string) {
-  if (tags.length === 0) return [];
+  if (!tags || tags.length === 0) return [];
 
   const posts = await prisma.post.findMany({
     where: {
@@ -90,7 +90,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   }
 
   const { prevPost, nextPost } = await getPrevNextPosts(post.createdAt);
-  const relatedPosts = await getRelatedPosts(post.tags, post.slug);
+  const relatedPosts = await getRelatedPosts(post.tags || [], post.slug);
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,7 +120,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                   <time className="text-muted-foreground text-sm" dateTime={post.createdAt.toISOString()}>
                     {format(new Date(post.createdAt), "MMMM d, yyyy")}
                   </time>
-                  {post.tags.length > 0 && (
+                  {post.tags && post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {post.tags.map((tag) => (
                         <span key={tag} className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
@@ -194,7 +194,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                               <CardDescription className="line-clamp-2">{relatedPost.excerpt}</CardDescription>
                             )}
                           </CardHeader>
-                          {relatedPost.tags.length > 0 && (
+                          {relatedPost.tags && relatedPost.tags.length > 0 && (
                             <CardContent className="pt-0">
                               <div className="flex flex-wrap gap-2">
                                 {relatedPost.tags.map((tag) => (
