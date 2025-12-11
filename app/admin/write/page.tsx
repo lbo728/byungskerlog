@@ -22,14 +22,18 @@ export default function WritePage() {
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // 자동 슬러그 생성
+  // 자동 슬러그 생성 (영문/숫자만)
   const generateSlug = (title: string) => {
-    return title
+    const slug = title
       .toLowerCase()
-      .replace(/[^a-z0-9가-힣\s-]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "") // 한글 제거, 영문/숫자만
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "") // 앞뒤 하이픈 제거
       .trim();
+
+    // 빈 문자열이면 타임스탬프 사용
+    return slug || `post-${Date.now()}`;
   };
 
   // 태그 추가
@@ -175,7 +179,7 @@ export default function WritePage() {
 
       <div className="container mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-3.5rem)]">
-          <div className="border-r border-border flex flex-col">
+          <div className="border-r border-border flex flex-col pt-5">
             <div>
               <Input
                 type="text"
