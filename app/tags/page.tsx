@@ -36,10 +36,20 @@ export default function TagsPage() {
   const fetchAllTags = async () => {
     try {
       const response = await fetch("/api/tags");
+      if (!response.ok) {
+        throw new Error("Failed to fetch tags");
+      }
       const data = await response.json();
-      setAllTags(data);
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setAllTags(data);
+      } else {
+        console.error("Invalid data format:", data);
+        setAllTags([]);
+      }
     } catch (error) {
       console.error("Error fetching tags:", error);
+      setAllTags([]);
     } finally {
       setIsLoading(false);
     }
@@ -48,10 +58,14 @@ export default function TagsPage() {
   const fetchPostsByTag = async (tag: string) => {
     try {
       const response = await fetch(`/api/posts?tag=${encodeURIComponent(tag)}&limit=100`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch posts");
+      }
       const data = await response.json();
       setFilteredPosts(data.posts || []);
     } catch (error) {
       console.error("Error fetching posts by tag:", error);
+      setFilteredPosts([]);
     }
   };
 
