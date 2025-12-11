@@ -48,22 +48,50 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const tag = searchParams.get("tag");
+
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const where: any = { published: true };
+    if (tag) {
+      where.tags = { has: tag };
+    }
+
+    // Get total count for pagination
+    const total = await prisma.post.count({ where });
+
+    // Get posts with pagination
     const posts = await prisma.post.findMany({
-      where: { published: true },
+      where,
       orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
       select: {
         id: true,
         slug: true,
         title: true,
         excerpt: true,
+        tags: true,
         createdAt: true,
         updatedAt: true,
       },
     });
 
-    return NextResponse.json(posts);
+    return NextResponse.json({
+      posts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error("Error fetching posts:", error);
     return NextResponse.json({ error: "Failed to fetch posts" }, { status: 500 });

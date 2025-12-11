@@ -1,12 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { TableOfContents } from "@/components/toc";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { Post } from "@/lib/types";
@@ -93,21 +91,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const relatedPosts = await getRelatedPosts(post.tags || [], post.slug);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
-          <Link href="/">
-            <Button
-              variant="ghost"
-              className="pl-0 hover:pl-2 transition-all text-muted-foreground hover:text-foreground"
-            >
-              ← Back to home
-            </Button>
-          </Link>
-          <ThemeToggle />
-        </div>
-      </header>
-
+    <div className="bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-12">
           <div className="max-w-3xl">

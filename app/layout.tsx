@@ -6,6 +6,8 @@ import "./globals.css";
 
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,7 +21,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Byungsker Log",
-  description: "Next.js 16과 Prisma로 만든 개인 블로그",
+  description: "제품 주도 개발을 지향하는 개발자",
 };
 
 export default function RootLayout({
@@ -33,7 +35,11 @@ export default function RootLayout({
         <StackProvider app={stackClientApp}>
           <StackTheme>
             <ThemeProvider>
-              <main className="relative flex min-h-screen flex-col">{children}</main>
+              <div className="relative flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
             </ThemeProvider>
           </StackTheme>
         </StackProvider>

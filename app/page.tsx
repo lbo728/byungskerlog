@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
@@ -35,16 +34,15 @@ export default async function Home() {
   return (
     <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <header className="mb-12 text-center relative">
-        <div className="absolute right-0 top-0 flex items-center gap-3">
-          {user && (
+        {user && (
+          <div className="absolute right-0 top-0">
             <Link href="/admin/write">
               <Button variant="default" size="sm">
                 글쓰기
               </Button>
             </Link>
-          )}
-          <ThemeToggle />
-        </div>
+          </div>
+        )}
         <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl mb-4">Byungsker Log</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">개발, 기술, 그리고 일상에 대한 기록들</p>
       </header>
