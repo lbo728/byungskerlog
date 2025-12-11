@@ -134,6 +134,7 @@ export default function WritePage() {
           slug,
           excerpt,
           content,
+          tags,
           published: true,
         }),
       });

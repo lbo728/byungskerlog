@@ -21,6 +21,7 @@ model Post {
   title     String
   content   String
   excerpt   String?
+  tags      String[] @default([])
   published Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
