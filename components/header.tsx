@@ -21,8 +21,11 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Image src="/logo-byungsker.png" alt="Byungsker Log" width={32} height={32} className="rounded" />
-            <span className="font-bold text-lg hidden sm:inline">Byungsker Log</span>
+            <Image src="/logo-byungsker.png" alt="병스커 BLOG" width={32} height={32} className="rounded" />
+            <div className="hidden sm:flex items-baseline gap-1">
+              <span className="font-bold text-lg">병스커</span>
+              <span className="font-bold text-2xl">BLOG</span>
+            </div>
           </Link>
 
           {/* Navigation */}
