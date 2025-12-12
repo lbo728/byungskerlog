@@ -14,12 +14,8 @@ export function Footer() {
     <footer className="border-t border-border bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          {/* Copyright */}
-          <p className="text-sm text-muted-foreground">
-            © {currentYear} Byungsker Log. All rights reserved.
-          </p>
+          <p className="text-sm text-muted-foreground">© {currentYear} Byungsker Log. All rights reserved.</p>
 
-          {/* Social Links */}
           <div className="flex items-center gap-4">
             {socialLinks.map((link) => (
               <Link
@@ -30,7 +26,13 @@ export function Footer() {
                 className="hover:opacity-70 transition-opacity"
                 aria-label={link.label}
               >
-                <Image src={link.icon} alt={link.label} width={24} height={24} />
+                <Image
+                  src={link.icon}
+                  alt={link.label}
+                  width={24}
+                  height={24}
+                  style={{ filter: "brightness(0) saturate(100%) invert(35%) sepia(0%) saturate(0%) hue-rotate(0deg)" }}
+                />
               </Link>
             ))}
           </div>
