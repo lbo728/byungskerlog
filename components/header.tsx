@@ -19,16 +19,10 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Image src="/logo-byungsker.png" alt="병스커 BLOG" width={32} height={32} className="rounded" />
-            <div className="hidden sm:flex items-baseline gap-1">
-              <span className="font-bold text-lg">병스커</span>
-              <span className="font-bold text-2xl">BLOG</span>
-            </div>
+            <Image src="/logo-byungsker.png" alt="병스커 BLOG" width={180} height={84} className="rounded" />
           </Link>
 
-          {/* Navigation */}
           <nav className="flex items-center gap-6">
             {navItems.map((item) => (
               <Link
