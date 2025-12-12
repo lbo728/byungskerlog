@@ -35,7 +35,7 @@ npm run create-admin        # Generate SQL for creating admin account
 ### Database & ORM
 
 - **Prisma**: Located in `prisma/schema.prisma`
-- **Generated Client**: Custom output path at `lib/generated/prisma/client`
+- **Generated Client**: Uses default path at `node_modules/@prisma/client`
 - **Singleton Pattern**: Prisma client is exported from `lib/prisma.ts` to prevent multiple instances in development
 - **Models**:
   - `Post`: Blog posts with slug-based routing, markdown content, published status
