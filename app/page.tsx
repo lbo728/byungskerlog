@@ -33,20 +33,6 @@ export default async function Home() {
 
   return (
     <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <header className="mb-12 text-center relative">
-        {user && (
-          <div className="absolute right-0 top-0">
-            <Link href="/admin/write">
-              <Button variant="default" size="sm">
-                글쓰기
-              </Button>
-            </Link>
-          </div>
-        )}
-        <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl mb-4">Byungsker Log</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">개발, 기술, 그리고 일상에 대한 기록들</p>
-      </header>
-
       {posts.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-xl text-muted-foreground">아직 작성된 포스트가 없습니다.</p>
@@ -70,9 +56,7 @@ export default async function Home() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grow">
-                  <CardDescription className="line-clamp-3 text-base">
-                    {post.excerpt || ""}
-                  </CardDescription>
+                  <CardDescription className="line-clamp-3 text-base">{post.excerpt || ""}</CardDescription>
                 </CardContent>
                 <CardFooter className="pt-0 mt-auto">
                   <span className="text-sm font-medium text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
