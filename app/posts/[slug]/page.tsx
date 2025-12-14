@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { TableOfContents } from "@/components/toc";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
+import { ViewTracker } from "@/components/view-tracker";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { Post } from "@/lib/types";
 
@@ -92,6 +93,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   return (
     <div className="bg-background">
+      <ViewTracker slug={slug} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-12">
           <div className="max-w-3xl">

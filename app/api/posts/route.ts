@@ -108,8 +108,31 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Calculate view stats for each post
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const postsWithViews = await Promise.all(
+      posts.map(async (post) => {
+        const [totalViews, dailyViews] = await Promise.all([
+          prisma.postView.count({ where: { postId: post.id } }),
+          prisma.postView.count({
+            where: {
+              postId: post.id,
+              viewedAt: { gte: oneDayAgo },
+            },
+          }),
+        ]);
+
+        return {
+          ...post,
+          totalViews,
+          dailyViews,
+        };
+      })
+    );
+
     return NextResponse.json({
-      posts,
+      posts: postsWithViews,
       pagination: {
         page,
         limit,
