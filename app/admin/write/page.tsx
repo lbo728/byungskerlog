@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUser, useStackApp } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,13 +14,18 @@ export default function WritePage() {
   const user = useUser({ or: "redirect" });
   const app = useStackApp();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const postId = searchParams.get("id");
+  const isEditMode = !!postId;
 
   const [title, setTitle] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingPost, setIsFetchingPost] = useState(false);
 
   // 자동 슬러그 생성 (영문/숫자만)
   const generateSlug = (title: string) => {
@@ -93,17 +98,41 @@ export default function WritePage() {
     alert("임시저장되었습니다.");
   };
 
+  // Load existing post for edit mode
   useEffect(() => {
-    const draft = localStorage.getItem("draft");
-    if (draft) {
-      const { title: draftTitle, tags: draftTags, content: draftContent } = JSON.parse(draft);
-      if (confirm("임시저장된 글이 있습니다. 불러오시겠습니까?")) {
-        setTitle(draftTitle || "");
-        setTags(draftTags || []);
-        setContent(draftContent || "");
+    if (isEditMode && postId) {
+      const fetchPost = async () => {
+        setIsFetchingPost(true);
+        try {
+          const response = await fetch(`/api/posts/${postId}`);
+          if (!response.ok) throw new Error("Failed to fetch post");
+          const post = await response.json();
+
+          setTitle(post.title);
+          setTags(post.tags || []);
+          setContent(post.content);
+        } catch (error) {
+          console.error("Error fetching post:", error);
+          alert("글을 불러오는데 실패했습니다.");
+          router.push("/admin/posts");
+        } finally {
+          setIsFetchingPost(false);
+        }
+      };
+      fetchPost();
+    } else {
+      // Load draft for new post
+      const draft = localStorage.getItem("draft");
+      if (draft) {
+        const { title: draftTitle, tags: draftTags, content: draftContent } = JSON.parse(draft);
+        if (confirm("임시저장된 글이 있습니다. 불러오시겠습니까?")) {
+          setTitle(draftTitle || "");
+          setTags(draftTags || []);
+          setContent(draftContent || "");
+        }
       }
     }
-  }, []);
+  }, [isEditMode, postId, router]);
 
   const handlePublish = async () => {
     if (!title.trim()) {
@@ -118,37 +147,65 @@ export default function WritePage() {
     setIsLoading(true);
 
     try {
-      const slug = generateSlug(title);
       const excerpt = content
         .substring(0, 150)
         .replace(/[#*`>\[\]]/g, "")
         .trim();
 
-      const response = await fetch("/api/posts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title,
-          slug,
-          excerpt,
-          content,
-          tags,
-          published: true,
-        }),
-      });
+      if (isEditMode && postId) {
+        // Update existing post
+        const response = await fetch(`/api/posts/${postId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            excerpt,
+            content,
+            tags,
+            published: true,
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to create post");
+        if (!response.ok) {
+          throw new Error("Failed to update post");
+        }
+
+        const data = await response.json();
+        alert("글이 수정되었습니다.");
+        router.push(`/posts/${data.slug}`);
+        router.refresh();
+      } else {
+        // Create new post
+        const slug = generateSlug(title);
+
+        const response = await fetch("/api/posts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            slug,
+            excerpt,
+            content,
+            tags,
+            published: true,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create post");
+        }
+
+        const data = await response.json();
+        localStorage.removeItem("draft");
+        router.push(`/posts/${data.slug}`);
+        router.refresh();
       }
-
-      const data = await response.json();
-      localStorage.removeItem("draft");
-      router.push(`/posts/${data.slug}`);
-      router.refresh();
     } catch (error) {
-      alert("글 발행 중 오류가 발생했습니다.");
+      alert(isEditMode ? "글 수정 중 오류가 발생했습니다." : "글 발행 중 오류가 발생했습니다.");
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -161,35 +218,42 @@ export default function WritePage() {
       <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/")} className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               나가기
             </Button>
-            <h1 className="text-lg font-semibold">글쓰기</h1>
+            <h1 className="text-lg font-semibold">{isEditMode ? "글 수정" : "글쓰기"}</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading}>
-              임시저장
-            </Button>
-            <Button variant="default" size="sm" onClick={handlePublish} disabled={isLoading}>
-              {isLoading ? "출간 중..." : "출간하기"}
+            {!isEditMode && (
+              <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading}>
+                임시저장
+              </Button>
+            )}
+            <Button variant="default" size="sm" onClick={handlePublish} disabled={isLoading || isFetchingPost}>
+              {isLoading ? (isEditMode ? "수정 중..." : "출간 중...") : (isEditMode ? "수정하기" : "출간하기")}
             </Button>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-3.5rem)]">
-          <div className="border-r border-border flex flex-col pt-5">
-            <div>
-              <Input
-                type="text"
-                placeholder="제목을 입력하세요"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="text-6xl font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
-                disabled={isLoading}
-              />
+        {isFetchingPost ? (
+          <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
+            <p className="text-muted-foreground">글을 불러오는 중...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-3.5rem)]">
+            <div className="border-r border-border flex flex-col pt-5">
+              <div>
+                <Input
+                  type="text"
+                  placeholder="제목을 입력하세요"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="text-6xl font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
+                  disabled={isLoading}
+                />
               <div className="mt-4 p-4">
                 <div className="flex flex-wrap gap-2 mb-2">
                   {tags.map((tag, index) => (
@@ -240,6 +304,7 @@ export default function WritePage() {
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

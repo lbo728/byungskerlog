@@ -175,6 +175,14 @@ export default function AdminPostsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => router.push(`/admin/write?id=${post.id}`)}
+                      className="gap-2"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleDeleteClick(post)}
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
