@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { VisitorCount } from "@/components/visitor-count";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,7 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+            <VisitorCount />
             <ThemeToggle />
           </nav>
         </div>
