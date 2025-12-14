@@ -1,38 +1,53 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { stackServerApp } from "@/stack/server";
 
 export async function GET() {
   try {
+    // Check authentication
+    const user = await stackServerApp.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Use UTC for consistent timezone handling
+    const startOfToday = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate()
+    ));
 
-    // Get unique visitors today (based on IP address)
-    const todayViews = await prisma.postView.findMany({
-      where: {
-        viewedAt: { gte: startOfToday },
+    // Use database aggregation for better performance
+    const uniqueToday = await prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(DISTINCT "ipAddress") as count
+      FROM "PostView"
+      WHERE "ipAddress" IS NOT NULL
+      AND "viewedAt" >= ${startOfToday}
+    `;
+
+    const uniqueTotal = await prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(DISTINCT "ipAddress") as count
+      FROM "PostView"
+      WHERE "ipAddress" IS NOT NULL
+    `;
+
+    return NextResponse.json(
+      {
+        today: Number(uniqueToday[0].count),
+        total: Number(uniqueTotal[0].count),
       },
-      select: {
-        ipAddress: true,
-      },
-    });
-
-    const uniqueToday = new Set(todayViews.map(v => v.ipAddress).filter(Boolean)).size;
-
-    // Get total unique visitors (based on IP address)
-    const allViews = await prisma.postView.findMany({
-      select: {
-        ipAddress: true,
-      },
-    });
-
-    const uniqueTotal = new Set(allViews.map(v => v.ipAddress).filter(Boolean)).size;
-
-    return NextResponse.json({
-      today: uniqueToday,
-      total: uniqueTotal,
-    });
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600'
+        }
+      }
+    );
   } catch (error) {
     console.error("Error fetching visitor stats:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.name, error.message);
+    }
     return NextResponse.json({ error: "Failed to fetch visitor stats" }, { status: 500 });
   }
 }
