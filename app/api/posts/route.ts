@@ -54,13 +54,37 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const tag = searchParams.get("tag");
+    const includeUnpublished = searchParams.get("includeUnpublished") === "true";
+    const sortBy = searchParams.get("sortBy") || "desc"; // "desc" or "asc"
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
 
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = { published: true };
+    const where: any = {};
+
+    // Only filter by published if not including unpublished (admin mode)
+    if (!includeUnpublished) {
+      where.published = true;
+    }
+
     if (tag) {
       where.tags = { has: tag };
+    }
+
+    // Add date range filter
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        where.createdAt.gte = new Date(startDate);
+      }
+      if (endDate) {
+        // Add one day to include the end date
+        const end = new Date(endDate);
+        end.setDate(end.getDate() + 1);
+        where.createdAt.lt = end;
+      }
     }
 
     // Get total count for pagination
@@ -69,7 +93,7 @@ export async function GET(request: NextRequest) {
     // Get posts with pagination
     const posts = await prisma.post.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: sortBy === "asc" ? "asc" : "desc" },
       skip,
       take: limit,
       select: {
@@ -78,6 +102,7 @@ export async function GET(request: NextRequest) {
         title: true,
         excerpt: true,
         tags: true,
+        published: true,
         createdAt: true,
         updatedAt: true,
       },
