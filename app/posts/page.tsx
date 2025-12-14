@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { calculateReadingTime } from "@/lib/reading-time";
 
 export const revalidate = 3600;
 
@@ -26,6 +27,7 @@ async function getPosts(page: number) {
         slug: true,
         title: true,
         excerpt: true,
+        content: true,
         tags: true,
         createdAt: true,
       },
@@ -59,10 +61,12 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
             <Link key={post.id} href={`/posts/${post.slug}`} className="group">
               <Card className="transition-colors hover:border-primary">
                 <CardHeader>
-                  <div className="flex items-center justify-between mb-2">
-                    <time className="text-sm text-muted-foreground" dateTime={post.createdAt.toISOString()}>
+                  <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
+                    <time dateTime={post.createdAt.toISOString()}>
                       {format(new Date(post.createdAt), "MMMM d, yyyy")}
                     </time>
+                    <span>·</span>
+                    <span>{calculateReadingTime(post.content)}</span>
                   </div>
                   <CardTitle className="text-2xl group-hover:text-primary transition-colors">
                     {post.title}
