@@ -11,7 +11,7 @@ export function ViewTracker({ slug }: ViewTrackerProps) {
     // Record view
     const recordView = async () => {
       try {
-        await fetch(`/api/posts/${slug}/views`, {
+        await fetch(`/api/posts-by-slug/${slug}/views`, {
           method: "POST",
         });
       } catch (error) {
