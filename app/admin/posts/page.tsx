@@ -33,6 +33,8 @@ interface Post {
   published: boolean;
   createdAt: string;
   updatedAt: string;
+  totalViews?: number;
+  dailyViews?: number;
 }
 
 export default function AdminPostsPage() {
@@ -266,6 +268,9 @@ export default function AdminPostsPage() {
                     )}
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>{formatDate(post.createdAt)}</span>
+                      <span className="px-2 py-0.5 bg-muted rounded">
+                        일간 {post.dailyViews || 0} / 총 {post.totalViews || 0} 조회
+                      </span>
                       {post.tags.length > 0 && (
                         <div className="flex gap-2">
                           {post.tags.map((tag, index) => (

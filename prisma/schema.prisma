@@ -15,13 +15,26 @@ datasource db {
 }
 
 model Post {
-  id        String   @id @default(cuid())
-  slug      String   @unique
+  id        String     @id @default(cuid())
+  slug      String     @unique
   title     String
   content   String
   excerpt   String?
-  tags      String[] @default([])
-  published Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  tags      String[]   @default([])
+  published Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  views     PostView[]
+}
+
+model PostView {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  viewedAt  DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+
+  @@index([postId])
+  @@index([viewedAt])
 }
