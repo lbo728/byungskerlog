@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { calculateReadingTime } from '@/lib/reading-time';
 
 interface Post {
@@ -36,7 +36,7 @@ interface PostsPageClientProps {
 }
 
 export function PostsPageClient({ initialData, currentPage }: PostsPageClientProps) {
-  const { data } = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: ['posts', 'list', currentPage],
     queryFn: async () => {
       const response = await fetch(`/api/posts?page=${currentPage}&limit=20`);
@@ -46,6 +46,14 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
     initialData,
     staleTime: 5 * 60 * 1000,
   });
+
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const { posts, pagination } = data;
 

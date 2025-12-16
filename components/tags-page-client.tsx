@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -29,7 +30,7 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   // Query for all tags
-  const { data: allTags } = useQuery({
+  const { data: allTags, isPending } = useQuery({
     queryKey: ['tags'],
     queryFn: async () => {
       const response = await fetch('/api/tags');
@@ -58,6 +59,14 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
     setSelectedTag(selectedTag === tag ? null : tag);
   };
 
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <>
       {/* All Tags */}
@@ -84,7 +93,9 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
             Posts tagged with "{selectedTag}" ({filteredPosts?.length || 0})
           </h2>
           {isLoadingPosts ? (
-            <p className="text-muted-foreground">Loading posts...</p>
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
           ) : (
             <div className="grid gap-6">
               {filteredPosts?.map((post: Post) => (

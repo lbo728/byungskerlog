@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { calculateReadingTime } from '@/lib/reading-time';
@@ -22,7 +23,7 @@ interface PostListClientProps {
 }
 
 export function PostListClient({ initialData }: PostListClientProps) {
-  const { data: posts } = useQuery({
+  const { data: posts, isPending } = useQuery({
     queryKey: ['posts', 'home'],
     queryFn: async () => {
       const response = await fetch('/api/posts');
@@ -33,6 +34,14 @@ export function PostListClient({ initialData }: PostListClientProps) {
     initialData,
     staleTime: 5 * 60 * 1000,
   });
+
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!posts || posts.length === 0) {
     return (
