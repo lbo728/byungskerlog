@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
+import { calculateReadingTime } from "@/lib/reading-time";
 import type { PostPreview } from "@/lib/types";
 
 export const revalidate = 3600;
 
-async function getPosts(): Promise<PostPreview[]> {
+async function getPosts() {
   const posts = await prisma.post.findMany({
     where: { published: true },
     orderBy: { createdAt: "desc" },
@@ -20,6 +21,7 @@ async function getPosts(): Promise<PostPreview[]> {
       slug: true,
       title: true,
       excerpt: true,
+      content: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -39,7 +41,7 @@ export default async function Home() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {posts.map((post: PostPreview) => (
+          {posts.map((post) => (
             <Link href={`/posts/${post.slug}`} key={post.id} className="block group h-full">
               <Card className="h-full flex flex-col overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50">
                 <CardHeader>
@@ -47,9 +49,13 @@ export default async function Home() {
                     <Badge variant="outline" className="font-normal">
                       Post
                     </Badge>
-                    <time className="text-xs text-muted-foreground" dateTime={post.createdAt.toISOString()}>
-                      {format(new Date(post.createdAt), "yyyy.MM.dd")}
-                    </time>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <time dateTime={post.createdAt.toISOString()}>
+                        {format(new Date(post.createdAt), "yyyy.MM.dd")}
+                      </time>
+                      <span>·</span>
+                      <span>{calculateReadingTime(post.content)}</span>
+                    </div>
                   </div>
                   <CardTitle className="text-xl font-bold line-clamp-2 group-hover:text-primary transition-colors">
                     {post.title}

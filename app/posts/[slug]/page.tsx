@@ -8,6 +8,7 @@ import { TableOfContents } from "@/components/toc";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { ViewTracker } from "@/components/view-tracker";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { calculateReadingTime } from "@/lib/reading-time";
 import type { Post } from "@/lib/types";
 
 export const revalidate = 3600;
@@ -102,10 +103,14 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl mb-4 leading-tight">
                   {post.title}
                 </h1>
-                <div className="flex items-center gap-4">
-                  <time className="text-muted-foreground text-sm" dateTime={post.createdAt.toISOString()}>
-                    {format(new Date(post.createdAt), "MMMM d, yyyy")}
-                  </time>
+                <div className="flex gap-4 flex-col">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <time dateTime={post.createdAt.toISOString()}>
+                      {format(new Date(post.createdAt), "MMMM d, yyyy")}
+                    </time>
+                    <span>·</span>
+                    <span>{calculateReadingTime(post.content)}</span>
+                  </div>
                   {post.tags && post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {post.tags.map((tag) => (
