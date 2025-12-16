@@ -103,7 +103,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl mb-4 leading-tight">
                   {post.title}
                 </h1>
-                <div className="flex items-center gap-4">
+                <div className="flex gap-4 flex-col">
                   <div className="flex items-center gap-2 text-muted-foreground text-sm">
                     <time dateTime={post.createdAt.toISOString()}>
                       {format(new Date(post.createdAt), "MMMM d, yyyy")}

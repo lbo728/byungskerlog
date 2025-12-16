@@ -1,5 +1,5 @@
 export function calculateReadingTime(content: string): string {
-  if (!content) return "1분 읽기";
+  if (!content) return "1 min read";
 
   // Remove markdown syntax for more accurate counting
   const cleanContent = content
@@ -32,5 +32,5 @@ export function calculateReadingTime(content: string): string {
   // Ensure at least 1 minute
   const readingMinutes = Math.max(1, totalMinutes);
 
-  return `${readingMinutes}분 읽기`;
+  return `${readingMinutes}min read`;
 }
