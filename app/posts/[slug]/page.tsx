@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { TableOfContents } from "@/components/toc";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { ViewTracker } from "@/components/view-tracker";
+import { PostActions } from "@/components/post-actions";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { calculateReadingTime } from "@/lib/reading-time";
 import type { Post } from "@/lib/types";
@@ -104,12 +105,15 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                   {post.title}
                 </h1>
                 <div className="flex gap-4 flex-col">
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                    <time dateTime={post.createdAt.toISOString()}>
-                      {format(new Date(post.createdAt), "MMMM d, yyyy")}
-                    </time>
-                    <span>·</span>
-                    <span>{calculateReadingTime(post.content)}</span>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <time dateTime={post.createdAt.toISOString()}>
+                        {format(new Date(post.createdAt), "MMMM d, yyyy")}
+                      </time>
+                      <span>·</span>
+                      <span>{calculateReadingTime(post.content)}</span>
+                    </div>
+                    <PostActions postId={post.id} postTitle={post.title} />
                   </div>
                   {post.tags && post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">

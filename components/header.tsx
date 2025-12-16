@@ -6,9 +6,13 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { VisitorCount } from "@/components/visitor-count";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useUser } from "@stackframe/stack";
+import { Button } from "@/components/ui/button";
+import { PenSquare } from "lucide-react";
 
 export function Header() {
   const pathname = usePathname();
+  const user = useUser();
 
   const navItems = [
     { label: "Post", href: "/posts" },
@@ -45,6 +49,14 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+            {user && (
+              <Button asChild variant="default" size="sm">
+                <Link href="/admin/write" className="gap-2">
+                  <PenSquare className="h-4 w-4" />
+                  글쓰기
+                </Link>
+              </Button>
+            )}
             <VisitorCount />
             <ThemeToggle />
           </nav>
