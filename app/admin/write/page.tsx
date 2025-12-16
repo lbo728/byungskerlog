@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MarkdownToolbar } from "@/components/markdown-toolbar";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { ArrowLeft } from "lucide-react";
+import { generateExcerpt } from "@/lib/excerpt";
 
 export default function WritePage() {
   const user = useUser({ or: "redirect" });
@@ -147,10 +148,7 @@ export default function WritePage() {
     setIsLoading(true);
 
     try {
-      const excerpt = content
-        .substring(0, 150)
-        .replace(/[#*`>\[\]]/g, "")
-        .trim();
+      const excerpt = generateExcerpt(content, 150);
 
       if (isEditMode && postId) {
         // Update existing post
