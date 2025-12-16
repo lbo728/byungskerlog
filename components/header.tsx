@@ -21,7 +21,14 @@ export function Header() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Image src="/logo-byungsker.png" alt="병스커 BLOG" width={180} height={84} className="rounded" />
+            <Image
+              src="/logo-byungsker.png"
+              alt="병스커 BLOG"
+              width={180}
+              height={84}
+              className="rounded"
+              priority
+            />
           </Link>
 
           <nav className="flex items-center gap-6">
@@ -29,6 +36,7 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 className={cn(
                   "text-sm font-medium transition-colors hover:text-primary",
                   pathname === item.href ? "text-foreground" : "text-muted-foreground"
