@@ -8,6 +8,7 @@ import { TableOfContents } from "@/components/toc";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { ViewTracker } from "@/components/view-tracker";
 import { PostActions } from "@/components/post-actions";
+import { AdSense } from "@/components/adsense";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { calculateReadingTime } from "@/lib/reading-time";
 import type { Post } from "@/lib/types";
@@ -99,6 +100,12 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-12">
           <div className="max-w-3xl">
+            {/* Top Ad */}
+            <AdSense
+              adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_TOP || ''}
+              className="mb-8"
+            />
+
             <article>
               <header className="mb-8">
                 <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl mb-4 leading-tight">
@@ -131,6 +138,12 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
               <MarkdownRenderer content={post.content} />
             </article>
+
+            {/* Middle Ad */}
+            <AdSense
+              adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_MIDDLE || ''}
+              className="my-8"
+            />
 
             {/* 이전/다음 글 내비게이션 */}
             <Separator className="my-12" />
@@ -207,6 +220,12 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 </section>
               </>
             )}
+
+            {/* Bottom Ad */}
+            <AdSense
+              adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_BOTTOM || ''}
+              className="mt-12"
+            />
           </div>
 
           <aside className="hidden xl:block">
