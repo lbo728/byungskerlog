@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@stackframe/stack";
 import { Users } from "lucide-react";
 
@@ -9,33 +9,24 @@ interface VisitorStats {
   total: number;
 }
 
+async function fetchVisitorStats(): Promise<VisitorStats> {
+  const response = await fetch("/api/visitors");
+  if (!response.ok) throw new Error("Failed to fetch visitor stats");
+  return response.json();
+}
+
 export function VisitorCount() {
   const user = useUser();
-  const [stats, setStats] = useState<VisitorStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Only fetch if user is logged in
-    if (!user) {
-      setIsLoading(false);
-      return;
-    }
-
-    const fetchStats = async () => {
-      try {
-        const response = await fetch("/api/visitors");
-        if (!response.ok) throw new Error("Failed to fetch visitor stats");
-        const data = await response.json();
-        setStats(data);
-      } catch (error) {
-        console.error("Error fetching visitor stats:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, [user]);
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ["visitor-stats"],
+    queryFn: fetchVisitorStats,
+    enabled: !!user, // 로그인한 경우에만 쿼리 실행
+    staleTime: 30 * 1000, // 30초간 fresh 상태 유지
+    refetchInterval: 60 * 1000, // 1분마다 자동 갱신
+    refetchOnWindowFocus: true, // 윈도우 포커스 시 재검증
+    retry: 1, // 실패 시 1회만 재시도
+  });
 
   // Don't render if user is not logged in
   if (!user) return null;
