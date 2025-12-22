@@ -19,6 +19,7 @@ export default function WritePage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const postId = searchParams.get("id");
+  const draftIdParam = searchParams.get("draft");
   const isEditMode = !!postId;
 
   const [title, setTitle] = useState("");
@@ -31,6 +32,8 @@ export default function WritePage() {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [draftId, setDraftId] = useState<string | null>(draftIdParam);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
   // 자동 슬러그 생성 (영문/숫자만)
   const generateSlug = (title: string) => {
@@ -98,9 +101,38 @@ export default function WritePage() {
     }, 0);
   };
 
-  const handleTempSave = () => {
-    localStorage.setItem("draft", JSON.stringify({ title, tags, content }));
-    alert("임시저장되었습니다.");
+  const handleTempSave = async () => {
+    setIsSavingDraft(true);
+    try {
+      if (draftId) {
+        // 기존 draft 업데이트
+        const response = await fetch(`/api/drafts/${draftId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, tags, content }),
+        });
+        if (!response.ok) throw new Error("Failed to update draft");
+        alert("임시저장되었습니다.");
+      } else {
+        // 새 draft 생성
+        const response = await fetch("/api/drafts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, tags, content }),
+        });
+        if (!response.ok) throw new Error("Failed to create draft");
+        const data = await response.json();
+        setDraftId(data.id);
+        // URL 업데이트 (새로고침 없이)
+        window.history.replaceState(null, "", `/admin/write?draft=${data.id}`);
+        alert("임시저장되었습니다.");
+      }
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      alert("임시저장에 실패했습니다.");
+    } finally {
+      setIsSavingDraft(false);
+    }
   };
 
   // 모바일 미리보기 모달 열기
@@ -225,9 +257,10 @@ export default function WritePage() {
     }
   }, [uploadImage, insertImageMarkdown]);
 
-  // Load existing post for edit mode
+  // Load existing post for edit mode or draft
   useEffect(() => {
     if (isEditMode && postId) {
+      // 기존 글 수정 모드
       const fetchPost = async () => {
         setIsFetchingPost(true);
         try {
@@ -247,19 +280,30 @@ export default function WritePage() {
         }
       };
       fetchPost();
-    } else {
-      // Load draft for new post
-      const draft = localStorage.getItem("draft");
-      if (draft) {
-        const { title: draftTitle, tags: draftTags, content: draftContent } = JSON.parse(draft);
-        if (confirm("임시저장된 글이 있습니다. 불러오시겠습니까?")) {
-          setTitle(draftTitle || "");
-          setTags(draftTags || []);
-          setContent(draftContent || "");
+    } else if (draftIdParam) {
+      // 임시저장 이어쓰기 모드
+      const fetchDraft = async () => {
+        setIsFetchingPost(true);
+        try {
+          const response = await fetch(`/api/drafts/${draftIdParam}`);
+          if (!response.ok) throw new Error("Failed to fetch draft");
+          const draft = await response.json();
+
+          setTitle(draft.title || "");
+          setTags(draft.tags || []);
+          setContent(draft.content || "");
+          setDraftId(draft.id);
+        } catch (error) {
+          console.error("Error fetching draft:", error);
+          alert("임시저장을 불러오는데 실패했습니다.");
+          router.push("/admin/drafts");
+        } finally {
+          setIsFetchingPost(false);
         }
-      }
+      };
+      fetchDraft();
     }
-  }, [isEditMode, postId, router]);
+  }, [isEditMode, postId, draftIdParam, router]);
 
   const handlePublish = async () => {
     if (!title.trim()) {
@@ -324,7 +368,16 @@ export default function WritePage() {
         }
 
         const data = await response.json();
-        localStorage.removeItem("draft");
+
+        // 발행 성공 시 draft 삭제
+        if (draftId) {
+          try {
+            await fetch(`/api/drafts/${draftId}`, { method: "DELETE" });
+          } catch (e) {
+            console.error("Failed to delete draft:", e);
+          }
+        }
+
         router.push(`/posts/${data.slug}`);
         router.refresh();
       }
@@ -361,8 +414,8 @@ export default function WritePage() {
               미리보기
             </Button>
             {!isEditMode && (
-              <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading}>
-                임시저장
+              <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading || isSavingDraft}>
+                {isSavingDraft ? "저장 중..." : "임시저장"}
               </Button>
             )}
             <Button variant="default" size="sm" onClick={handlePublish} disabled={isLoading || isFetchingPost}>

@@ -16,7 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { PenSquare, LogOut, Menu } from "lucide-react";
+import { PenSquare, LogOut, Menu, FileText } from "lucide-react";
 
 export function Header() {
   const pathname = usePathname();
@@ -67,6 +67,12 @@ export function Header() {
             ))}
             {user && (
               <>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/admin/drafts" className="gap-2">
+                    <FileText className="h-4 w-4" />
+                    임시저장
+                  </Link>
+                </Button>
                 <Button asChild variant="default" size="sm">
                   <Link href="/admin/write" className="gap-2">
                     <PenSquare className="h-4 w-4" />
@@ -116,6 +122,12 @@ export function Header() {
                 {/* 사용자 관련 버튼 */}
                 {user && (
                   <div className="flex flex-col gap-2 pt-4 border-t">
+                    <Button asChild variant="ghost" size="default" onClick={() => setIsOpen(false)}>
+                      <Link href="/admin/drafts" className="gap-2 w-full justify-start">
+                        <FileText className="h-4 w-4" />
+                        임시저장
+                      </Link>
+                    </Button>
                     <Button asChild variant="default" size="default" onClick={() => setIsOpen(false)}>
                       <Link href="/admin/write" className="gap-2 w-full justify-start">
                         <PenSquare className="h-4 w-4" />
