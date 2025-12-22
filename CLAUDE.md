@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Next.js 16-based personal blog application with admin capabilities. The blog supports markdown content with syntax highlighting, uses Neon PostgreSQL database via Prisma, and Stack Auth for authentication. Deployed on Vercel.
 
+## Git Commit Rule
+
+반드시 lbo728 계정으로 커밋, 푸시, PR을 진행해야해.
+
 ## Development Commands
 
 ```bash
@@ -43,6 +47,7 @@ npm run create-admin        # Generate SQL for creating admin account
 ### Authentication System
 
 The application uses **Stack Auth** (@stackframe/stack):
+
 - Client configuration in `stack/client.tsx`
 - Server configuration in `stack/server.tsx`
 - Auth handler route at `app/handler/[...stack]/page.tsx`
@@ -61,16 +66,19 @@ The application uses **Stack Auth** (@stackframe/stack):
 ### Application Structure
 
 **Pages & Routes**:
+
 - `/` - Homepage listing published posts
 - `/posts/[slug]` - Dynamic post pages
 - `/admin/login` - Admin login page
 - `/admin/write` - Post creation/editing page
 
 **API Routes**:
+
 - `POST /api/posts` - Create new post (authenticated with Stack Auth)
 - `GET /api/posts` - List published posts
 
 **Key Features**:
+
 - Markdown rendering with syntax highlighting (react-markdown + react-syntax-highlighter)
 - Automatic heading IDs for ToC navigation (scroll offset: `scroll-mt-24`)
 - On-demand revalidation after post creation
@@ -79,6 +87,7 @@ The application uses **Stack Auth** (@stackframe/stack):
 ### Admin Account Management
 
 Admin authentication is managed entirely through Stack Auth:
+
 - Create admin accounts in Stack Auth dashboard (https://app.stack-auth.com)
 - No database-level admin accounts
 - All users authenticated through Stack Auth can access admin routes
@@ -103,6 +112,7 @@ Admin authentication is managed entirely through Stack Auth:
 ### Environment Setup
 
 Required environment variables:
+
 - `DATABASE_URL` - Neon PostgreSQL connection string (pooled)
 - `DATABASE_URL_UNPOOLED` - Direct connection for migrations
 - `NEXT_PUBLIC_STACK_PROJECT_ID` - Stack Auth project ID
@@ -112,6 +122,7 @@ Required environment variables:
 ### Database Provider
 
 Uses **Neon PostgreSQL** (serverless Postgres):
+
 - Requires both pooled and direct connection URLs
 - Schema changes via `prisma db push` (development)
 - Consider migrations for production (`prisma migrate`)
