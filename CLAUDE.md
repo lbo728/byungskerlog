@@ -118,6 +118,7 @@ Required environment variables:
 
 - `DATABASE_URL` - Neon PostgreSQL connection string (pooled)
 - `DATABASE_URL_UNPOOLED` - Direct connection for migrations
+- `NEXT_PUBLIC_SITE_URL` - Full site URL for SEO metadata (e.g., `https://byungsker.com`)
 - `NEXT_PUBLIC_STACK_PROJECT_ID` - Stack Auth project ID
 - `NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY` - Stack Auth publishable key
 - `STACK_SECRET_SERVER_KEY` - Stack Auth secret key (server-side only)

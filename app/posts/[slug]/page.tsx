@@ -13,6 +13,8 @@ import { Comments } from "@/components/comments";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { calculateReadingTime } from "@/lib/reading-time";
 import type { Post } from "@/lib/types";
+import { Metadata } from "next";
+import { StructuredData } from "@/components/structured-data";
 
 export const revalidate = 3600;
 
@@ -25,6 +27,65 @@ export async function generateStaticParams() {
   return posts.map((post: { slug: string }) => ({
     slug: post.slug,
   }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPost(slug);
+
+  if (!post) {
+    return {
+      title: 'Post Not Found',
+    };
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://byungsker.com';
+  const postUrl = `${baseUrl}/posts/${post.slug}`;
+
+  // 마크다운에서 첫 번째 이미지 추출
+  const imageMatch = post.content.match(/!\[.*?\]\((.*?)\)/);
+  const firstImage = imageMatch ? imageMatch[1] : `${baseUrl}/og-image.png`;
+
+  // 이미지 URL이 상대 경로인 경우 절대 경로로 변환
+  const absoluteImageUrl = firstImage.startsWith('http') ? firstImage : `${baseUrl}${firstImage}`;
+
+  const description = post.excerpt || post.content.slice(0, 160).replace(/[#*`\[\]]/g, '');
+
+  return {
+    title: post.title,
+    description,
+    authors: [{ name: 'Byungsker' }],
+    keywords: post.tags || [],
+    openGraph: {
+      title: post.title,
+      description,
+      url: postUrl,
+      siteName: 'Byungsker Log',
+      locale: 'ko_KR',
+      type: 'article',
+      publishedTime: post.createdAt.toISOString(),
+      modifiedTime: post.updatedAt.toISOString(),
+      authors: ['Byungsker'],
+      tags: post.tags || [],
+      images: [
+        {
+          url: absoluteImageUrl,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description,
+      images: [absoluteImageUrl],
+    },
+    alternates: {
+      canonical: postUrl,
+    },
+  };
 }
 
 async function getPost(slug: string): Promise<Post | null> {
@@ -97,6 +158,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   return (
     <div className="bg-background">
+      <StructuredData post={post} />
       <ViewTracker slug={slug} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-12">
