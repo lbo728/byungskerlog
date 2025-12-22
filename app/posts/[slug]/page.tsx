@@ -13,8 +13,12 @@ import { Comments } from "@/components/comments";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { calculateReadingTime } from "@/lib/reading-time";
 import type { Post } from "@/lib/types";
+import type { Metadata } from "next";
+import { StructuredData } from "@/components/structured-data";
 
 export const revalidate = 3600;
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel.app";
 
 export async function generateStaticParams() {
   const posts = await prisma.post.findMany({
@@ -25,6 +29,63 @@ export async function generateStaticParams() {
   return posts.map((post: { slug: string }) => ({
     slug: post.slug,
   }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await prisma.post.findUnique({
+    where: { slug },
+  });
+
+  if (!post) {
+    return {
+      title: "포스트를 찾을 수 없습니다",
+    };
+  }
+
+  const postUrl = `${siteUrl}/posts/${slug}`;
+  const imageUrl = `${siteUrl}/og-image.png`;
+
+  // 본문에서 첫 200자를 추출하여 description으로 사용
+  const description = post.excerpt || post.content.replace(/[#*`\n]/g, "").substring(0, 200) + "...";
+
+  return {
+    title: post.title,
+    description,
+    keywords: post.tags || [],
+    authors: [{ name: "이병우 (Byungsker)" }],
+    openGraph: {
+      type: "article",
+      locale: "ko_KR",
+      alternateLocale: ["en_US"],
+      url: postUrl,
+      siteName: "Byungsker Log",
+      title: post.title,
+      description,
+      publishedTime: post.createdAt.toISOString(),
+      modifiedTime: post.updatedAt.toISOString(),
+      authors: ["이병우 (Byungsker)"],
+      tags: post.tags || [],
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description,
+      images: [imageUrl],
+      creator: "@byungsker",
+    },
+    alternates: {
+      canonical: postUrl,
+    },
+  };
 }
 
 async function getPost(slug: string): Promise<Post | null> {
@@ -97,6 +158,18 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   return (
     <div className="bg-background">
+      <StructuredData
+        type="article"
+        data={{
+          title: post.title,
+          description: post.excerpt || post.content.replace(/[#*`\n]/g, "").substring(0, 200) + "...",
+          image: `${siteUrl}/og-image.png`,
+          slug: post.slug,
+          datePublished: post.createdAt.toISOString(),
+          dateModified: post.updatedAt.toISOString(),
+          tags: post.tags || [],
+        }}
+      />
       <ViewTracker slug={slug} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-12">
