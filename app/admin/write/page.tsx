@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MarkdownToolbar } from "@/components/markdown-toolbar";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, X } from "lucide-react";
 import { generateExcerpt } from "@/lib/excerpt";
 
 export default function WritePage() {
@@ -27,6 +27,8 @@ export default function WritePage() {
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingPost, setIsFetchingPost] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   // 자동 슬러그 생성 (영문/숫자만)
   const generateSlug = (title: string) => {
@@ -97,6 +99,22 @@ export default function WritePage() {
   const handleTempSave = () => {
     localStorage.setItem("draft", JSON.stringify({ title, tags, content }));
     alert("임시저장되었습니다.");
+  };
+
+  // 모바일 미리보기 모달 열기
+  const openPreviewModal = () => {
+    setScrollPosition(window.scrollY);
+    setIsPreviewModalOpen(true);
+    document.body.style.overflow = "hidden";
+  };
+
+  // 모바일 미리보기 모달 닫기
+  const closePreviewModal = () => {
+    setIsPreviewModalOpen(false);
+    document.body.style.overflow = "";
+    setTimeout(() => {
+      window.scrollTo(0, scrollPosition);
+    }, 0);
   };
 
   // Load existing post for edit mode
@@ -223,6 +241,17 @@ export default function WritePage() {
             <h1 className="text-lg font-semibold">{isEditMode ? "글 수정" : "글쓰기"}</h1>
           </div>
           <div className="flex items-center gap-2">
+            {/* 모바일 전용 미리보기 버튼 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={openPreviewModal}
+              className="lg:hidden gap-2"
+              disabled={isLoading}
+            >
+              <Eye className="h-4 w-4" />
+              미리보기
+            </Button>
             {!isEditMode && (
               <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading}>
                 임시저장
@@ -288,8 +317,8 @@ export default function WritePage() {
             />
           </div>
 
-          {/* 오른쪽: 미리보기 */}
-          <div className="bg-muted/20 overflow-y-auto">
+          {/* 오른쪽: 미리보기 (데스크톱만) */}
+          <div className="hidden lg:block bg-muted/20 overflow-y-auto">
             <div className="p-8">
               <h1 className="text-4xl font-bold mb-8">{title || "제목 없음"}</h1>
               <div className="prose prose-lg dark:prose-invert max-w-none">
@@ -304,6 +333,41 @@ export default function WritePage() {
         </div>
         )}
       </div>
+
+      {/* 모바일 미리보기 풀 모달 */}
+      {isPreviewModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-background">
+          {/* 모달 헤더 */}
+          <div className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
+            <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">미리보기</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={closePreviewModal}
+                className="gap-2"
+              >
+                <X className="h-4 w-4" />
+                닫기
+              </Button>
+            </div>
+          </div>
+
+          {/* 모달 콘텐츠 */}
+          <div className="overflow-y-auto h-[calc(100vh-3.5rem)]">
+            <div className="container mx-auto p-4 sm:p-8">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8">{title || "제목 없음"}</h1>
+              <div className="prose prose-sm sm:prose-base md:prose-lg dark:prose-invert max-w-none">
+                {content ? (
+                  <MarkdownRenderer content={content} />
+                ) : (
+                  <p className="text-muted-foreground italic">여기에 미리보기가 표시됩니다...</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
