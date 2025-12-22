@@ -113,12 +113,23 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 </h1>
                 <div className="flex gap-4 flex-col">
                   <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                      <time dateTime={post.createdAt.toISOString()}>
-                        {format(new Date(post.createdAt), "MMMM d, yyyy")}
-                      </time>
-                      <span>·</span>
-                      <span>{calculateReadingTime(post.content)}</span>
+                    <div className="flex flex-col gap-1 text-muted-foreground text-sm">
+                      <div className="flex items-center gap-2">
+                        <span>작성:</span>
+                        <time dateTime={post.createdAt.toISOString()}>
+                          {format(new Date(post.createdAt), "MMMM d, yyyy")}
+                        </time>
+                        <span>·</span>
+                        <span>{calculateReadingTime(post.content)}</span>
+                      </div>
+                      {post.updatedAt.getTime() !== post.createdAt.getTime() && (
+                        <div className="flex items-center gap-2">
+                          <span>최종 수정:</span>
+                          <time dateTime={post.updatedAt.toISOString()}>
+                            {format(new Date(post.updatedAt), "MMMM d, yyyy")}
+                          </time>
+                        </div>
+                      )}
                     </div>
                     <PostActions postId={post.id} postTitle={post.title} />
                   </div>
