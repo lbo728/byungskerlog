@@ -9,6 +9,7 @@ import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { ViewTracker } from "@/components/view-tracker";
 import { PostActions } from "@/components/post-actions";
 import { AdSense } from "@/components/adsense";
+import { Comments } from "@/components/comments";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { calculateReadingTime } from "@/lib/reading-time";
 import type { Post } from "@/lib/types";
@@ -229,6 +230,10 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 </section>
               </>
             )}
+
+            {/* 댓글 */}
+            <Separator className="my-12" />
+            <Comments slug={slug} />
 
             {/* Bottom Ad */}
             <AdSense
