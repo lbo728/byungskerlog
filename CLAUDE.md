@@ -76,6 +76,7 @@ The application uses **Stack Auth** (@stackframe/stack):
 
 - `POST /api/posts` - Create new post (authenticated with Stack Auth)
 - `GET /api/posts` - List published posts
+- `POST /api/upload` - Image upload to Vercel Blob storage
 
 **Key Features**:
 
@@ -83,6 +84,8 @@ The application uses **Stack Auth** (@stackframe/stack):
 - Automatic heading IDs for ToC navigation (scroll offset: `scroll-mt-24`)
 - On-demand revalidation after post creation
 - Tailwind CSS with dark mode support
+- GitHub comments via Giscus (GitHub Discussions based)
+- Drag & drop image upload in admin write page (Vercel Blob storage)
 
 ### Admin Account Management
 
@@ -118,6 +121,11 @@ Required environment variables:
 - `NEXT_PUBLIC_STACK_PROJECT_ID` - Stack Auth project ID
 - `NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY` - Stack Auth publishable key
 - `STACK_SECRET_SERVER_KEY` - Stack Auth secret key (server-side only)
+- `NEXT_PUBLIC_GISCUS_REPO` - GitHub repository for Giscus comments (e.g., `lbo728/byungskerlog`)
+- `NEXT_PUBLIC_GISCUS_REPO_ID` - Giscus repository ID (from giscus.app)
+- `NEXT_PUBLIC_GISCUS_CATEGORY` - Giscus discussion category name
+- `NEXT_PUBLIC_GISCUS_CATEGORY_ID` - Giscus category ID (from giscus.app)
+- `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token for image uploads
 
 ### Database Provider
 
