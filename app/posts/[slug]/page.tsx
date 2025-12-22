@@ -122,14 +122,12 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                         <span>·</span>
                         <span>{calculateReadingTime(post.content)}</span>
                       </div>
-                      {post.updatedAt.getTime() !== post.createdAt.getTime() && (
-                        <div className="flex items-center gap-2">
-                          <span>최종 수정:</span>
-                          <time dateTime={post.updatedAt.toISOString()}>
-                            {format(new Date(post.updatedAt), "MMMM d, yyyy")}
-                          </time>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <span>최종 수정:</span>
+                        <time dateTime={post.updatedAt.toISOString()}>
+                          {format(new Date(post.updatedAt), "MMMM d, yyyy")}
+                        </time>
+                      </div>
                     </div>
                     <PostActions postId={post.id} postTitle={post.title} />
                   </div>
