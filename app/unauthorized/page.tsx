@@ -41,9 +41,7 @@ export default function UnauthorizedPage() {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <div className="text-center space-y-6 p-8">
         <div className="text-6xl">🚫</div>
-        <h1 className="text-2xl font-bold text-foreground">
-          권한이 없는 계정입니다
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground">권한이 없는 계정입니다</h1>
         <p className="text-muted-foreground">
           이 계정으로는 접근할 수 없습니다.
           <br />

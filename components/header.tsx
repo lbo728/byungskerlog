@@ -9,13 +9,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUser, useStackApp } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PenSquare, LogOut, Menu, FileText, Settings } from "lucide-react";
 
 const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
@@ -45,14 +39,7 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* 로고 */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Image
-              src="/logo-byungsker.png"
-              alt="병스커 BLOG"
-              width={180}
-              height={84}
-              className="rounded"
-              priority
-            />
+            <Image src="/logo-byungsker.png" alt="병스커 BLOG" width={180} height={84} className="rounded" priority />
           </Link>
 
           {/* 데스크톱 네비게이션 (md 이상) */}

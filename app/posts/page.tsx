@@ -8,7 +8,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel
 
 export const metadata: Metadata = {
   title: "Posts | Byungsker Log",
-  description: "소프트웨어 개발, 제품 개발, 스타트업에 대한 모든 포스트를 확인하세요. 제품 주도 개발을 지향하는 개발자의 인사이트를 공유합니다.",
+  description:
+    "소프트웨어 개발, 제품 개발, 스타트업에 대한 모든 포스트를 확인하세요. 제품 주도 개발을 지향하는 개발자의 인사이트를 공유합니다.",
   alternates: {
     canonical: `${siteUrl}/posts`,
   },

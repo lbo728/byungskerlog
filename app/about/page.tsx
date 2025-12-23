@@ -11,7 +11,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel
 
 export const metadata: Metadata = {
   title: "About | Byungsker Log",
-  description: "제품 주도 개발을 지향하는 개발자, 이병우(Byungsker)에 대해 알아보세요. 소프트웨어 개발, 제품 개발, 스타트업에 대한 경험과 인사이트를 공유합니다.",
+  description:
+    "제품 주도 개발을 지향하는 개발자, 이병우(Byungsker)에 대해 알아보세요. 소프트웨어 개발, 제품 개발, 스타트업에 대한 경험과 인사이트를 공유합니다.",
   alternates: {
     canonical: `${siteUrl}/about`,
   },
@@ -57,10 +58,7 @@ const personSchema = {
   jobTitle: "Software Developer",
   description: "제품 주도 개발을 지향하는 소프트웨어 개발자",
   knowsAbout: ["소프트웨어 개발", "제품 개발", "스타트업", "Next.js", "React", "TypeScript"],
-  sameAs: [
-    "https://github.com/lbo728",
-    "https://linkedin.com/in/byungsker",
-  ],
+  sameAs: ["https://github.com/lbo728", "https://linkedin.com/in/byungsker"],
 };
 
 export default async function AboutPage() {
@@ -71,10 +69,7 @@ export default async function AboutPage() {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-8">

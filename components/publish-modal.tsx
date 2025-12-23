@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ThumbnailUploader } from "@/components/thumbnail-uploader";
@@ -144,11 +138,7 @@ export function PublishModal({
 
         <div className="publish-modal-content grid gap-6 py-4 sm:grid-cols-2">
           <div className="thumbnail-section">
-            <ThumbnailUploader
-              value={thumbnail}
-              onChange={setThumbnail}
-              disabled={isPublishing}
-            />
+            <ThumbnailUploader value={thumbnail} onChange={setThumbnail} disabled={isPublishing} />
             <p className="mt-2 text-xs text-muted-foreground">
               썸네일을 업로드하면 포스트 목록에서 카드 형태로 표시됩니다.
             </p>
@@ -165,44 +155,21 @@ export function PublishModal({
                 rows={4}
                 maxLength={200}
               />
-              <p className="text-xs text-muted-foreground text-right">
-                {excerpt.length}/200
-              </p>
+              <p className="text-xs text-muted-foreground text-right">{excerpt.length}/200</p>
             </div>
 
-            <SeriesSelect
-              value={seriesId}
-              onChange={setSeriesId}
-              disabled={isPublishing}
-            />
+            <SeriesSelect value={seriesId} onChange={setSeriesId} disabled={isPublishing} />
           </div>
         </div>
 
-        {error && (
-          <p className="text-sm text-destructive text-center">{error}</p>
-        )}
+        {error && <p className="text-sm text-destructive text-center">{error}</p>}
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPublishing}
-          >
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPublishing}>
             취소
           </Button>
-          <Button
-            type="button"
-            onClick={handlePublish}
-            disabled={isPublishing}
-          >
-            {isPublishing
-              ? isEditMode
-                ? "수정 중..."
-                : "발행 중..."
-              : isEditMode
-                ? "수정하기"
-                : "발행하기"}
+          <Button type="button" onClick={handlePublish} disabled={isPublishing}>
+            {isPublishing ? (isEditMode ? "수정 중..." : "발행 중...") : isEditMode ? "수정하기" : "발행하기"}
           </Button>
         </DialogFooter>
       </DialogContent>

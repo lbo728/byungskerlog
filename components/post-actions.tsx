@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { useUser } from '@stackframe/stack';
-import { Button } from '@/components/ui/button';
-import { Pencil, Trash2 } from 'lucide-react';
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useUser } from "@stackframe/stack";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface PostActionsProps {
   postId: string;
@@ -30,19 +30,19 @@ export function PostActions({ postId, postTitle }: PostActionsProps) {
 
     try {
       const response = await fetch(`/api/posts/${postId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete post');
+        throw new Error("Failed to delete post");
       }
 
-      toast.success('포스트가 삭제되었습니다.');
-      router.push('/posts');
+      toast.success("포스트가 삭제되었습니다.");
+      router.push("/posts");
       router.refresh();
     } catch (error) {
-      console.error('Error deleting post:', error);
-      toast.error('포스트 삭제 중 오류가 발생했습니다.');
+      console.error("Error deleting post:", error);
+      toast.error("포스트 삭제 중 오류가 발생했습니다.");
     }
   };
 

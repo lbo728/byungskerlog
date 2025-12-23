@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
-import { format } from 'date-fns';
-import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { BookOpen, ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from 'lucide-react';
-import { calculateReadingTime } from '@/lib/reading-time';
-import { useUser } from '@stackframe/stack';
-import { useRouter } from 'next/navigation';
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react";
+import { calculateReadingTime } from "@/lib/reading-time";
+import { useUser } from "@stackframe/stack";
+import { useRouter } from "next/navigation";
 
 interface Series {
   id: string;
@@ -52,10 +52,10 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
   const router = useRouter();
 
   const { data, isPending } = useQuery({
-    queryKey: ['posts', 'list', currentPage],
+    queryKey: ["posts", "list", currentPage],
     queryFn: async () => {
       const response = await fetch(`/api/posts?page=${currentPage}&limit=20`);
-      if (!response.ok) throw new Error('Failed to fetch posts');
+      if (!response.ok) throw new Error("Failed to fetch posts");
       return response.json() as Promise<PostsData>;
     },
     initialData,
@@ -72,18 +72,18 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
 
     try {
       const response = await fetch(`/api/posts/${postId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete post');
+        throw new Error("Failed to delete post");
       }
 
-      toast.success('포스트가 삭제되었습니다.');
+      toast.success("포스트가 삭제되었습니다.");
       router.refresh();
     } catch (error) {
-      console.error('Error deleting post:', error);
-      toast.error('포스트 삭제 중 오류가 발생했습니다.');
+      console.error("Error deleting post:", error);
+      toast.error("포스트 삭제 중 오류가 발생했습니다.");
     }
   };
 
@@ -114,25 +114,23 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
                   <div className="post-meta flex items-center justify-between gap-2 mb-2">
                     <div className="post-info flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                       {post.series && (
-                        <Badge variant="secondary" className="series-badge bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0">
+                        <Badge
+                          variant="secondary"
+                          className="series-badge bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0"
+                        >
                           <BookOpen className="h-3 w-3 mr-1" />
                           {post.series.name}
                         </Badge>
                       )}
                       <time dateTime={new Date(post.createdAt).toISOString()}>
-                        {format(new Date(post.createdAt), 'MMMM d, yyyy')}
+                        {format(new Date(post.createdAt), "MMMM d, yyyy")}
                       </time>
                       <span>·</span>
                       <span>{calculateReadingTime(post.content)}</span>
                     </div>
                     {user && (
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => handleEdit(post.id, e)}
-                        >
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEdit(post.id, e)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
@@ -146,12 +144,8 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
                       </div>
                     )}
                   </div>
-                  <CardTitle className="text-2xl group-hover:text-primary transition-colors">
-                    {post.title}
-                  </CardTitle>
-                  {post.excerpt && (
-                    <CardDescription className="line-clamp-2 text-base">{post.excerpt}</CardDescription>
-                  )}
+                  <CardTitle className="text-2xl group-hover:text-primary transition-colors">{post.title}</CardTitle>
+                  {post.excerpt && <CardDescription className="line-clamp-2 text-base">{post.excerpt}</CardDescription>}
                 </CardHeader>
                 {post.tags && post.tags.length > 0 && (
                   <CardContent>
@@ -178,7 +172,7 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
             size="sm"
             asChild
             disabled={pagination.page === 1}
-            className={pagination.page === 1 ? 'pointer-events-none opacity-50' : ''}
+            className={pagination.page === 1 ? "pointer-events-none opacity-50" : ""}
           >
             <Link href={`/posts?page=${pagination.page - 1}`}>
               <ChevronLeft className="h-4 w-4 mr-1" />
@@ -188,12 +182,7 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
 
           <div className="flex items-center gap-1">
             {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pageNum) => (
-              <Button
-                key={pageNum}
-                variant={pageNum === pagination.page ? 'default' : 'outline'}
-                size="sm"
-                asChild
-              >
+              <Button key={pageNum} variant={pageNum === pagination.page ? "default" : "outline"} size="sm" asChild>
                 <Link href={`/posts?page=${pageNum}`}>{pageNum}</Link>
               </Button>
             ))}
@@ -204,7 +193,7 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
             size="sm"
             asChild
             disabled={pagination.page === pagination.totalPages}
-            className={pagination.page === pagination.totalPages ? 'pointer-events-none opacity-50' : ''}
+            className={pagination.page === pagination.totalPages ? "pointer-events-none opacity-50" : ""}
           >
             <Link href={`/posts?page=${pagination.page + 1}`}>
               Next

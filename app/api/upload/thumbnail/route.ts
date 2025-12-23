@@ -24,10 +24,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const contentLength = request.headers.get("content-length");
     if (contentLength && parseInt(contentLength) > MAX_SIZE) {
-      return NextResponse.json(
-        { error: "파일 크기는 500KB 이하여야 합니다." },
-        { status: 413 }
-      );
+      return NextResponse.json({ error: "파일 크기는 500KB 이하여야 합니다." }, { status: 413 });
     }
 
     const thumbnailFilename = `thumbnail-${Date.now()}-${filename}`;

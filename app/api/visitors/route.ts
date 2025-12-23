@@ -12,11 +12,7 @@ export async function GET() {
 
     const now = new Date();
     // Use UTC for consistent timezone handling
-    const startOfToday = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate()
-    ));
+    const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
     // Use database aggregation for better performance
     const uniqueToday = await prisma.$queryRaw<[{ count: bigint }]>`
@@ -39,8 +35,8 @@ export async function GET() {
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600'
-        }
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
       }
     );
   } catch (error) {

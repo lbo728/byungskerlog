@@ -12,7 +12,7 @@ import {
   Quote,
   Link as LinkIcon,
   Image,
-  Code
+  Code,
 } from "lucide-react";
 
 interface MarkdownToolbarProps {

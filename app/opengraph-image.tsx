@@ -13,29 +13,27 @@ export default async function Image() {
   const logoUrl = `${siteUrl}/logo-byungsker.png`;
 
   return new ImageResponse(
-    (
-      <div
+    <div
+      style={{
+        height: "100%",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#000000",
+      }}
+    >
+      <img
+        src={logoUrl}
+        alt="Byungsker Blog Logo"
+        width={400}
+        height={186}
         style={{
-          height: "100%",
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#000000",
+          objectFit: "contain",
         }}
-      >
-        <img
-          src={logoUrl}
-          alt="Byungsker Blog Logo"
-          width={400}
-          height={186}
-          style={{
-            objectFit: "contain",
-          }}
-        />
-      </div>
-    ),
+      />
+    </div>,
     {
       ...size,
     }

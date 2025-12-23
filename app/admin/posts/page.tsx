@@ -6,13 +6,7 @@ import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Pencil, Trash2, Plus, X, BookOpen, Check } from "lucide-react";
 import {
@@ -286,8 +280,7 @@ export default function AdminPostsPage() {
             <h1 className="text-lg font-semibold">관리</h1>
           </div>
           <Button variant="default" size="sm" onClick={() => router.push("/admin/write")} className="gap-2">
-            <Plus className="h-4 w-4" />
-            새 글 작성
+            <Plus className="h-4 w-4" />새 글 작성
           </Button>
         </div>
       </header>
@@ -354,29 +347,16 @@ export default function AdminPostsPage() {
 
                 <div className="flex-1 min-w-[200px]">
                   <label className="text-sm font-medium mb-2 block">시작일</label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
+                  <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
                 </div>
 
                 <div className="flex-1 min-w-[200px]">
                   <label className="text-sm font-medium mb-2 block">종료일</label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
+                  <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
                 </div>
 
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleResetFilters}
-                    className="gap-2"
-                  >
+                  <Button variant="outline" size="sm" onClick={handleResetFilters} className="gap-2">
                     <X className="h-4 w-4" />
                     초기화
                   </Button>
@@ -387,88 +367,75 @@ export default function AdminPostsPage() {
 
           {/* Posts Content */}
           <div className="container mx-auto px-4 py-8">
-        {isLoading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">로딩 중...</p>
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">작성된 글이 없습니다.</p>
-            <Button onClick={() => router.push("/admin/write")}>
-              첫 글 작성하기
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                className="border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h2 className="text-xl font-semibold truncate">{post.title}</h2>
-                      {!post.published && (
-                        <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded">
-                          비공개
-                        </span>
-                      )}
-                    </div>
-                    {post.excerpt && (
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                        {post.excerpt}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>{formatDate(post.createdAt)}</span>
-                      <span className="px-2 py-0.5 bg-muted rounded">
-                        일간 {post.dailyViews || 0} / 총 {post.totalViews || 0} 조회
-                      </span>
-                      {post.tags.length > 0 && (
-                        <div className="flex gap-2">
-                          {post.tags.map((tag, index) => (
-                            <span
-                              key={index}
-                              className="px-2 py-0.5 bg-primary/10 text-primary rounded"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => router.push(`/posts/${post.slug}`)}
-                    >
-                      보기
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => router.push(`/admin/write?id=${post.id}`)}
-                      className="gap-2"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteClick(post)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+            {isLoading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">로딩 중...</p>
               </div>
-            ))}
-          </div>
-        )}
+            ) : posts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">작성된 글이 없습니다.</p>
+                <Button onClick={() => router.push("/admin/write")}>첫 글 작성하기</Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {posts.map((post) => (
+                  <div
+                    key={post.id}
+                    className="border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h2 className="text-xl font-semibold truncate">{post.title}</h2>
+                          {!post.published && (
+                            <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded">비공개</span>
+                          )}
+                        </div>
+                        {post.excerpt && (
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{post.excerpt}</p>
+                        )}
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>{formatDate(post.createdAt)}</span>
+                          <span className="px-2 py-0.5 bg-muted rounded">
+                            일간 {post.dailyViews || 0} / 총 {post.totalViews || 0} 조회
+                          </span>
+                          {post.tags.length > 0 && (
+                            <div className="flex gap-2">
+                              {post.tags.map((tag, index) => (
+                                <span key={index} className="px-2 py-0.5 bg-primary/10 text-primary rounded">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button variant="ghost" size="sm" onClick={() => router.push(`/posts/${post.slug}`)}>
+                          보기
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/admin/write?id=${post.id}`)}
+                          className="gap-2"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteClick(post)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </>
       )}
@@ -536,9 +503,7 @@ export default function AdminPostsPage() {
                         <BookOpen className="h-5 w-5 text-emerald-500" />
                         <div>
                           <h3 className="font-medium">{series.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {series._count.posts}개의 포스트
-                          </p>
+                          <p className="text-sm text-muted-foreground">{series._count.posts}개의 포스트</p>
                         </div>
                       </div>
                       <div className="series-actions flex items-center gap-2">
@@ -598,8 +563,8 @@ export default function AdminPostsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>시리즈를 삭제하시겠습니까?</AlertDialogTitle>
             <AlertDialogDescription>
-              &ldquo;{seriesToDelete?.name}&rdquo; 시리즈가 삭제됩니다. 해당 시리즈에 속한 포스트는
-              삭제되지 않고 무분류로 변경됩니다.
+              &ldquo;{seriesToDelete?.name}&rdquo; 시리즈가 삭제됩니다. 해당 시리즈에 속한 포스트는 삭제되지 않고
+              무분류로 변경됩니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

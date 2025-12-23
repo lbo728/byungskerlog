@@ -119,11 +119,7 @@ async function getSeriesPosts(seriesId: string | null) {
   return posts;
 }
 
-async function getPrevNextPosts(
-  createdAt: Date,
-  seriesId: string | null,
-  currentSlug: string
-) {
+async function getPrevNextPosts(createdAt: Date, seriesId: string | null, currentSlug: string) {
   if (seriesId) {
     const seriesPosts = await prisma.post.findMany({
       where: { published: true, seriesId },
@@ -207,11 +203,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   }
 
   const seriesPosts = await getSeriesPosts(post.seriesId);
-  const { prevPost, nextPost } = await getPrevNextPosts(
-    post.createdAt,
-    post.seriesId,
-    post.slug
-  );
+  const { prevPost, nextPost } = await getPrevNextPosts(post.createdAt, post.seriesId, post.slug);
   const relatedPosts = await getRelatedPosts(post.tags || [], post.slug);
   const currentSeriesIndex = seriesPosts.findIndex((p) => p.slug === post.slug);
 
@@ -235,10 +227,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-12">
           <div className="max-w-3xl">
             {/* Top Ad */}
-            <AdSense
-              adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_TOP || ''}
-              className="mb-8"
-            />
+            <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_TOP || ""} className="mb-8" />
 
             <article>
               <header className="mb-8">
@@ -268,9 +257,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                   {post.series && (
                     <div className="series-badge flex items-center gap-2">
                       <BookOpen className="h-4 w-4 text-emerald-500" />
-                      <span className="text-sm text-emerald-500 font-medium">
-                        {post.series.name}
-                      </span>
+                      <span className="text-sm text-emerald-500 font-medium">{post.series.name}</span>
                     </div>
                   )}
                   {post.tags && post.tags.length > 0 && (
@@ -291,10 +278,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             </article>
 
             {/* Middle Ad */}
-            <AdSense
-              adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_MIDDLE || ''}
-              className="my-8"
-            />
+            <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_MIDDLE || ""} className="my-8" />
 
             {/* 시리즈 섹션 */}
             {post.series && seriesPosts.length > 0 && (
@@ -321,12 +305,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                                   : "hover:bg-muted"
                               }`}
                             >
-                              <span className="series-index text-sm text-muted-foreground w-6">
-                                {index + 1}.
-                              </span>
-                              <span className="series-title line-clamp-1">
-                                {seriesPost.title}
-                              </span>
+                              <span className="series-index text-sm text-muted-foreground w-6">{index + 1}.</span>
+                              <span className="series-title line-clamp-1">{seriesPost.title}</span>
                             </Link>
                           </li>
                         ))}
@@ -418,10 +398,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             <Comments slug={slug} />
 
             {/* Bottom Ad */}
-            <AdSense
-              adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_BOTTOM || ''}
-              className="mt-12"
-            />
+            <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_BOTTOM || ""} className="mt-12" />
           </div>
 
           <aside className="hidden xl:block">

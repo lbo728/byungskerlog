@@ -19,10 +19,7 @@ const DEFAULT_ABOUT_CONTENT = `프로덕트 디자이너로 커리어를 시작�
 ### Contact
 [링크드인](https://www.linkedin.com) | [스레드](https://www.threads.net) | [X](https://x.com)`;
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
 
@@ -51,10 +48,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     // Check authentication with Stack Auth
     const user = await getAuthUser();

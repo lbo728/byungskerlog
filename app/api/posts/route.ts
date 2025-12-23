@@ -133,27 +133,31 @@ export async function GET(request: NextRequest) {
     const postIds = posts.map((post) => post.id);
 
     // Get all views for these posts in a single query
-    const allViews = postIds.length > 0
-      ? await prisma.postView.findMany({
-          where: { postId: { in: postIds } },
-          select: {
-            postId: true,
-            viewedAt: true,
-          },
-        })
-      : [];
+    const allViews =
+      postIds.length > 0
+        ? await prisma.postView.findMany({
+            where: { postId: { in: postIds } },
+            select: {
+              postId: true,
+              viewedAt: true,
+            },
+          })
+        : [];
 
     // Group views by postId and calculate total/daily counts
-    const viewStats = allViews.reduce((acc, view) => {
-      if (!acc[view.postId]) {
-        acc[view.postId] = { totalViews: 0, dailyViews: 0 };
-      }
-      acc[view.postId].totalViews++;
-      if (view.viewedAt >= oneDayAgo) {
-        acc[view.postId].dailyViews++;
-      }
-      return acc;
-    }, {} as Record<string, { totalViews: number; dailyViews: number }>);
+    const viewStats = allViews.reduce(
+      (acc, view) => {
+        if (!acc[view.postId]) {
+          acc[view.postId] = { totalViews: 0, dailyViews: 0 };
+        }
+        acc[view.postId].totalViews++;
+        if (view.viewedAt >= oneDayAgo) {
+          acc[view.postId].dailyViews++;
+        }
+        return acc;
+      },
+      {} as Record<string, { totalViews: number; dailyViews: number }>
+    );
 
     // Attach view stats to posts
     const postsWithViews = posts.map((post) => ({

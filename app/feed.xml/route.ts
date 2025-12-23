@@ -25,9 +25,7 @@ export async function GET() {
   const rssItems = posts
     .map((post) => {
       const pubDate = new Date(post.createdAt).toUTCString();
-      const categories = post.tags
-        .map((tag) => `<category>${escapeXml(tag)}</category>`)
-        .join("\n        ");
+      const categories = post.tags.map((tag) => `<category>${escapeXml(tag)}</category>`).join("\n        ");
 
       return `    <item>
       <title>${escapeXml(post.title)}</title>
