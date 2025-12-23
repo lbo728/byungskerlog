@@ -32,10 +32,7 @@ export default function UnauthorizedPage() {
   if (isDeleting) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
-        <div className="text-center space-y-6 p-8">
-          <div className="text-6xl animate-pulse">🔄</div>
-          <p className="text-muted-foreground">처리 중...</p>
-        </div>
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-primary" />
       </div>
     );
   }
