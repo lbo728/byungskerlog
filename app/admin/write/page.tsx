@@ -35,18 +35,18 @@ export default function WritePage() {
   const [draftId, setDraftId] = useState<string | null>(draftIdParam);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
 
-  // 자동 슬러그 생성 (영문/숫자만)
+  // 자동 슬러그 생성 (영문/숫자만 + 타임스탬프로 고유성 보장)
   const generateSlug = (title: string) => {
-    const slug = title
+    const baseSlug = title
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "") // 한글 제거, 영문/숫자만
+      .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
-      .replace(/^-+|-+$/g, "") // 앞뒤 하이픈 제거
+      .replace(/^-+|-+$/g, "")
       .trim();
 
-    // 빈 문자열이면 타임스탬프 사용
-    return slug || `post-${Date.now()}`;
+    const timestamp = Date.now();
+    return baseSlug ? `${baseSlug}-${timestamp}` : `post-${timestamp}`;
   };
 
   // 태그 추가
