@@ -25,7 +25,6 @@ export default async function Image() {
           backgroundColor: "#000000",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={logoUrl}
           alt="Byungsker Blog Logo"

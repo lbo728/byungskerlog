@@ -82,6 +82,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       </a>
     ),
 
+    // eslint-disable-next-line @next/next/no-img-element
     img: ({ src, alt, ...props }) => <img src={src} alt={alt || ""} className="rounded-lg shadow-md my-6" {...props} />,
     blockquote: ({ children, ...props }) => (
       <blockquote

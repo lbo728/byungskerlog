@@ -13,7 +13,6 @@ import { AdSense } from "@/components/adsense";
 import { Comments } from "@/components/comments";
 import { ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
 import { calculateReadingTime } from "@/lib/reading-time";
-import type { Post } from "@/lib/types";
 import type { Metadata } from "next";
 import { StructuredData } from "@/components/structured-data";
 
@@ -22,14 +21,18 @@ export const revalidate = 3600;
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel.app";
 
 export async function generateStaticParams() {
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    select: { slug: true },
-  });
+  try {
+    const posts = await prisma.post.findMany({
+      where: { published: true },
+      select: { slug: true },
+    });
 
-  return posts.map((post: { slug: string }) => ({
-    slug: post.slug,
-  }));
+    return posts.map((post: { slug: string }) => ({
+      slug: post.slug,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -101,7 +104,7 @@ async function getPost(slug: string) {
   return post;
 }
 
-async function getSeriesPosts(seriesId: string | null, currentSlug: string) {
+async function getSeriesPosts(seriesId: string | null) {
   if (!seriesId) return [];
 
   const posts = await prisma.post.findMany({
@@ -203,7 +206,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     notFound();
   }
 
-  const seriesPosts = await getSeriesPosts(post.seriesId, post.slug);
+  const seriesPosts = await getSeriesPosts(post.seriesId);
   const { prevPost, nextPost } = await getPrevNextPosts(
     post.createdAt,
     post.seriesId,

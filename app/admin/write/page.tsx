@@ -26,7 +26,7 @@ export default function WritePage() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [content, setContent] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [isFetchingPost, setIsFetchingPost] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
@@ -38,20 +38,6 @@ export default function WritePage() {
   const [existingThumbnail, setExistingThumbnail] = useState<string | null>(null);
   const [existingSeriesId, setExistingSeriesId] = useState<string | null>(null);
   const [existingExcerpt, setExistingExcerpt] = useState<string | null>(null);
-
-  // 자동 슬러그 생성 (영문/숫자만 + 타임스탬프로 고유성 보장)
-  const generateSlug = (title: string) => {
-    const baseSlug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .trim();
-
-    const timestamp = Date.now();
-    return baseSlug ? `${baseSlug}-${timestamp}` : `post-${timestamp}`;
-  };
 
   // 태그 추가
   const addTag = (tag: string) => {
