@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useUser, useStackApp } from "@stackframe/stack";
+import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,8 +12,7 @@ import { ArrowLeft, Eye, X } from "lucide-react";
 import { generateExcerpt } from "@/lib/excerpt";
 
 export default function WritePage() {
-  const user = useUser({ or: "redirect" });
-  const app = useStackApp();
+  useUser({ or: "redirect" });
   const router = useRouter();
   const searchParams = useSearchParams();
   const textareaRef = useRef<HTMLTextAreaElement>(null);

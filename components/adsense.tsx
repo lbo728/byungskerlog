@@ -22,7 +22,9 @@ export function AdSense({
   useEffect(() => {
     try {
       if (typeof window !== 'undefined') {
-        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+        type WindowWithAdsbygoogle = Window & { adsbygoogle?: unknown[] };
+        const windowWithAds = window as WindowWithAdsbygoogle;
+        (windowWithAds.adsbygoogle = windowWithAds.adsbygoogle || []).push({});
       }
     } catch (error) {
       console.error('AdSense error:', error);

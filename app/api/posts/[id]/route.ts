@@ -36,7 +36,7 @@ export async function DELETE(
     revalidatePath(`/posts/${post.slug}`);
 
     return NextResponse.json({ message: "Post deleted successfully" }, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error deleting post:", error);
     return NextResponse.json({ error: "Failed to delete post" }, { status: 500 });
   }
@@ -97,17 +97,17 @@ export async function PATCH(
     revalidatePath(`/posts/${post.slug}`);
 
     return NextResponse.json(post);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error updating post:", error);
 
-    // Handle unique constraint violation (duplicate slug)
-    if (error.code === "P2002") {
-      return NextResponse.json({ error: "A post with this slug already exists" }, { status: 409 });
-    }
+    if (error && typeof error === "object" && "code" in error) {
+      if (error.code === "P2002") {
+        return NextResponse.json({ error: "A post with this slug already exists" }, { status: 409 });
+      }
 
-    // Handle post not found
-    if (error.code === "P2025") {
-      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+      if (error.code === "P2025") {
+        return NextResponse.json({ error: "Post not found" }, { status: 404 });
+      }
     }
 
     return NextResponse.json({ error: "Failed to update post" }, { status: 500 });

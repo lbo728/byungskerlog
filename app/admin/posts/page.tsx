@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Pencil, Trash2, Plus, Filter, X } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Plus, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +38,7 @@ interface Post {
 }
 
 export default function AdminPostsPage() {
-  const user = useUser({ or: "redirect" });
+  useUser({ or: "redirect" });
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,11 +53,7 @@ export default function AdminPostsPage() {
   const [endDate, setEndDate] = useState<string>("");
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
-  useEffect(() => {
-    fetchPosts();
-  }, [selectedTag, sortBy, startDate, endDate]);
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -97,7 +93,11 @@ export default function AdminPostsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedTag, sortBy, startDate, endDate]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   const handleDeleteClick = (post: Post) => {
     setPostToDelete(post);

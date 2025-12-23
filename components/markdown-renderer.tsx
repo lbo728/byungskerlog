@@ -48,10 +48,10 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         </h3>
       );
     },
-    code: ({ node, inline, className, children, ...props }: any) => {
+    code: ({ inline, className, children, ...props }) => {
       const match = /language-(\w+)/.exec(className || "");
       return !inline && match ? (
-        <SyntaxHighlighter style={vscDarkPlus as any} language={match[1]} PreTag="div" className="rounded-lg !my-6">
+        <SyntaxHighlighter style={vscDarkPlus} language={match[1]} PreTag="div" className="rounded-lg !my-6">
           {String(children).replace(/\n$/, "")}
         </SyntaxHighlighter>
       ) : (

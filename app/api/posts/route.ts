@@ -36,11 +36,10 @@ export async function POST(request: NextRequest) {
     revalidatePath(`/posts/${slug}`);
 
     return NextResponse.json(post, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating post:", error);
 
-    // Handle unique constraint violation (duplicate slug)
-    if (error.code === "P2002") {
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
       return NextResponse.json({ error: "A post with this slug already exists" }, { status: 409 });
     }
 
@@ -61,8 +60,16 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    // Build where clause
-    const where: any = {};
+    type WhereClause = {
+      published?: boolean;
+      tags?: { has: string };
+      createdAt?: {
+        gte?: Date;
+        lt?: Date;
+      };
+    };
+
+    const where: WhereClause = {};
 
     // Only filter by published if not including unpublished (admin mode)
     if (!includeUnpublished) {

@@ -90,7 +90,7 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
       {selectedTag && (
         <div>
           <h2 className="text-2xl font-semibold mb-4">
-            Posts tagged with "{selectedTag}" ({filteredPosts?.length || 0})
+            Posts tagged with &ldquo;{selectedTag}&rdquo; ({filteredPosts?.length || 0})
           </h2>
           {isLoadingPosts ? (
             <div className="flex items-center justify-center py-12">

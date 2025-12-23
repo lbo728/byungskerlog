@@ -63,7 +63,7 @@ export async function PUT(
     revalidatePath(`/${slug}`);
 
     return NextResponse.json(page);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error updating page:", error);
     return NextResponse.json({ error: "Failed to update page" }, { status: 500 });
   }

@@ -26,7 +26,7 @@ interface Draft {
 }
 
 export default function AdminDraftsPage() {
-  const user = useUser({ or: "redirect" });
+  useUser({ or: "redirect" });
   const router = useRouter();
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [isLoading, setIsLoading] = useState(true);
