@@ -17,7 +17,10 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
   const [hoveredDay, setHoveredDay] = useState<DayData | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
-  const { weeks, streak } = useMemo(() => {
+  const monthLabels = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+  const dayLabels = ["일", "월", "화", "수", "목", "금", "토"];
+
+  const { weeks, streak, monthPositions } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -59,6 +62,19 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
       weeks.push(currentWeek);
     }
 
+    const monthPositions: { month: number; weekIndex: number }[] = [];
+    let lastMonth = -1;
+    weeks.forEach((week, weekIndex) => {
+      const firstDayOfWeek = week[0];
+      if (firstDayOfWeek) {
+        const month = firstDayOfWeek.date.getMonth();
+        if (month !== lastMonth) {
+          monthPositions.push({ month, weekIndex });
+          lastMonth = month;
+        }
+      }
+    });
+
     let currentStreak = 0;
     const checkDate = new Date(today);
 
@@ -84,6 +100,7 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
     return {
       weeks,
       streak: currentStreak,
+      monthPositions,
     };
   }, [postDates]);
 
@@ -141,32 +158,58 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
       <CardContent>
         <div className="contribution-graph-container w-full">
           <div className="contribution-graph w-full">
-            <div
-              className="graph-grid grid w-full"
-              style={{
-                gridTemplateColumns: `repeat(${weeks.length}, 1fr)`,
-                gap: '2px',
-              }}
-            >
-              {weeks.map((week, weekIndex) => (
+            <div className="graph-with-labels flex">
+              <div className="day-labels flex flex-col justify-around text-[10px] text-muted-foreground pr-2 pt-4">
+                {[1, 3, 5].map((dayIndex) => (
+                  <span key={dayIndex} className="h-[calc((100%-2px*6)/7)] flex items-center">
+                    {dayLabels[dayIndex]}
+                  </span>
+                ))}
+              </div>
+              <div className="graph-main flex-1">
                 <div
-                  key={weekIndex}
-                  className="week-column grid"
+                  className="month-labels grid text-[10px] text-muted-foreground mb-1"
                   style={{
-                    gridTemplateRows: 'repeat(7, 1fr)',
+                    gridTemplateColumns: `repeat(${weeks.length}, 1fr)`,
+                  }}
+                >
+                  {weeks.map((_, weekIndex) => {
+                    const monthData = monthPositions.find((m) => m.weekIndex === weekIndex);
+                    return (
+                      <span key={weekIndex} className="text-left">
+                        {monthData ? monthLabels[monthData.month] : ""}
+                      </span>
+                    );
+                  })}
+                </div>
+                <div
+                  className="graph-grid grid w-full"
+                  style={{
+                    gridTemplateColumns: `repeat(${weeks.length}, 1fr)`,
                     gap: '2px',
                   }}
                 >
-                  {week.map((day, dayIndex) => (
+                  {weeks.map((week, weekIndex) => (
                     <div
-                      key={dayIndex}
-                      className={`day-cell aspect-square rounded-[2px] transition-all cursor-pointer ${getLevelColor(day.level)}`}
-                      onMouseEnter={(e) => handleMouseEnter(day, e)}
-                      onMouseLeave={handleMouseLeave}
-                    />
+                      key={weekIndex}
+                      className="week-column grid"
+                      style={{
+                        gridTemplateRows: 'repeat(7, 1fr)',
+                        gap: '2px',
+                      }}
+                    >
+                      {week.map((day, dayIndex) => (
+                        <div
+                          key={dayIndex}
+                          className={`day-cell aspect-square rounded-[2px] transition-all cursor-pointer ${getLevelColor(day.level)}`}
+                          onMouseEnter={(e) => handleMouseEnter(day, e)}
+                          onMouseLeave={handleMouseLeave}
+                        />
+                      ))}
+                    </div>
                   ))}
                 </div>
-              ))}
+              </div>
             </div>
             <div className="graph-legend flex items-center justify-between mt-3 text-xs text-muted-foreground">
               <span>{totalContributions}개의 글 발행</span>
