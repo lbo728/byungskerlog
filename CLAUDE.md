@@ -8,7 +8,12 @@ This is a Next.js 16-based personal blog application with admin capabilities. Th
 
 ## Git Commit Rule
 
-반드시 lbo728 계정으로 커밋, 푸시, PR을 진행해야해.
+- 반드시 lbo728 계정으로 커밋, 푸시, PR을 진행해야해.
+- 커밋 메세지는 영문 컨벤셔널 커밋으로 해야해.(단, description은 한글 불릿 포인트로 작성해.)
+
+## Code rules
+
+나에게 리뷰할 때만 주석을 포함해서 알려주고, 커밋 및 푸시 시점에는 주석은 삭제해야해.
 
 ## Development Commands
 
