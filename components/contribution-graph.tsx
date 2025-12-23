@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ContributionGraphProps {
@@ -16,9 +16,16 @@ interface DayData {
 export function ContributionGraph({ postDates }: ContributionGraphProps) {
   const [hoveredDay, setHoveredDay] = useState<DayData | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
+    }
+  }, []);
 
   const { weeks, streak, monthPositions } = useMemo(() => {
     const today = new Date();
@@ -156,7 +163,7 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="contribution-graph-container w-full overflow-x-auto">
+        <div ref={scrollContainerRef} className="contribution-graph-container w-full overflow-x-auto">
           <div className="contribution-graph min-w-[700px] sm:min-w-0 sm:w-full">
             <div className="graph-with-labels flex">
               <div className="day-labels flex flex-col text-[10px] text-muted-foreground pr-2 pt-4">
