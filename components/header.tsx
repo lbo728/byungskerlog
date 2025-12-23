@@ -16,7 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { PenSquare, LogOut, Menu, FileText } from "lucide-react";
+import { PenSquare, LogOut, Menu, FileText, Settings } from "lucide-react";
 
 const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
 
@@ -73,6 +73,12 @@ export function Header() {
             {isAuthorized && (
               <>
                 <Button asChild variant="ghost" size="sm">
+                  <Link href="/admin/posts" className="gap-2">
+                    <Settings className="h-4 w-4" />
+                    어드민
+                  </Link>
+                </Button>
+                <Button asChild variant="ghost" size="sm">
                   <Link href="/admin/drafts" className="gap-2">
                     <FileText className="h-4 w-4" />
                     임시저장
@@ -127,6 +133,12 @@ export function Header() {
                 {/* 사용자 관련 버튼 */}
                 {isAuthorized && (
                   <div className="flex flex-col gap-2 pt-4 border-t">
+                    <Button asChild variant="ghost" size="default" onClick={() => setIsOpen(false)}>
+                      <Link href="/admin/posts" className="gap-2 w-full justify-start">
+                        <Settings className="h-4 w-4" />
+                        어드민
+                      </Link>
+                    </Button>
                     <Button asChild variant="ghost" size="default" onClick={() => setIsOpen(false)}>
                       <Link href="/admin/drafts" className="gap-2 w-full justify-start">
                         <FileText className="h-4 w-4" />
