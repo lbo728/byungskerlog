@@ -17,6 +17,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (!stackServerApp) {
+    return NextResponse.next();
+  }
+
   const user = await stackServerApp.getUser();
 
   // 로그인된 사용자가 화이트리스트에 없으면 unauthorized 페이지로

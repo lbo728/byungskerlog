@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { stackServerApp } from "@/stack/server";
+import { getAuthUser } from "@/lib/auth";
 
 const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
 
 export async function POST() {
   try {
-    const user = await stackServerApp.getUser();
+    const user = await getAuthUser();
 
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

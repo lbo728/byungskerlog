@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { stackServerApp } from "@/stack/server";
+import { getAuthUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 const DEFAULT_ABOUT_CONTENT = `프로덕트 디자이너로 커리어를 시작하여 현재는 프론트엔드 개발을 하고 있습니다.
@@ -57,7 +57,7 @@ export async function PUT(
 ) {
   try {
     // Check authentication with Stack Auth
-    const user = await stackServerApp.getUser();
+    const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

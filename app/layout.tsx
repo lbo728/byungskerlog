@@ -103,20 +103,33 @@ export default function RootLayout({
             strategy="afterInteractive"
           />
         )}
-        <StackProvider app={stackClientApp}>
-          <StackTheme>
-            <ThemeProvider>
-              <Providers>
-                <div className="relative flex min-h-screen flex-col">
-                  <Header />
-                  <main className="flex-1">{children}</main>
-                  <Footer />
-                </div>
-                <Toaster />
-              </Providers>
-            </ThemeProvider>
-          </StackTheme>
-        </StackProvider>
+        {stackClientApp ? (
+          <StackProvider app={stackClientApp}>
+            <StackTheme>
+              <ThemeProvider>
+                <Providers>
+                  <div className="relative flex min-h-screen flex-col">
+                    <Header />
+                    <main className="flex-1">{children}</main>
+                    <Footer />
+                  </div>
+                  <Toaster />
+                </Providers>
+              </ThemeProvider>
+            </StackTheme>
+          </StackProvider>
+        ) : (
+          <ThemeProvider>
+            <Providers>
+              <div className="relative flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
+              <Toaster />
+            </Providers>
+          </ThemeProvider>
+        )}
       </body>
     </html>
   );

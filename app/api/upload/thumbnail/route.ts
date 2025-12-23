@@ -1,12 +1,12 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { stackServerApp } from "@/stack/server";
+import { getAuthUser } from "@/lib/auth";
 
 const MAX_SIZE = 500 * 1024;
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const user = await stackServerApp.getUser();
+    const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
