@@ -3,18 +3,24 @@ import { prisma } from "@/lib/prisma";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel.app";
 
 export async function GET() {
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-    select: {
-      slug: true,
-      title: true,
-      excerpt: true,
-      createdAt: true,
-      tags: true,
-    },
-  });
+  let posts: { slug: string; title: string; excerpt: string | null; createdAt: Date; tags: string[] }[] = [];
+
+  try {
+    posts = await prisma.post.findMany({
+      where: { published: true },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: {
+        slug: true,
+        title: true,
+        excerpt: true,
+        createdAt: true,
+        tags: true,
+      },
+    });
+  } catch {
+    // DB 연결 실패 시 빈 배열 유지
+  }
 
   const rssItems = posts
     .map((post) => {
