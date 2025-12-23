@@ -39,8 +39,16 @@ async function getPosts(page: number) {
         title: true,
         excerpt: true,
         content: true,
+        thumbnail: true,
         tags: true,
         createdAt: true,
+        series: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
       },
     }),
     prisma.post.count({ where: { published: true } }),

@@ -112,10 +112,19 @@ export async function GET(request: NextRequest) {
         slug: true,
         title: true,
         excerpt: true,
+        content: true,
+        thumbnail: true,
         tags: true,
         published: true,
         createdAt: true,
         updatedAt: true,
+        series: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
       },
     });
 

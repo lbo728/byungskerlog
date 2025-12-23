@@ -6,10 +6,17 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { BookOpen, ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { calculateReadingTime } from '@/lib/reading-time';
 import { useUser } from '@stackframe/stack';
 import { useRouter } from 'next/navigation';
+
+interface Series {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 interface Post {
   id: string;
@@ -17,8 +24,10 @@ interface Post {
   title: string;
   excerpt: string | null;
   content: string;
+  thumbnail: string | null;
   tags: string[];
   createdAt: Date;
+  series: Series | null;
 }
 
 interface Pagination {
@@ -102,8 +111,14 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
             <Link href={`/posts/${post.slug}`} className="group block">
               <Card className="transition-colors hover:border-primary">
                 <CardHeader>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="post-meta flex items-center justify-between gap-2 mb-2">
+                    <div className="post-info flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                      {post.series && (
+                        <Badge variant="secondary" className="series-badge bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0">
+                          <BookOpen className="h-3 w-3 mr-1" />
+                          {post.series.name}
+                        </Badge>
+                      )}
                       <time dateTime={new Date(post.createdAt).toISOString()}>
                         {format(new Date(post.createdAt), 'MMMM d, yyyy')}
                       </time>

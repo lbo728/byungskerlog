@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { Loader2, Pencil, Trash2 } from 'lucide-react';
+import { BookOpen, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -117,21 +117,27 @@ export function PostListClient({ initialData }: PostListClientProps) {
                 </div>
               )}
               <CardHeader>
-                <div className="flex justify-between items-center mb-3">
-                  <div className="flex gap-1.5">
+                <div className="card-meta flex justify-between items-center mb-3">
+                  <div className="card-badges flex gap-1.5 flex-wrap">
+                    {post.series && (
+                      <Badge variant="secondary" className="series-badge bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0">
+                        <BookOpen className="h-3 w-3 mr-1" />
+                        {post.series.name}
+                      </Badge>
+                    )}
                     {post.tags && post.tags.length > 0 ? (
-                      post.tags.slice(0, 2).map((tag) => (
+                      post.tags.slice(0, post.series ? 1 : 2).map((tag) => (
                         <Badge key={tag} variant="outline" className="font-normal">
                           {tag}
                         </Badge>
                       ))
-                    ) : (
+                    ) : !post.series && (
                       <Badge variant="outline" className="font-normal">
                         Post
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="card-date flex items-center gap-2 text-xs text-muted-foreground">
                     <time dateTime={new Date(post.createdAt).toISOString()}>
                       {format(new Date(post.createdAt), 'yyyy.MM.dd')}
                     </time>
