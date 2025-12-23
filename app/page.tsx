@@ -27,6 +27,7 @@ async function getPosts() {
       title: true,
       excerpt: true,
       content: true,
+      tags: true,
       createdAt: true,
       updatedAt: true,
     },

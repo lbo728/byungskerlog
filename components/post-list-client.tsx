@@ -18,6 +18,7 @@ interface Post {
   title: string;
   excerpt: string | null;
   content: string;
+  tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -97,9 +98,19 @@ export function PostListClient({ initialData }: PostListClientProps) {
             <Card className="h-full flex flex-col overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50">
               <CardHeader>
                 <div className="flex justify-between items-center mb-3">
-                  <Badge variant="outline" className="font-normal">
-                    Post
-                  </Badge>
+                  <div className="flex gap-1.5">
+                    {post.tags && post.tags.length > 0 ? (
+                      post.tags.slice(0, 2).map((tag) => (
+                        <Badge key={tag} variant="outline" className="font-normal">
+                          {tag}
+                        </Badge>
+                      ))
+                    ) : (
+                      <Badge variant="outline" className="font-normal">
+                        Post
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <time dateTime={new Date(post.createdAt).toISOString()}>
                       {format(new Date(post.createdAt), 'yyyy.MM.dd')}
