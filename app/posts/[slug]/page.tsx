@@ -8,6 +8,7 @@ import { TableOfContents } from "@/components/toc";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { ViewTracker } from "@/components/view-tracker";
 import { PostActions } from "@/components/post-actions";
+import { ReadingProgress } from "@/components/reading-progress";
 import { AdSense } from "@/components/adsense";
 import { Comments } from "@/components/comments";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -158,6 +159,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   return (
     <div className="bg-background">
+      <ReadingProgress />
       <StructuredData
         type="article"
         data={{
