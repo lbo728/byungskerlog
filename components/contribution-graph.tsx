@@ -17,8 +17,8 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
   const [hoveredDay, setHoveredDay] = useState<DayData | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
-  const monthLabels = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
-  const dayLabels = ["일", "월", "화", "수", "목", "금", "토"];
+  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const { weeks, streak, monthPositions } = useMemo(() => {
     const today = new Date();
@@ -156,13 +156,17 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="contribution-graph-container w-full">
-          <div className="contribution-graph w-full">
+        <div className="contribution-graph-container w-full overflow-x-auto">
+          <div className="contribution-graph min-w-[700px] sm:min-w-0 sm:w-full">
             <div className="graph-with-labels flex">
-              <div className="day-labels flex flex-col justify-around text-[10px] text-muted-foreground pr-2 pt-4">
-                {[1, 3, 5].map((dayIndex) => (
-                  <span key={dayIndex} className="h-[calc((100%-2px*6)/7)] flex items-center">
-                    {dayLabels[dayIndex]}
+              <div className="day-labels flex flex-col text-[10px] text-muted-foreground pr-2 pt-4">
+                {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => (
+                  <span
+                    key={dayIndex}
+                    className="h-[12px] sm:h-[calc((100%-2px*6)/7)] flex items-center"
+                    style={{ marginBottom: dayIndex < 6 ? "2px" : 0 }}
+                  >
+                    {dayIndex % 2 === 1 ? dayLabels[dayIndex] : ""}
                   </span>
                 ))}
               </div>
@@ -170,23 +174,24 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
                 <div
                   className="month-labels grid text-[10px] text-muted-foreground mb-1"
                   style={{
-                    gridTemplateColumns: `repeat(${weeks.length}, 1fr)`,
+                    gridTemplateColumns: `repeat(${weeks.length}, 12px)`,
+                    gap: "2px",
                   }}
                 >
                   {weeks.map((_, weekIndex) => {
                     const monthData = monthPositions.find((m) => m.weekIndex === weekIndex);
                     return (
-                      <span key={weekIndex} className="text-left">
+                      <span key={weekIndex} className="text-left whitespace-nowrap">
                         {monthData ? monthLabels[monthData.month] : ""}
                       </span>
                     );
                   })}
                 </div>
                 <div
-                  className="graph-grid grid w-full"
+                  className="graph-grid grid"
                   style={{
-                    gridTemplateColumns: `repeat(${weeks.length}, 1fr)`,
-                    gap: '2px',
+                    gridTemplateColumns: `repeat(${weeks.length}, 12px)`,
+                    gap: "2px",
                   }}
                 >
                   {weeks.map((week, weekIndex) => (
@@ -194,14 +199,16 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
                       key={weekIndex}
                       className="week-column grid"
                       style={{
-                        gridTemplateRows: 'repeat(7, 1fr)',
-                        gap: '2px',
+                        gridTemplateRows: "repeat(7, 12px)",
+                        gap: "2px",
                       }}
                     >
                       {week.map((day, dayIndex) => (
                         <div
                           key={dayIndex}
-                          className={`day-cell aspect-square rounded-[2px] transition-all cursor-pointer ${getLevelColor(day.level)}`}
+                          className={`day-cell w-[12px] h-[12px] rounded-[2px] transition-all cursor-pointer ${getLevelColor(
+                            day.level
+                          )}`}
                           onMouseEnter={(e) => handleMouseEnter(day, e)}
                           onMouseLeave={handleMouseLeave}
                         />
@@ -214,12 +221,12 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
             <div className="graph-legend flex items-center justify-between mt-3 text-xs text-muted-foreground">
               <span>{totalContributions}개의 글 발행</span>
               <div className="legend-items flex items-center gap-1">
-                <span className="mr-1">적음</span>
+                <span className="mr-1">Less</span>
                 <div className="w-[10px] h-[10px] rounded-[2px] bg-muted" />
                 <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-200 dark:bg-emerald-900" />
                 <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-400 dark:bg-emerald-700" />
                 <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-600 dark:bg-emerald-500" />
-                <span className="ml-1">많음</span>
+                <span className="ml-1">More</span>
               </div>
             </div>
           </div>
@@ -234,9 +241,7 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
             }}
           >
             <div className="font-medium">
-              {hoveredDay.count > 0
-                ? `${hoveredDay.count}개의 글 발행`
-                : "발행된 글 없음"}
+              {hoveredDay.count > 0 ? `${hoveredDay.count}개의 글 발행` : "발행된 글 없음"}
             </div>
             <div className="text-muted-foreground">{formatDate(hoveredDay.date)}</div>
           </div>
