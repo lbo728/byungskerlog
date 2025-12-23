@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const postUrl = `${siteUrl}/posts/${slug}`;
-  const imageUrl = `${siteUrl}/og-image.png`;
+  const imageUrl = post.thumbnail || `${siteUrl}/og-image.png`;
 
   // 본문에서 첫 200자를 추출하여 description으로 사용
   const description = post.excerpt || post.content.replace(/[#*`\n]/g, "").substring(0, 200) + "...";
@@ -70,8 +70,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       images: [
         {
           url: imageUrl,
-          width: 1200,
-          height: 630,
+          width: post.thumbnail ? undefined : 1200,
+          height: post.thumbnail ? undefined : 630,
           alt: post.title,
         },
       ],
@@ -220,7 +220,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         data={{
           title: post.title,
           description: post.excerpt || post.content.replace(/[#*`\n]/g, "").substring(0, 200) + "...",
-          image: `${siteUrl}/og-image.png`,
+          image: post.thumbnail || `${siteUrl}/og-image.png`,
           slug: post.slug,
           datePublished: post.createdAt.toISOString(),
           dateModified: post.updatedAt.toISOString(),
