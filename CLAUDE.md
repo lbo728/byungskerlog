@@ -6,12 +6,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Next.js 16-based personal blog application with admin capabilities. The blog supports markdown content with syntax highlighting, uses Neon PostgreSQL database via Prisma, and Stack Auth for authentication. Deployed on Vercel.
 
-## Git Commit Rule
+## Style Rules
+
+- Tailwind로 Class 이름 작성 시, 첫번째 Class는 해당 DOM요소를 나타낼 수 있는 직관적인 이름을 붙여.
+  e.g.,
+
+```
+<div className="about-preview-container flex flex-wrap gap-2 mb-2">
+```
+
+- html 작성 시 반드시 Semantic Tag 를 사용해.
+
+## Git Commit Rules
 
 - 반드시 lbo728 계정으로 커밋, 푸시, PR을 진행해야해.
 - 커밋 메세지는 영문 컨벤셔널 커밋으로 해야해.(단, description은 한글 불릿 포인트로 작성해.)
 
-## Code rules
+## Code Rules
 
 나에게 리뷰할 때만 주석을 포함해서 알려주고, 커밋 및 푸시 시점에는 주석은 삭제해야해.
 
