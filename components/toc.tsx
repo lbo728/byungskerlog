@@ -22,8 +22,8 @@ export function TableOfContents({ content }: { content: string }) {
       const text = match[2].trim();
       const id = text
         .toLowerCase()
-        .replace(/[^\w\s-]/g, "")
-        .replace(/\s+/g, "-");
+        .replace(/\s+/g, "-")
+        .replace(/[^\w가-힣-]/g, "");
 
       headings.push({ id, text, level });
     }
@@ -33,15 +33,17 @@ export function TableOfContents({ content }: { content: string }) {
 
   useEffect(() => {
     const handleScroll = () => {
-      const headingElements = document.querySelectorAll("h1, h2, h3");
       let currentActiveId = "";
 
-      headingElements.forEach((element) => {
-        const rect = element.getBoundingClientRect();
-        if (rect.top <= 100) {
-          currentActiveId = element.id;
+      for (const item of toc) {
+        const element = document.getElementById(item.id);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          if (rect.top <= 100) {
+            currentActiveId = item.id;
+          }
         }
-      });
+      }
 
       if (currentActiveId) {
         setActiveId(currentActiveId);

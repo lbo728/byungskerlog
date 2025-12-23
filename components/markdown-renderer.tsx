@@ -23,8 +23,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       const text = String(children);
       const id = text
         .toLowerCase()
-        .replace(/[^\w\s-]/g, "")
-        .replace(/\s+/g, "-");
+        .replace(/\s+/g, "-")
+        .replace(/[^\w가-힣-]/g, "");
       return (
         <h1 id={id} className="scroll-mt-24" {...props}>
           {children}
@@ -35,8 +35,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       const text = String(children);
       const id = text
         .toLowerCase()
-        .replace(/[^\w\s-]/g, "")
-        .replace(/\s+/g, "-");
+        .replace(/\s+/g, "-")
+        .replace(/[^\w가-힣-]/g, "");
       return (
         <h2 id={id} className="scroll-mt-24" {...props}>
           {children}
@@ -47,8 +47,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       const text = String(children);
       const id = text
         .toLowerCase()
-        .replace(/[^\w\s-]/g, "")
-        .replace(/\s+/g, "-");
+        .replace(/\s+/g, "-")
+        .replace(/[^\w가-힣-]/g, "");
       return (
         <h3 id={id} className="scroll-mt-24" {...props}>
           {children}
