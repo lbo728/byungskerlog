@@ -11,7 +11,7 @@ import { PostActions } from "@/components/post-actions";
 import { ReadingProgress } from "@/components/reading-progress";
 import { AdSense } from "@/components/adsense";
 import { Comments } from "@/components/comments";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
 import { calculateReadingTime } from "@/lib/reading-time";
 import type { Post } from "@/lib/types";
 import type { Metadata } from "next";
@@ -89,32 +89,81 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-async function getPost(slug: string): Promise<Post | null> {
+async function getPost(slug: string) {
   const post = await prisma.post.findUnique({
     where: { slug },
+    include: {
+      series: true,
+    },
   });
 
   if (!post) return null;
   return post;
 }
 
-async function getPrevNextPosts(createdAt: Date) {
+async function getSeriesPosts(seriesId: string | null, currentSlug: string) {
+  if (!seriesId) return [];
+
+  const posts = await prisma.post.findMany({
+    where: {
+      published: true,
+      seriesId,
+    },
+    orderBy: { createdAt: "asc" },
+    select: { slug: true, title: true, createdAt: true },
+  });
+
+  return posts;
+}
+
+async function getPrevNextPosts(
+  createdAt: Date,
+  seriesId: string | null,
+  currentSlug: string
+) {
+  if (seriesId) {
+    const seriesPosts = await prisma.post.findMany({
+      where: { published: true, seriesId },
+      orderBy: { createdAt: "asc" },
+      select: { slug: true, title: true, createdAt: true },
+    });
+
+    const currentIndex = seriesPosts.findIndex((p) => p.slug === currentSlug);
+
+    let prevPost = null;
+    let nextPost = null;
+
+    if (currentIndex > 0) {
+      prevPost = seriesPosts[currentIndex - 1];
+    } else {
+      prevPost = await prisma.post.findFirst({
+        where: { published: true, createdAt: { lt: createdAt } },
+        orderBy: { createdAt: "desc" },
+        select: { slug: true, title: true },
+      });
+    }
+
+    if (currentIndex < seriesPosts.length - 1) {
+      nextPost = seriesPosts[currentIndex + 1];
+    } else {
+      nextPost = await prisma.post.findFirst({
+        where: { published: true, createdAt: { gt: createdAt } },
+        orderBy: { createdAt: "asc" },
+        select: { slug: true, title: true },
+      });
+    }
+
+    return { prevPost, nextPost };
+  }
+
   const [prevPost, nextPost] = await Promise.all([
-    // 이전 글 (더 오래된 글)
     prisma.post.findFirst({
-      where: {
-        published: true,
-        createdAt: { lt: createdAt },
-      },
+      where: { published: true, createdAt: { lt: createdAt } },
       orderBy: { createdAt: "desc" },
       select: { slug: true, title: true },
     }),
-    // 다음 글 (더 최신 글)
     prisma.post.findFirst({
-      where: {
-        published: true,
-        createdAt: { gt: createdAt },
-      },
+      where: { published: true, createdAt: { gt: createdAt } },
       orderBy: { createdAt: "asc" },
       select: { slug: true, title: true },
     }),
@@ -154,8 +203,14 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     notFound();
   }
 
-  const { prevPost, nextPost } = await getPrevNextPosts(post.createdAt);
+  const seriesPosts = await getSeriesPosts(post.seriesId, post.slug);
+  const { prevPost, nextPost } = await getPrevNextPosts(
+    post.createdAt,
+    post.seriesId,
+    post.slug
+  );
   const relatedPosts = await getRelatedPosts(post.tags || [], post.slug);
+  const currentSeriesIndex = seriesPosts.findIndex((p) => p.slug === post.slug);
 
   return (
     <div className="bg-background">
@@ -207,6 +262,14 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                     </div>
                     <PostActions postId={post.id} postTitle={post.title} />
                   </div>
+                  {post.series && (
+                    <div className="series-badge flex items-center gap-2">
+                      <BookOpen className="h-4 w-4 text-emerald-500" />
+                      <span className="text-sm text-emerald-500 font-medium">
+                        {post.series.name}
+                      </span>
+                    </div>
+                  )}
                   {post.tags && post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {post.tags.map((tag) => (
@@ -229,6 +292,47 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_MIDDLE || ''}
               className="my-8"
             />
+
+            {/* 시리즈 섹션 */}
+            {post.series && seriesPosts.length > 0 && (
+              <>
+                <Separator className="my-12" />
+                <section className="series-section">
+                  <div className="series-header flex items-center gap-2 mb-4">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                    <h2 className="text-lg font-semibold">{post.series.name}</h2>
+                    <span className="text-sm text-muted-foreground">
+                      ({currentSeriesIndex + 1}/{seriesPosts.length})
+                    </span>
+                  </div>
+                  <Card className="bg-muted/30">
+                    <CardContent className="p-4">
+                      <ul className="series-list space-y-2">
+                        {seriesPosts.map((seriesPost, index) => (
+                          <li key={seriesPost.slug}>
+                            <Link
+                              href={`/posts/${seriesPost.slug}`}
+                              className={`series-item flex items-center gap-3 py-2 px-3 rounded-md transition-colors ${
+                                seriesPost.slug === post.slug
+                                  ? "bg-primary/10 text-primary font-medium"
+                                  : "hover:bg-muted"
+                              }`}
+                            >
+                              <span className="series-index text-sm text-muted-foreground w-6">
+                                {index + 1}.
+                              </span>
+                              <span className="series-title line-clamp-1">
+                                {seriesPost.title}
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </section>
+              </>
+            )}
 
             {/* 이전/다음 글 내비게이션 */}
             <Separator className="my-12" />
