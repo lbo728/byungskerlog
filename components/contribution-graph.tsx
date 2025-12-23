@@ -17,7 +17,7 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
   const [hoveredDay, setHoveredDay] = useState<DayData | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
-  const { weeks, contributionData, streak } = useMemo(() => {
+  const { weeks, streak } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -83,7 +83,6 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
 
     return {
       weeks,
-      contributionData: dateCountMap,
       streak: currentStreak,
     };
   }, [postDates]);
@@ -140,15 +139,28 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="contribution-graph-container overflow-x-auto">
-          <div className="contribution-graph min-w-fit">
-            <div className="graph-grid flex gap-[3px]">
+        <div className="contribution-graph-container w-full">
+          <div className="contribution-graph w-full">
+            <div
+              className="graph-grid grid w-full"
+              style={{
+                gridTemplateColumns: `repeat(${weeks.length}, 1fr)`,
+                gap: '2px',
+              }}
+            >
               {weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="week-column flex flex-col gap-[3px]">
+                <div
+                  key={weekIndex}
+                  className="week-column grid"
+                  style={{
+                    gridTemplateRows: 'repeat(7, 1fr)',
+                    gap: '2px',
+                  }}
+                >
                   {week.map((day, dayIndex) => (
                     <div
                       key={dayIndex}
-                      className={`day-cell w-[10px] h-[10px] sm:w-[12px] sm:h-[12px] rounded-sm transition-all cursor-pointer ${getLevelColor(day.level)}`}
+                      className={`day-cell aspect-square rounded-[2px] transition-all cursor-pointer ${getLevelColor(day.level)}`}
                       onMouseEnter={(e) => handleMouseEnter(day, e)}
                       onMouseLeave={handleMouseLeave}
                     />
@@ -160,10 +172,10 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
               <span>{totalContributions}개의 글 발행</span>
               <div className="legend-items flex items-center gap-1">
                 <span className="mr-1">적음</span>
-                <div className="w-[10px] h-[10px] rounded-sm bg-muted" />
-                <div className="w-[10px] h-[10px] rounded-sm bg-emerald-200 dark:bg-emerald-900" />
-                <div className="w-[10px] h-[10px] rounded-sm bg-emerald-400 dark:bg-emerald-700" />
-                <div className="w-[10px] h-[10px] rounded-sm bg-emerald-600 dark:bg-emerald-500" />
+                <div className="w-[10px] h-[10px] rounded-[2px] bg-muted" />
+                <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-200 dark:bg-emerald-900" />
+                <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-400 dark:bg-emerald-700" />
+                <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-600 dark:bg-emerald-500" />
                 <span className="ml-1">많음</span>
               </div>
             </div>
