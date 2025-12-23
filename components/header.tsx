@@ -18,11 +18,16 @@ import {
 } from "@/components/ui/sheet";
 import { PenSquare, LogOut, Menu, FileText } from "lucide-react";
 
+const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
+
 export function Header() {
   const pathname = usePathname();
   const user = useUser();
   const app = useStackApp();
   const [isOpen, setIsOpen] = useState(false);
+
+  // 허용된 이메일인지 확인
+  const isAuthorized = user && user.primaryEmail && ALLOWED_EMAILS.includes(user.primaryEmail);
 
   const navItems = [
     { label: "Post", href: "/posts" },
@@ -65,7 +70,7 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            {user && (
+            {isAuthorized && (
               <>
                 <Button asChild variant="ghost" size="sm">
                   <Link href="/admin/drafts" className="gap-2">
@@ -120,7 +125,7 @@ export function Header() {
                 </div>
 
                 {/* 사용자 관련 버튼 */}
-                {user && (
+                {isAuthorized && (
                   <div className="flex flex-col gap-2 pt-4 border-t">
                     <Button asChild variant="ghost" size="default" onClick={() => setIsOpen(false)}>
                       <Link href="/admin/drafts" className="gap-2 w-full justify-start">

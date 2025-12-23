@@ -31,7 +31,7 @@ export default function UnauthorizedPage() {
 
   if (isDeleting) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
         <div className="text-center space-y-6 p-8">
           <div className="text-6xl animate-pulse">🔄</div>
           <p className="text-muted-foreground">처리 중...</p>
@@ -41,7 +41,7 @@ export default function UnauthorizedPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <div className="text-center space-y-6 p-8">
         <div className="text-6xl">🚫</div>
         <h1 className="text-2xl font-bold text-foreground">
