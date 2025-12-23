@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pencil, Trash2, Plus } from "lucide-react";
@@ -47,7 +48,7 @@ export default function AdminDraftsPage() {
       setDrafts(data);
     } catch (error) {
       console.error("Error fetching drafts:", error);
-      alert("임시저장 목록을 불러오는데 실패했습니다.");
+      toast.error("임시저장 목록을 불러오는데 실패했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -71,13 +72,13 @@ export default function AdminDraftsPage() {
         throw new Error("Failed to delete draft");
       }
 
-      alert("임시저장이 삭제되었습니다.");
+      toast.success("임시저장이 삭제되었습니다.");
       setDeleteDialogOpen(false);
       setDraftToDelete(null);
       fetchDrafts();
     } catch (error) {
       console.error("Error deleting draft:", error);
-      alert("삭제 중 오류가 발생했습니다.");
+      toast.error("삭제 중 오류가 발생했습니다.");
     } finally {
       setIsDeleting(false);
     }

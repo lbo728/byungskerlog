@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from 'lucide-react';
@@ -69,11 +70,11 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
         throw new Error('Failed to delete post');
       }
 
-      alert('포스트가 삭제되었습니다.');
+      toast.success('포스트가 삭제되었습니다.');
       router.refresh();
     } catch (error) {
       console.error('Error deleting post:', error);
-      alert('포스트 삭제 중 오류가 발생했습니다.');
+      toast.error('포스트 삭제 중 오류가 발생했습니다.');
     }
   };
 

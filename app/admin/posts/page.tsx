@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,7 +90,7 @@ export default function AdminPostsPage() {
       setAvailableTags(Array.from(tags).sort());
     } catch (error) {
       console.error("Error fetching posts:", error);
-      alert("글 목록을 불러오는데 실패했습니다.");
+      toast.error("글 목록을 불러오는데 실패했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -124,14 +125,14 @@ export default function AdminPostsPage() {
         throw new Error("Failed to delete post");
       }
 
-      alert("글이 삭제되었습니다.");
+      toast.success("글이 삭제되었습니다.");
       setDeleteDialogOpen(false);
       setPostToDelete(null);
-      fetchPosts(); // Refresh the list
+      fetchPosts();
       router.refresh();
     } catch (error) {
       console.error("Error deleting post:", error);
-      alert("글 삭제 중 오류가 발생했습니다.");
+      toast.error("글 삭제 중 오류가 발생했습니다.");
     } finally {
       setIsDeleting(false);
     }

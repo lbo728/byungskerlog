@@ -11,6 +11,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Providers } from "./providers";
 import { StructuredData } from "@/components/structured-data";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -111,6 +112,7 @@ export default function RootLayout({
                   <main className="flex-1">{children}</main>
                   <Footer />
                 </div>
+                <Toaster />
               </Providers>
             </ThemeProvider>
           </StackTheme>

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,11 +74,11 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      alert("제목을 입력해주세요.");
+      toast.warning("제목을 입력해주세요.");
       return;
     }
     if (!content.trim()) {
-      alert("내용을 입력해주세요.");
+      toast.warning("내용을 입력해주세요.");
       return;
     }
 
@@ -99,11 +100,11 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
         throw new Error("Failed to update page");
       }
 
-      alert("About 페이지가 저장되었습니다.");
+      toast.success("About 페이지가 저장되었습니다.");
       onOpenChange(false);
       router.refresh();
     } catch (error) {
-      alert("페이지 저장 중 오류가 발생했습니다.");
+      toast.error("페이지 저장 중 오류가 발생했습니다.");
       console.error(error);
     } finally {
       setIsLoading(false);

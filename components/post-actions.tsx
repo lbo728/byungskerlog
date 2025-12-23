@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useUser } from '@stackframe/stack';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
@@ -36,12 +37,12 @@ export function PostActions({ postId, postTitle }: PostActionsProps) {
         throw new Error('Failed to delete post');
       }
 
-      alert('포스트가 삭제되었습니다.');
+      toast.success('포스트가 삭제되었습니다.');
       router.push('/posts');
       router.refresh();
     } catch (error) {
       console.error('Error deleting post:', error);
-      alert('포스트 삭제 중 오류가 발생했습니다.');
+      toast.error('포스트 삭제 중 오류가 발생했습니다.');
     }
   };
 

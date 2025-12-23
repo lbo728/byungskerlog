@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -111,7 +112,7 @@ export default function WritePage() {
           body: JSON.stringify({ title, tags, content }),
         });
         if (!response.ok) throw new Error("Failed to update draft");
-        alert("임시저장되었습니다.");
+        toast.success("임시저장되었습니다.");
       } else {
         // 새 draft 생성
         const response = await fetch("/api/drafts", {
@@ -124,11 +125,11 @@ export default function WritePage() {
         setDraftId(data.id);
         // URL 업데이트 (새로고침 없이)
         window.history.replaceState(null, "", `/admin/write?draft=${data.id}`);
-        alert("임시저장되었습니다.");
+        toast.success("임시저장되었습니다.");
       }
     } catch (error) {
       console.error("Error saving draft:", error);
-      alert("임시저장에 실패했습니다.");
+      toast.error("임시저장에 실패했습니다.");
     } finally {
       setIsSavingDraft(false);
     }
@@ -153,13 +154,13 @@ export default function WritePage() {
   // 이미지 업로드 함수
   const uploadImage = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      alert("이미지 파일만 업로드 가능합니다.");
+      toast.warning("이미지 파일만 업로드 가능합니다.");
       return null;
     }
 
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      alert("파일 크기는 5MB 이하여야 합니다.");
+      toast.warning("파일 크기는 5MB 이하여야 합니다.");
       return null;
     }
 
@@ -180,7 +181,7 @@ export default function WritePage() {
       return blob.url;
     } catch (error) {
       console.error("Upload error:", error);
-      alert("이미지 업로드에 실패했습니다.");
+      toast.error("이미지 업로드에 실패했습니다.");
       return null;
     } finally {
       setIsUploading(false);
@@ -272,7 +273,7 @@ export default function WritePage() {
           setContent(post.content);
         } catch (error) {
           console.error("Error fetching post:", error);
-          alert("글을 불러오는데 실패했습니다.");
+          toast.error("글을 불러오는데 실패했습니다.");
           router.push("/admin/posts");
         } finally {
           setIsFetchingPost(false);
@@ -294,7 +295,7 @@ export default function WritePage() {
           setDraftId(draft.id);
         } catch (error) {
           console.error("Error fetching draft:", error);
-          alert("임시저장을 불러오는데 실패했습니다.");
+          toast.error("임시저장을 불러오는데 실패했습니다.");
           router.push("/admin/drafts");
         } finally {
           setIsFetchingPost(false);
@@ -306,11 +307,11 @@ export default function WritePage() {
 
   const handlePublish = async () => {
     if (!title.trim()) {
-      alert("제목을 입력해주세요.");
+      toast.warning("제목을 입력해주세요.");
       return;
     }
     if (!content.trim()) {
-      alert("내용을 입력해주세요.");
+      toast.warning("내용을 입력해주세요.");
       return;
     }
 
@@ -340,7 +341,7 @@ export default function WritePage() {
         }
 
         const data = await response.json();
-        alert("글이 수정되었습니다.");
+        toast.success("글이 수정되었습니다.");
         router.push(`/posts/${data.slug}`);
         router.refresh();
       } else {
@@ -381,7 +382,7 @@ export default function WritePage() {
         router.refresh();
       }
     } catch (error) {
-      alert(isEditMode ? "글 수정 중 오류가 발생했습니다." : "글 발행 중 오류가 발생했습니다.");
+      toast.error(isEditMode ? "글 수정 중 오류가 발생했습니다." : "글 발행 중 오류가 발생했습니다.");
       console.error(error);
     } finally {
       setIsLoading(false);
