@@ -2,8 +2,18 @@ import Script from "next/script";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel.app";
 
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
 interface StructuredDataProps {
-  type: "website" | "blog" | "article";
+  type: "website" | "blog" | "article" | "faq" | "breadcrumb";
   data?: {
     title?: string;
     description?: string;
@@ -12,6 +22,8 @@ interface StructuredDataProps {
     datePublished?: string;
     dateModified?: string;
     tags?: string[];
+    faqItems?: FAQItem[];
+    breadcrumbs?: BreadcrumbItem[];
   };
 }
 
@@ -23,7 +35,7 @@ export function StructuredData({ type, data }: StructuredDataProps) {
       url: siteUrl,
       logo: {
         "@type": "ImageObject",
-        url: `${siteUrl}/logo.png`,
+        url: `${siteUrl}/logo-byungsker.png`,
       },
     };
 
@@ -73,6 +85,34 @@ export function StructuredData({ type, data }: StructuredDataProps) {
         },
         keywords: data.tags?.join(", "),
         inLanguage: "ko-KR",
+      };
+    }
+
+    if (type === "faq" && data?.faqItems && data.faqItems.length > 0) {
+      return {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: data.faqItems.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
+          },
+        })),
+      };
+    }
+
+    if (type === "breadcrumb" && data?.breadcrumbs && data.breadcrumbs.length > 0) {
+      return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: data.breadcrumbs.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: item.name,
+          item: item.url,
+        })),
       };
     }
 
