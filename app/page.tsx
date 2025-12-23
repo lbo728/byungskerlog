@@ -18,29 +18,33 @@ export const metadata: Metadata = {
 };
 
 async function getPosts() {
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      excerpt: true,
-      content: true,
-      thumbnail: true,
-      tags: true,
-      createdAt: true,
-      updatedAt: true,
-      series: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
+  try {
+    const posts = await prisma.post.findMany({
+      where: { published: true },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        excerpt: true,
+        content: true,
+        thumbnail: true,
+        tags: true,
+        createdAt: true,
+        updatedAt: true,
+        series: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
         },
       },
-    },
-  });
-  return posts;
+    });
+    return posts;
+  } catch {
+    return [];
+  }
 }
 
 export default async function Home() {

@@ -20,25 +20,29 @@ export const metadata: Metadata = {
 };
 
 async function getAllTags() {
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    select: { tags: true },
-  });
+  try {
+    const posts = await prisma.post.findMany({
+      where: { published: true },
+      select: { tags: true },
+    });
 
-  const tagCounts = new Map<string, number>();
-  posts.forEach((post) => {
-    if (post.tags) {
-      post.tags.forEach((tag) => {
-        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
-      });
-    }
-  });
+    const tagCounts = new Map<string, number>();
+    posts.forEach((post) => {
+      if (post.tags) {
+        post.tags.forEach((tag) => {
+          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+        });
+      }
+    });
 
-  const tags = Array.from(tagCounts.entries())
-    .map(([tag, count]) => ({ tag, count }))
-    .sort((a, b) => b.count - a.count);
+    const tags = Array.from(tagCounts.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count);
 
-  return tags;
+    return tags;
+  } catch {
+    return [];
+  }
 }
 
 export default async function TagsPage() {
