@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { AboutPageActions } from "@/components/about-page-actions";
+import { ContributionGraph } from "@/components/contribution-graph";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Metadata } from "next";
 
@@ -34,6 +35,20 @@ async function getAboutPage() {
   }
 }
 
+async function getPostDates() {
+  try {
+    const posts = await prisma.post.findMany({
+      where: { published: true },
+      select: { createdAt: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return posts.map((post) => post.createdAt.toISOString());
+  } catch (error) {
+    console.error("Error fetching post dates:", error);
+    return [];
+  }
+}
+
 const personSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
@@ -49,7 +64,7 @@ const personSchema = {
 };
 
 export default async function AboutPage() {
-  const page = await getAboutPage();
+  const [page, postDates] = await Promise.all([getAboutPage(), getPostDates()]);
 
   const title = page?.title || "About";
   const content = page?.content || "";
@@ -65,6 +80,10 @@ export default async function AboutPage() {
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-4xl font-bold">{title}</h1>
             <AboutPageActions />
+          </div>
+
+          <div className="contribution-graph-section mb-8">
+            <ContributionGraph postDates={postDates} />
           </div>
 
           <Card>
