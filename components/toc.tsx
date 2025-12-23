@@ -32,28 +32,33 @@ export function TableOfContents({ content }: { content: string }) {
   }, [content]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-          }
-        });
-      },
-      { rootMargin: "-80px 0px -80% 0px" }
-    );
+    const handleScroll = () => {
+      const headingElements = document.querySelectorAll("h1, h2, h3");
+      let currentActiveId = "";
 
-    const headingElements = document.querySelectorAll("h1, h2, h3");
-    headingElements.forEach((element) => observer.observe(element));
+      headingElements.forEach((element) => {
+        const rect = element.getBoundingClientRect();
+        if (rect.top <= 100) {
+          currentActiveId = element.id;
+        }
+      });
 
-    return () => observer.disconnect();
+      if (currentActiveId) {
+        setActiveId(currentActiveId);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [toc]);
 
   if (toc.length === 0) return null;
 
   return (
     <nav className="sticky top-24 hidden xl:block">
-      <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-6 shadow-lg overflow-y-scroll">
+      <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-6 shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto">
         <h2 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">목차</h2>
         <ul className="space-y-2.5">
           {toc.map((item) => (
