@@ -19,32 +19,15 @@ interface AboutEditModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const DEFAULT_CONTENT = `프로덕트 디자이너로 커리어를 시작하여 현재는 프론트엔드 개발을 하고 있습니다.
-
-제품 중심 개발을 지향하고, 매일 꾸준 글쓰기를 하고 있습니다.
-
-개발과 디자인, 비즈니스, 글쓰기에 대한 글을 쓰고 있어요.
-
----
-
-### 활동
-- TeoConf3 - 주니어 개발자의, 200일간 혼자만의 짧은 글쓰기로 성장하기
-
----
-
-### Contact
-[링크드인](https://www.linkedin.com) | [스레드](https://www.threads.net) | [X](https://x.com)`;
-
 export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [title, setTitle] = useState('About');
-  const [content, setContent] = useState(DEFAULT_CONTENT);
+  const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
-  // Load existing About page content when modal opens
   useEffect(() => {
     if (open) {
       const fetchPage = async () => {
@@ -55,15 +38,9 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
             const page = await response.json();
             setTitle(page.title);
             setContent(page.content);
-          } else {
-            // Use default content if page doesn't exist
-            setTitle('About');
-            setContent(DEFAULT_CONTENT);
           }
         } catch (error) {
           console.error('Error fetching page:', error);
-          setTitle('About');
-          setContent(DEFAULT_CONTENT);
         } finally {
           setIsFetching(false);
         }
@@ -140,7 +117,7 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] h-[95vh] p-0">
+      <DialogContent className="max-w-[95vw] sm:max-w-[95vw] max-h-[95vh] h-[95vh] p-0">
         <DialogHeader className="px-6 py-4 border-b">
           <div className="flex items-center justify-between">
             <DialogTitle>About 페이지 편집</DialogTitle>

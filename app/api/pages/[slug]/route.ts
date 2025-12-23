@@ -3,6 +3,22 @@ import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
 import { revalidatePath } from "next/cache";
 
+const DEFAULT_ABOUT_CONTENT = `프로덕트 디자이너로 커리어를 시작하여 현재는 프론트엔드 개발을 하고 있습니다.
+
+제품 중심 개발을 지향하고, 매일 꾸준 글쓰기를 하고 있습니다.
+
+개발과 디자인, 비즈니스, 글쓰기에 대한 글을 쓰고 있어요.
+
+---
+
+### 활동
+- TeoConf3 - 주니어 개발자의, 200일간 혼자만의 짧은 글쓰기로 성장하기
+
+---
+
+### Contact
+[링크드인](https://www.linkedin.com) | [스레드](https://www.threads.net) | [X](https://x.com)`;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -10,9 +26,19 @@ export async function GET(
   try {
     const { slug } = await params;
 
-    const page = await prisma.page.findUnique({
+    let page = await prisma.page.findUnique({
       where: { slug },
     });
+
+    if (!page && slug === "about") {
+      page = await prisma.page.create({
+        data: {
+          slug: "about",
+          title: "About",
+          content: DEFAULT_ABOUT_CONTENT,
+        },
+      });
+    }
 
     if (!page) {
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
