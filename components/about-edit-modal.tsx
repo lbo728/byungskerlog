@@ -1,18 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { MarkdownToolbar } from '@/components/markdown-toolbar';
-import { MarkdownRenderer } from '@/components/markdown-renderer';
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { MarkdownToolbar } from "@/components/markdown-toolbar";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 
 interface AboutEditModalProps {
   open: boolean;
@@ -23,8 +18,8 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const [title, setTitle] = useState('About');
-  const [content, setContent] = useState('');
+  const [title, setTitle] = useState("About");
+  const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
@@ -33,14 +28,14 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
       const fetchPage = async () => {
         setIsFetching(true);
         try {
-          const response = await fetch('/api/pages/about');
+          const response = await fetch("/api/pages/about");
           if (response.ok) {
             const page = await response.json();
             setTitle(page.title);
             setContent(page.content);
           }
         } catch (error) {
-          console.error('Error fetching page:', error);
+          console.error("Error fetching page:", error);
         } finally {
           setIsFetching(false);
         }
@@ -59,8 +54,8 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
 
     let newText = text;
 
-    if (selectedText && text.includes('텍스트')) {
-      newText = text.replace('텍스트', selectedText);
+    if (selectedText && text.includes("텍스트")) {
+      newText = text.replace("텍스트", selectedText);
     }
 
     const before = content.substring(0, start);
@@ -78,21 +73,21 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      alert('제목을 입력해주세요.');
+      alert("제목을 입력해주세요.");
       return;
     }
     if (!content.trim()) {
-      alert('내용을 입력해주세요.');
+      alert("내용을 입력해주세요.");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/pages/about', {
-        method: 'PUT',
+      const response = await fetch("/api/pages/about", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           title,
@@ -101,14 +96,14 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update page');
+        throw new Error("Failed to update page");
       }
 
-      alert('About 페이지가 저장되었습니다.');
+      alert("About 페이지가 저장되었습니다.");
       onOpenChange(false);
       router.refresh();
     } catch (error) {
-      alert('페이지 저장 중 오류가 발생했습니다.');
+      alert("페이지 저장 중 오류가 발생했습니다.");
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -126,8 +121,9 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
               size="sm"
               onClick={handleSave}
               disabled={isLoading || isFetching}
+              className="mr-8"
             >
-              {isLoading ? '저장 중...' : '저장하기'}
+              {isLoading ? "저장 중..." : "저장하기"}
             </Button>
           </div>
         </DialogHeader>
@@ -168,7 +164,7 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
             {/* 오른쪽: 미리보기 */}
             <div className="bg-muted/20 overflow-y-auto">
               <div className="p-6">
-                <h1 className="text-4xl font-bold mb-8">{title || '제목 없음'}</h1>
+                <h1 className="text-4xl font-bold mb-8">{title || "제목 없음"}</h1>
                 <div className="prose prose-lg dark:prose-invert max-w-none">
                   {content ? (
                     <MarkdownRenderer content={content} />

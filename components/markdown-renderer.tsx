@@ -93,7 +93,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     ),
     br: () => <br className="my-2" />,
     p: ({ children, ...props }) => (
-      <p className="my-4" {...props}>
+      <p className="mt-3 mb-3" {...props}>
         {children}
       </p>
     ),
@@ -101,11 +101,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
   return (
     <div className="prose prose-lg dark:prose-invert max-w-none">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
-        components={components}
-      >
+      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={components}>
         {content}
       </ReactMarkdown>
     </div>
