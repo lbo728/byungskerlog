@@ -1,0 +1,51 @@
+# Byungsker Log
+
+> A technical blog by Byungsker (이병우), focusing on product-led development, software engineering, and startup insights.
+
+## About This Site
+
+Byungsker Log is a Korean technical blog that shares insights on:
+- Software Development
+- Product-Led Development
+- Startup Experience
+- Web Technologies (Next.js, React, TypeScript)
+
+## Author
+
+- Name: 이병우 (Byungsker)
+- Role: Software Developer
+- Focus: Product-Led Development
+- Website: https://byungskerlog.vercel.app
+
+## Main Sections
+
+- Home: https://byungskerlog.vercel.app/
+- Posts: https://byungskerlog.vercel.app/posts
+- Tags: https://byungskerlog.vercel.app/tags
+- About: https://byungskerlog.vercel.app/about
+
+## Content Topics
+
+This blog primarily covers:
+1. Software development best practices
+2. Product development strategies
+3. Startup experiences and lessons learned
+4. Technical tutorials and guides
+5. Web development with modern frameworks
+
+## Language
+
+Primary language: Korean (한국어)
+Technical terms: English
+
+## Contact
+
+For inquiries or collaboration, please visit the About page or connect through the social links on the website.
+
+## Sitemap
+
+https://byungskerlog.vercel.app/sitemap.xml
+
+## RSS Feed
+
+https://byungskerlog.vercel.app/feed.xml
