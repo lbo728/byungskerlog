@@ -27,8 +27,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Byungsker Log",
-    template: "%s | Byungsker Log",
+    default: "Byungsker's Technical Blog",
+    template: "%s",
   },
   description: "제품 주도 개발을 지향하는 개발자, 이병우의 기술 블로그. 소프트웨어 개발, 제품 개발, 스타트업에 대한 인사이트를 공유합니다.",
   keywords: ["개발 블로그", "소프트웨어 개발", "제품 주도 개발", "Product-Led Development", "이병우", "Byungsker", "스타트업", "기술 블로그"],

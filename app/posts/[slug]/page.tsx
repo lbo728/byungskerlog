@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const description = post.excerpt || post.content.replace(/[#*`\n]/g, "").substring(0, 200) + "...";
 
   return {
-    title: post.title,
+    title: `${post.title} written by Byungsker`,
     description,
     keywords: post.tags || [],
     authors: [{ name: "이병우 (Byungsker)" }],
