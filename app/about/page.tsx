@@ -3,7 +3,6 @@ import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { AboutPageActions } from "@/components/about-page-actions";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Metadata } from "next";
-import Script from "next/script";
 
 export const revalidate = 3600;
 
@@ -57,11 +56,9 @@ export default async function AboutPage() {
 
   return (
     <>
-      <Script
-        id="person-schema"
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
-        strategy="afterInteractive"
       />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-3xl mx-auto">

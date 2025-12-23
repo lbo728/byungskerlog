@@ -1,5 +1,3 @@
-import Script from "next/script";
-
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel.app";
 
 interface FAQItem {
@@ -122,11 +120,9 @@ export function StructuredData({ type, data }: StructuredDataProps) {
   const structuredData = getStructuredData();
 
   return (
-    <Script
-      id={`structured-data-${type}`}
+    <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      strategy="afterInteractive"
     />
   );
 }
