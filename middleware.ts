@@ -4,31 +4,32 @@ import { stackServerApp } from "@/stack/server";
 const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // 체크하지 않을 경로들
+  if (
+    pathname.startsWith("/handler") ||
+    pathname.startsWith("/unauthorized") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/_next") ||
+    pathname === "/favicon.ico"
+  ) {
+    return NextResponse.next();
+  }
+
   const user = await stackServerApp.getUser();
 
-  // 로그인된 사용자가 있고, 화이트리스트에 없는 경우
+  // 로그인된 사용자가 화이트리스트에 없으면 unauthorized 페이지로
   if (user && user.primaryEmail && !ALLOWED_EMAILS.includes(user.primaryEmail)) {
-    // 로그아웃 처리
-    const signOutUrl = new URL("/handler/sign-out", request.url);
-    const response = NextResponse.redirect(signOutUrl);
-
-    // 에러 메시지를 쿼리 파라미터로 전달
-    signOutUrl.searchParams.set("error", "unauthorized");
-
-    return NextResponse.redirect(signOutUrl);
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
 
   // admin 페이지 접근 시 로그인 체크
-  if (request.nextUrl.pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin")) {
     if (!user) {
       const signInUrl = new URL("/handler/sign-in", request.url);
-      signInUrl.searchParams.set("after", request.nextUrl.pathname);
+      signInUrl.searchParams.set("after", pathname);
       return NextResponse.redirect(signInUrl);
-    }
-
-    // admin 페이지는 화이트리스트 이메일만 접근 가능
-    if (user.primaryEmail && !ALLOWED_EMAILS.includes(user.primaryEmail)) {
-      return new NextResponse("Unauthorized", { status: 403 });
     }
   }
 
