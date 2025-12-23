@@ -33,6 +33,8 @@ export async function DELETE(
 
     // Revalidate paths
     revalidatePath("/");
+    revalidatePath("/posts");
+    revalidatePath("/tags");
     revalidatePath(`/posts/${post.slug}`);
 
     return NextResponse.json({ message: "Post deleted successfully" }, { status: 200 });
@@ -94,6 +96,8 @@ export async function PATCH(
 
     // Revalidate paths
     revalidatePath("/");
+    revalidatePath("/posts");
+    revalidatePath("/tags");
     revalidatePath(`/posts/${post.slug}`);
 
     return NextResponse.json(post);

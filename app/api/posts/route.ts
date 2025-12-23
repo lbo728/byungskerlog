@@ -33,6 +33,8 @@ export async function POST(request: NextRequest) {
 
     // On-demand revalidation
     revalidatePath("/");
+    revalidatePath("/posts");
+    revalidatePath("/tags");
     revalidatePath(`/posts/${slug}`);
 
     return NextResponse.json(post, { status: 201 });
