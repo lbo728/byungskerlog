@@ -27,9 +27,17 @@ async function getPosts() {
       title: true,
       excerpt: true,
       content: true,
+      thumbnail: true,
       tags: true,
       createdAt: true,
       updatedAt: true,
+      series: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+      },
     },
   });
   return posts;

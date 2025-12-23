@@ -79,7 +79,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { title, slug, excerpt, content, tags, published } = body;
+    const { title, slug, excerpt, content, tags, published, thumbnail, seriesId } = body;
 
     // Update post
     const post = await prisma.post.update({
@@ -91,6 +91,8 @@ export async function PATCH(
         ...(content !== undefined && { content }),
         ...(tags !== undefined && { tags }),
         ...(published !== undefined && { published }),
+        ...(thumbnail !== undefined && { thumbnail }),
+        ...(seriesId !== undefined && { seriesId }),
       },
     });
 

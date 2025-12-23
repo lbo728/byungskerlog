@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MarkdownToolbar } from "@/components/markdown-toolbar";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
+import { PublishModal } from "@/components/publish-modal";
 import { ArrowLeft, Eye, X } from "lucide-react";
-import { generateExcerpt } from "@/lib/excerpt";
 
 export default function WritePage() {
   useUser({ or: "redirect" });
@@ -34,6 +34,10 @@ export default function WritePage() {
   const [isUploading, setIsUploading] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(draftIdParam);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [existingThumbnail, setExistingThumbnail] = useState<string | null>(null);
+  const [existingSeriesId, setExistingSeriesId] = useState<string | null>(null);
+  const [existingExcerpt, setExistingExcerpt] = useState<string | null>(null);
 
   // 자동 슬러그 생성 (영문/숫자만 + 타임스탬프로 고유성 보장)
   const generateSlug = (title: string) => {
@@ -271,6 +275,9 @@ export default function WritePage() {
           setTitle(post.title);
           setTags(post.tags || []);
           setContent(post.content);
+          setExistingThumbnail(post.thumbnail || null);
+          setExistingSeriesId(post.seriesId || null);
+          setExistingExcerpt(post.excerpt || null);
         } catch (error) {
           console.error("Error fetching post:", error);
           toast.error("글을 불러오는데 실패했습니다.");
@@ -305,7 +312,7 @@ export default function WritePage() {
     }
   }, [isEditMode, postId, draftIdParam, router]);
 
-  const handlePublish = async () => {
+  const handleOpenPublishModal = () => {
     if (!title.trim()) {
       toast.warning("제목을 입력해주세요.");
       return;
@@ -314,79 +321,13 @@ export default function WritePage() {
       toast.warning("내용을 입력해주세요.");
       return;
     }
+    setIsPublishModalOpen(true);
+  };
 
-    setIsLoading(true);
-
-    try {
-      const excerpt = generateExcerpt(content, 150);
-
-      if (isEditMode && postId) {
-        // Update existing post
-        const response = await fetch(`/api/posts/${postId}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title,
-            excerpt,
-            content,
-            tags,
-            published: true,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to update post");
-        }
-
-        const data = await response.json();
-        toast.success("글이 수정되었습니다.");
-        router.push(`/posts/${data.slug}`);
-        router.refresh();
-      } else {
-        // Create new post
-        const slug = generateSlug(title);
-
-        const response = await fetch("/api/posts", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title,
-            slug,
-            excerpt,
-            content,
-            tags,
-            published: true,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to create post");
-        }
-
-        const data = await response.json();
-
-        // 발행 성공 시 draft 삭제
-        if (draftId) {
-          try {
-            await fetch(`/api/drafts/${draftId}`, { method: "DELETE" });
-          } catch (e) {
-            console.error("Failed to delete draft:", e);
-          }
-        }
-
-        router.push(`/posts/${data.slug}`);
-        router.refresh();
-      }
-    } catch (error) {
-      toast.error(isEditMode ? "글 수정 중 오류가 발생했습니다." : "글 발행 중 오류가 발생했습니다.");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handlePublishSuccess = (slug: string) => {
+    toast.success(isEditMode ? "글이 수정되었습니다." : "글이 발행되었습니다.");
+    router.push(`/posts/${slug}`);
+    router.refresh();
   };
 
   return (
@@ -418,8 +359,8 @@ export default function WritePage() {
                 {isSavingDraft ? "저장 중..." : "임시저장"}
               </Button>
             )}
-            <Button variant="default" size="sm" onClick={handlePublish} disabled={isLoading || isFetchingPost}>
-              {isLoading ? (isEditMode ? "수정 중..." : "출간 중...") : (isEditMode ? "수정하기" : "출간하기")}
+            <Button variant="default" size="sm" onClick={handleOpenPublishModal} disabled={isLoading || isFetchingPost}>
+              {isEditMode ? "수정하기" : "출간하기"}
             </Button>
           </div>
         </div>
@@ -547,6 +488,22 @@ export default function WritePage() {
           </div>
         </div>
       )}
+
+      {/* 발행 모달 */}
+      <PublishModal
+        open={isPublishModalOpen}
+        onOpenChange={setIsPublishModalOpen}
+        title={title}
+        content={content}
+        tags={tags}
+        isEditMode={isEditMode}
+        postId={postId || undefined}
+        draftId={draftId}
+        onPublishSuccess={handlePublishSuccess}
+        initialThumbnail={existingThumbnail}
+        initialSeriesId={existingSeriesId}
+        initialExcerpt={existingExcerpt}
+      />
     </div>
   );
 }

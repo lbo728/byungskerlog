@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import Image from 'next/image';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Loader2, Pencil, Trash2 } from 'lucide-react';
@@ -12,15 +13,23 @@ import { calculateReadingTime } from '@/lib/reading-time';
 import { useUser } from '@stackframe/stack';
 import { useRouter } from 'next/navigation';
 
+interface Series {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 interface Post {
   id: string;
   slug: string;
   title: string;
   excerpt: string | null;
   content: string;
+  thumbnail: string | null;
   tags: string[];
   createdAt: Date;
   updatedAt: Date;
+  series: Series | null;
 }
 
 interface PostListClientProps {
@@ -96,6 +105,17 @@ export function PostListClient({ initialData }: PostListClientProps) {
         <div key={post.id} className="relative h-full">
           <Link href={`/posts/${post.slug}`} className="block group h-full">
             <Card className="h-full flex flex-col overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50">
+              {post.thumbnail && (
+                <div className="thumbnail-container relative aspect-video overflow-hidden">
+                  <Image
+                    src={post.thumbnail}
+                    alt={post.title}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
+              )}
               <CardHeader>
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex gap-1.5">

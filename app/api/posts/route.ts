@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, slug, excerpt, content, tags, published } = body;
+    const { title, slug, excerpt, content, tags, published, thumbnail, seriesId } = body;
 
     // Validate required fields
     if (!title || !slug || !content) {
@@ -28,6 +28,8 @@ export async function POST(request: NextRequest) {
         content,
         tags: tags || [],
         published: published ?? false,
+        thumbnail: thumbnail || null,
+        seriesId: seriesId || null,
       },
     });
 
