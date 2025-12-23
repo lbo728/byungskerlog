@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStackApp } from "@stackframe/stack";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,18 +8,37 @@ import { Button } from "@/components/ui/button";
 export default function UnauthorizedPage() {
   const app = useStackApp();
   const router = useRouter();
+  const [isDeleting, setIsDeleting] = useState(true);
 
-  const handleSignOut = async () => {
-    await app.signOut();
+  useEffect(() => {
+    const deleteAndSignOut = async () => {
+      try {
+        await fetch("/api/auth/delete-unauthorized", { method: "POST" });
+      } catch (error) {
+        console.error("Failed to delete user:", error);
+      }
+
+      await app.signOut();
+      setIsDeleting(false);
+    };
+
+    deleteAndSignOut();
+  }, [app]);
+
+  const handleGoToSignIn = () => {
     router.push("/handler/sign-in");
   };
 
-  useEffect(() => {
-    const autoSignOut = async () => {
-      await app.signOut();
-    };
-    autoSignOut();
-  }, [app]);
+  if (isDeleting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-6 p-8">
+          <div className="text-6xl animate-pulse">🔄</div>
+          <p className="text-muted-foreground">처리 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -33,7 +52,7 @@ export default function UnauthorizedPage() {
           <br />
           허용된 계정으로 다시 로그인해주세요.
         </p>
-        <Button onClick={handleSignOut} variant="default">
+        <Button onClick={handleGoToSignIn} variant="default">
           로그인 페이지로 돌아가기
         </Button>
       </div>
