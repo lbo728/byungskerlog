@@ -26,12 +26,19 @@ export async function generateStaticParams() {
   try {
     const posts = await prisma.post.findMany({
       where: { published: true },
-      select: { slug: true },
+      select: { slug: true, subSlug: true },
     });
 
-    return posts.map((post: { slug: string }) => ({
-      slug: post.slug,
-    }));
+    const params: { slug: string }[] = [];
+
+    posts.forEach((post: { slug: string; subSlug: string | null }) => {
+      params.push({ slug: post.slug });
+      if (post.subSlug) {
+        params.push({ slug: post.subSlug });
+      }
+    });
+
+    return params;
   } catch {
     return [];
   }
@@ -39,8 +46,11 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const post = await prisma.post.findUnique({
-    where: { slug },
+  const decodedSlug = decodeURIComponent(slug);
+  const post = await prisma.post.findFirst({
+    where: {
+      OR: [{ slug: decodedSlug }, { subSlug: decodedSlug }],
+    },
   });
 
   if (!post) {
@@ -49,7 +59,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
-  const postUrl = `${siteUrl}/posts/${slug}`;
+  const canonicalUrl = `${siteUrl}/posts/${post.slug}`;
   const imageUrl = post.thumbnail || `${siteUrl}/og-image.png`;
 
   // 본문에서 첫 200자를 추출하여 description으로 사용
@@ -64,7 +74,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: "article",
       locale: "ko_KR",
       alternateLocale: ["en_US"],
-      url: postUrl,
+      url: canonicalUrl,
       siteName: "Byungsker Log",
       title: `${post.title} written by Byungsker`,
       description,
@@ -89,14 +99,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       creator: "@byungsker",
     },
     alternates: {
-      canonical: postUrl,
+      canonical: canonicalUrl,
     },
   };
 }
 
 async function getPost(slug: string) {
-  const post = await prisma.post.findUnique({
-    where: { slug },
+  const decodedSlug = decodeURIComponent(slug);
+  const post = await prisma.post.findFirst({
+    where: {
+      OR: [{ slug: decodedSlug }, { subSlug: decodedSlug }],
+    },
     include: {
       series: true,
     },
@@ -264,7 +277,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                         </time>
                       </div>
                     </div>
-                    <PostActions postId={post.id} postTitle={post.title} />
+                    <PostActions postId={post.id} postTitle={post.title} postSlug={post.slug} postSubSlug={post.subSlug} />
                   </div>
                   {post.series && (
                     <div className="series-badge flex items-center gap-2">

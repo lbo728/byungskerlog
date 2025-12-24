@@ -24,14 +24,13 @@ interface PublishModalProps {
 }
 
 function generateSlug(title: string): string {
-  const baseSlug = title
+  return title
     .toLowerCase()
     .replace(/[^a-z0-9가-힣\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
     .trim();
-
-  return `${baseSlug}-${Date.now()}`;
 }
 
 export function PublishModal({

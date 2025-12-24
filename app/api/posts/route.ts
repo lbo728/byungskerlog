@@ -3,6 +3,26 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getAuthUser } from "@/lib/auth";
 
+async function generateUniqueSlug(baseSlug: string): Promise<string> {
+  let slug = baseSlug;
+  let counter = 2;
+
+  while (true) {
+    const existing = await prisma.post.findFirst({
+      where: {
+        OR: [{ slug }, { subSlug: slug }],
+      },
+    });
+
+    if (!existing) {
+      return slug;
+    }
+
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Check authentication with Stack Auth
@@ -12,12 +32,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, slug, excerpt, content, tags, published, thumbnail, seriesId } = body;
+    const { title, slug: requestedSlug, excerpt, content, tags, published, thumbnail, seriesId } = body;
 
     // Validate required fields
-    if (!title || !slug || !content) {
+    if (!title || !requestedSlug || !content) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
+
+    // Generate unique slug (add suffix if duplicate)
+    const slug = await generateUniqueSlug(requestedSlug);
 
     // Create post
     const post = await prisma.post.create({

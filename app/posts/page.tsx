@@ -86,7 +86,10 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">All Posts</h1>
+        <div className="posts-header flex items-baseline gap-3 mb-8">
+          <h1 className="text-4xl font-bold">All Posts</h1>
+          <span className="text-xl text-muted-foreground">{data.pagination.total}</span>
+        </div>
         <PostsPageClient initialData={data} currentPage={page} />
       </div>
     </div>
