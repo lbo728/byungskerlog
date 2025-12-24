@@ -9,8 +9,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUser, useStackApp } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { PenSquare, LogOut, Menu, FileText, FolderOpen, ChevronDown } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { PenSquare, LogOut, Menu, FileText, FolderOpen, ChevronDown, ChevronsRight } from "lucide-react";
 
 const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
 
@@ -52,19 +52,22 @@ export function Header() {
           </Link>
 
           <nav className="desktop-nav hidden md:flex items-center gap-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                prefetch={true}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  pathname === item.href ? "text-foreground" : "text-muted-foreground"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  prefetch={true}
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-primary",
+                    isActive ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
             {isAuthorized && (
               <Button variant="ghost" size="sm" onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)} className="gap-2">
                 관리자
@@ -81,24 +84,34 @@ export function Header() {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <SheetHeader>{/* <SheetTitle>메뉴</SheetTitle> */}</SheetHeader>
-              <div className="mobile-menu-content flex flex-col gap-4 mt-8">
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]" hideCloseButton>
+              <SheetHeader className="mobile-menu-header flex-row items-center justify-end">
+                <SheetClose asChild>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <ChevronsRight className="h-5 w-5" />
+                    접기
+                  </Button>
+                </SheetClose>
+              </SheetHeader>
+              <div className="mobile-menu-content flex flex-col gap-4 mt-4">
                 <div className="nav-section flex flex-col gap-3">
-                  {navItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      prefetch={true}
-                      onClick={() => setIsOpen(false)}
-                      className={cn(
-                        "text-lg font-medium transition-colors hover:text-primary px-4 py-2",
-                        pathname === item.href ? "text-foreground" : "text-muted-foreground"
-                      )}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
+                  {navItems.map((item) => {
+                    const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        prefetch={true}
+                        onClick={() => setIsOpen(false)}
+                        className={cn(
+                          "text-lg font-medium transition-colors hover:text-primary px-4 py-2",
+                          isActive ? "text-foreground" : "text-muted-foreground"
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
                 </div>
 
                 {isAuthorized && (

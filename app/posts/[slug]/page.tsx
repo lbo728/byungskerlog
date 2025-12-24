@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { TableOfContents } from "@/components/toc";
+import { MobileToc } from "@/components/mobile-toc";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { ViewTracker } from "@/components/view-tracker";
 import { PostActions } from "@/components/post-actions";
@@ -12,6 +13,7 @@ import { ReadingProgress } from "@/components/reading-progress";
 import { AdSense } from "@/components/adsense";
 import { Comments } from "@/components/comments";
 import { ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
+import Image from "next/image";
 import { calculateReadingTime } from "@/lib/reading-time";
 import type { Metadata } from "next";
 import { StructuredData } from "@/components/structured-data";
@@ -210,6 +212,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   return (
     <div className="bg-background">
       <ReadingProgress />
+      <MobileToc content={post.content} />
       <StructuredData
         type="article"
         data={{
@@ -229,23 +232,32 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             {/* Top Ad */}
             <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_TOP || ""} className="mb-8" />
 
+            {/* 뒤로가기 버튼 */}
+            <Link
+              href="/posts"
+              className="back-to-posts inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Post
+            </Link>
+
             <article>
               <header className="mb-8">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground mb-4 leading-tight">
                   {post.title}
                 </h1>
-                <div className="flex gap-4 flex-col">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex flex-col gap-1 text-muted-foreground text-sm">
-                      <div className="flex items-center gap-2">
+                <div className="post-header-meta flex gap-4 flex-col">
+                  <div className="post-meta-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="post-dates flex flex-col gap-1 text-muted-foreground text-sm">
+                      <div className="post-created flex items-center gap-2 flex-wrap">
                         <span>작성:</span>
                         <time dateTime={post.createdAt.toISOString()}>
                           {format(new Date(post.createdAt), "MMMM d, yyyy")}
                         </time>
-                        <span>·</span>
+                        <span className="hidden sm:inline">·</span>
                         <span>{calculateReadingTime(post.content)}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="post-updated flex items-center gap-2">
                         <span>최종 수정:</span>
                         <time dateTime={post.updatedAt.toISOString()}>
                           {format(new Date(post.updatedAt), "MMMM d, yyyy")}
@@ -273,6 +285,20 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               </header>
 
               <Separator className="my-8" />
+
+              {/* 섬네일 - 커스텀 이미지가 있는 경우에만 표시 */}
+              {post.thumbnail && !post.thumbnail.includes("og-image") && (
+                <div className="post-thumbnail relative w-full aspect-video mb-8 rounded-lg overflow-hidden">
+                  <Image
+                    src={post.thumbnail}
+                    alt={post.title}
+                    fill
+                    className="object-cover"
+                    priority
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+                  />
+                </div>
+              )}
 
               <MarkdownRenderer content={post.content} />
             </article>
