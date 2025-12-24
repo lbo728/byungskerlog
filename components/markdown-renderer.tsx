@@ -6,7 +6,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { cn } from "@/lib/utils";
 import { LinkCard } from "@/components/link-card";
 import type { Components } from "react-markdown";
-import type { ReactElement, ReactNode } from "react";
+import React, { type ReactElement, type ReactNode } from "react";
 
 interface MarkdownRendererProps {
   content: string;
@@ -95,20 +95,30 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     ),
     br: () => <br className="my-2" />,
     p: ({ children, ...props }) => {
-      if (typeof children === "string") {
-        const text = children.trim();
-        const urlPattern = /^https?:\/\/[^\s]+$/;
-        if (urlPattern.test(text)) {
-          return <LinkCard url={text} />;
+      const urlPattern = /^https?:\/\/[^\s]+$/;
+
+      const getUrlFromChild = (child: ReactNode): string | null => {
+        if (typeof child === "string") {
+          const text = child.trim();
+          if (urlPattern.test(text)) return text;
         }
+        if (React.isValidElement(child)) {
+          const element = child as ReactElement<{ href?: string }>;
+          if (element.props?.href && urlPattern.test(element.props.href)) {
+            return element.props.href;
+          }
+        }
+        return null;
+      };
+
+      if (!Array.isArray(children)) {
+        const url = getUrlFromChild(children);
+        if (url) return <LinkCard url={url} />;
       }
 
-      if (Array.isArray(children) && children.length === 1 && typeof children[0] === "string") {
-        const text = children[0].trim();
-        const urlPattern = /^https?:\/\/[^\s]+$/;
-        if (urlPattern.test(text)) {
-          return <LinkCard url={text} />;
-        }
+      if (Array.isArray(children) && children.length === 1) {
+        const url = getUrlFromChild(children[0]);
+        if (url) return <LinkCard url={url} />;
       }
 
       return (
