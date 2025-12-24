@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { useUser, useStackApp } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { PenSquare, LogOut, Menu, FileText, Settings } from "lucide-react";
+import { PenSquare, LogOut, Menu, FileText, FolderOpen, ChevronDown } from "lucide-react";
 
 const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
 
@@ -19,8 +19,8 @@ export function Header() {
   const user = useUser();
   const app = useStackApp();
   const [isOpen, setIsOpen] = useState(false);
+  const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
 
-  // 허용된 이메일인지 확인
   const isAuthorized = user && user.primaryEmail && ALLOWED_EMAILS.includes(user.primaryEmail);
 
   const navItems = [
@@ -31,13 +31,13 @@ export function Header() {
 
   const handleLogout = async () => {
     await app.signOut();
+    setIsAdminMenuOpen(false);
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="header-wrapper sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* 로고 */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Image
               src="/logo-byungsker.png"
@@ -51,8 +51,7 @@ export function Header() {
             />
           </Link>
 
-          {/* 데스크톱 네비게이션 (md 이상) */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="desktop-nav hidden md:flex items-center gap-6">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -67,36 +66,15 @@ export function Header() {
               </Link>
             ))}
             {isAuthorized && (
-              <>
-                <Button asChild variant="ghost" size="sm">
-                  <Link href="/admin/posts" className="gap-2">
-                    <Settings className="h-4 w-4" />
-                    어드민
-                  </Link>
-                </Button>
-                <Button asChild variant="ghost" size="sm">
-                  <Link href="/admin/drafts" className="gap-2">
-                    <FileText className="h-4 w-4" />
-                    임시저장
-                  </Link>
-                </Button>
-                <Button asChild variant="default" size="sm">
-                  <Link href="/admin/write" className="gap-2">
-                    <PenSquare className="h-4 w-4" />
-                    글쓰기
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
-                  <LogOut className="h-4 w-4" />
-                  로그아웃
-                </Button>
-              </>
+              <Button variant="ghost" size="sm" onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)} className="gap-2">
+                관리자
+                <ChevronDown className={cn("h-4 w-4 transition-transform", isAdminMenuOpen && "rotate-180")} />
+              </Button>
             )}
             <VisitorCount />
             <ThemeToggle />
           </nav>
 
-          {/* 모바일 메뉴 버튼 (md 미만) */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="sm">
@@ -107,9 +85,8 @@ export function Header() {
               <SheetHeader>
                 <SheetTitle>메뉴</SheetTitle>
               </SheetHeader>
-              <div className="flex flex-col gap-4 mt-8">
-                {/* 네비게이션 링크 */}
-                <div className="flex flex-col gap-3">
+              <div className="mobile-menu-content flex flex-col gap-4 mt-8">
+                <div className="nav-section flex flex-col gap-3">
                   {navItems.map((item) => (
                     <Link
                       key={item.href}
@@ -126,13 +103,12 @@ export function Header() {
                   ))}
                 </div>
 
-                {/* 사용자 관련 버튼 */}
                 {isAuthorized && (
-                  <div className="flex flex-col gap-2 pt-4 border-t">
-                    <Button asChild variant="ghost" size="default" onClick={() => setIsOpen(false)}>
-                      <Link href="/admin/posts" className="gap-2 w-full justify-start">
-                        <Settings className="h-4 w-4" />
-                        어드민
+                  <div className="admin-section flex flex-col gap-2 py-4 border-t">
+                    <Button asChild variant="default" size="default" onClick={() => setIsOpen(false)}>
+                      <Link href="/admin/write" className="gap-2 w-full justify-start">
+                        <PenSquare className="h-4 w-4" />
+                        글쓰기
                       </Link>
                     </Button>
                     <Button asChild variant="ghost" size="default" onClick={() => setIsOpen(false)}>
@@ -141,10 +117,10 @@ export function Header() {
                         임시저장
                       </Link>
                     </Button>
-                    <Button asChild variant="default" size="default" onClick={() => setIsOpen(false)}>
-                      <Link href="/admin/write" className="gap-2 w-full justify-start">
-                        <PenSquare className="h-4 w-4" />
-                        글쓰기
+                    <Button asChild variant="ghost" size="default" onClick={() => setIsOpen(false)}>
+                      <Link href="/admin/posts" className="gap-2 w-full justify-start">
+                        <FolderOpen className="h-4 w-4" />
+                        포스트 관리
                       </Link>
                     </Button>
                     <Button
@@ -162,8 +138,7 @@ export function Header() {
                   </div>
                 )}
 
-                {/* 조회수 및 테마 토글 */}
-                <div className="flex items-center justify-between pt-4 border-t">
+                <div className="visitor-section flex items-center justify-between py-4 border-t">
                   <VisitorCount />
                   <ThemeToggle />
                 </div>
@@ -172,6 +147,37 @@ export function Header() {
           </Sheet>
         </div>
       </div>
+
+      {isAuthorized && isAdminMenuOpen && (
+        <div className="admin-sub-gnb hidden md:block border-t border-border/40 bg-muted/50">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex h-12 items-center gap-4">
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/admin/write" className="gap-2">
+                  <PenSquare className="h-4 w-4" />
+                  글쓰기
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/admin/drafts" className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  임시저장
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/admin/posts" className="gap-2">
+                  <FolderOpen className="h-4 w-4" />
+                  포스트 관리
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
+                <LogOut className="h-4 w-4" />
+                로그아웃
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
