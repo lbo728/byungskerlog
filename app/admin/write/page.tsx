@@ -39,6 +39,32 @@ export default function WritePage() {
   const [existingThumbnail, setExistingThumbnail] = useState<string | null>(null);
   const [existingSeriesId, setExistingSeriesId] = useState<string | null>(null);
   const [existingExcerpt, setExistingExcerpt] = useState<string | null>(null);
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const fetchAllTags = async () => {
+      try {
+        const response = await fetch("/api/tags");
+        if (response.ok) {
+          const data = await response.json();
+          setAllTags(data.map((item: { tag: string }) => item.tag));
+        }
+      } catch (error) {
+        console.error("Failed to fetch tags:", error);
+      }
+    };
+    fetchAllTags();
+  }, []);
+
+  const filteredSuggestions = tagInput.trim()
+    ? allTags.filter(
+        (tag) =>
+          tag.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(tag)
+      )
+    : [];
 
   // 태그 추가
   const addTag = (tag: string) => {
@@ -47,6 +73,8 @@ export default function WritePage() {
       setTags([...tags, trimmedTag]);
     }
     setTagInput("");
+    setShowTagSuggestions(false);
+    setSelectedSuggestionIndex(0);
   };
 
   // 태그 삭제
@@ -56,13 +84,43 @@ export default function WritePage() {
 
   // 태그 입력 처리
   const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // 한글 입력 조합 중일 때는 무시
     if (e.nativeEvent.isComposing) return;
 
-    if (e.key === "Enter" && tagInput.trim()) {
+    if (e.key === "ArrowDown") {
       e.preventDefault();
-      addTag(tagInput);
+      setSelectedSuggestionIndex((prev) =>
+        prev < filteredSuggestions.length - 1 ? prev + 1 : prev
+      );
+      return;
     }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : 0));
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (showTagSuggestions && filteredSuggestions.length > 0) {
+        addTag(filteredSuggestions[selectedSuggestionIndex]);
+      } else if (tagInput.trim()) {
+        addTag(tagInput);
+      }
+      return;
+    }
+
+    if (e.key === "Escape") {
+      setShowTagSuggestions(false);
+      return;
+    }
+  };
+
+  const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTagInput(value);
+    setShowTagSuggestions(value.trim().length > 0);
+    setSelectedSuggestionIndex(0);
   };
 
   const insertMarkdown = (text: string) => {
@@ -387,27 +445,49 @@ export default function WritePage() {
                   className="text-6xl font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
                   disabled={isLoading}
                 />
-                <div className="mt-4 p-4">
-                  <div className="flex flex-wrap gap-2 mb-2">
+                <div className="tag-input-section mt-4 p-4">
+                  <div className="tag-list flex flex-wrap gap-2 mb-2">
                     {tags.map((tag, index) => (
                       <span
                         key={index}
                         onClick={() => removeTag(index)}
-                        className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm cursor-pointer hover:bg-primary/20 transition-colors"
+                        className="tag-item px-3 py-1 bg-primary/10 text-primary rounded-full text-sm cursor-pointer hover:bg-primary/20 transition-colors"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
-                  <Input
-                    type="text"
-                    placeholder="태그를 입력하세요 (엔터로 등록)"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={handleTagInput}
-                    className="border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-muted-foreground bg-transparent"
-                    disabled={isLoading}
-                  />
+                  <div className="tag-autocomplete relative">
+                    <Input
+                      ref={tagInputRef}
+                      type="text"
+                      placeholder="태그를 입력하세요 (엔터로 등록)"
+                      value={tagInput}
+                      onChange={handleTagInputChange}
+                      onKeyDown={handleTagInput}
+                      onFocus={() => tagInput.trim() && setShowTagSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowTagSuggestions(false), 150)}
+                      className="border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-muted-foreground bg-transparent"
+                      disabled={isLoading}
+                    />
+                    {showTagSuggestions && filteredSuggestions.length > 0 && (
+                      <ul className="tag-suggestions absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                        {filteredSuggestions.slice(0, 10).map((suggestion, index) => (
+                          <li
+                            key={suggestion}
+                            onMouseDown={() => addTag(suggestion)}
+                            className={`tag-suggestion-item px-3 py-2 cursor-pointer text-sm transition-colors ${
+                              index === selectedSuggestionIndex
+                                ? "bg-primary/10 text-primary"
+                                : "hover:bg-muted"
+                            }`}
+                          >
+                            {suggestion}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               </div>
 
