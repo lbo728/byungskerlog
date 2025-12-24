@@ -75,6 +75,7 @@ This is a Next.js 16-based personal blog application with admin capabilities. Th
 ````
 - git push는 요청한 **작업 덩어리**가 전부 완료된 경우에만 수행해야한다. (한 커밋이 완료되었다고 바로 푸시하지 말 것)
 - git push 후 CI 확인 워크플로우는 `~/.claude/skills/git-ci-workflow/SKILL.md` 참조
+- main 브랜치에서의 푸시는 반드시, dev나 feature 등 서브 브랜치를 병합하는 푸시만 있어야해. 어떤 작업을 요청하면 반드시 브랜치를 생성해서 작업하고 승인되어야만 main 브랜치에서 푸시된다는 의미지.
 
 ## Code Rules
 
