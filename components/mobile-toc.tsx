@@ -85,9 +85,9 @@ export function MobileToc({ content }: MobileTocProps) {
     <div className="mobile-toc-wrapper fixed bottom-6 right-6 z-40 xl:hidden">
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
-          <Button size="icon" className="mobile-toc-trigger h-12 w-12 rounded-full shadow-lg">
-            <List className="h-5 w-5" />
-          </Button>
+          <button className="mobile-toc-trigger h-14 w-14 rounded-2xl flex items-center justify-center bg-background/60 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] dark:bg-background/40 dark:border-white/10 hover:bg-background/80 dark:hover:bg-background/60 hover:scale-105 active:scale-95 transition-all duration-200">
+            <List className="h-5 w-5 text-foreground/80" />
+          </button>
         </SheetTrigger>
         <SheetContent side="right" className="mobile-toc-content w-[300px] sm:w-[350px]" hideCloseButton>
           <SheetHeader>
