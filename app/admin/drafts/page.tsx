@@ -106,14 +106,12 @@ export default function AdminDraftsPage() {
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              글 관리
+              <ArrowLeft className="h-4 w-4" />글 관리
             </Button>
             <h1 className="text-lg font-semibold">임시저장</h1>
           </div>
           <Button variant="default" size="sm" onClick={() => router.push("/admin/write")} className="gap-2">
-            <Plus className="h-4 w-4" />
-            새 글 작성
+            <Plus className="h-4 w-4" />새 글 작성
           </Button>
         </div>
       </header>
@@ -127,9 +125,7 @@ export default function AdminDraftsPage() {
         ) : drafts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">임시저장된 글이 없습니다.</p>
-            <Button onClick={() => router.push("/admin/write")}>
-              새 글 작성하기
-            </Button>
+            <Button onClick={() => router.push("/admin/write")}>새 글 작성하기</Button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -140,9 +136,7 @@ export default function AdminDraftsPage() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-xl font-semibold truncate mb-2">
-                      {draft.title || "제목 없음"}
-                    </h2>
+                    <h2 className="text-xl font-semibold truncate mb-2">{draft.title || "제목 없음"}</h2>
                     <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                       {getPreviewText(draft.content) || "내용 없음"}
                     </p>
@@ -151,10 +145,7 @@ export default function AdminDraftsPage() {
                       {draft.tags.length > 0 && (
                         <div className="flex gap-2">
                           {draft.tags.map((tag, index) => (
-                            <span
-                              key={index}
-                              className="px-2 py-0.5 bg-primary/10 text-primary rounded"
-                            >
+                            <span key={index} className="px-2 py-0.5 bg-primary/10 text-primary rounded">
                               {tag}
                             </span>
                           ))}

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { stackServerApp } from "@/stack/server";
+import { getAuthUser } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication with Stack Auth
-    const user = await stackServerApp.getUser();
+    const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -112,10 +112,19 @@ export async function GET(request: NextRequest) {
         slug: true,
         title: true,
         excerpt: true,
+        content: true,
+        thumbnail: true,
         tags: true,
         published: true,
         createdAt: true,
         updatedAt: true,
+        series: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
       },
     });
 
@@ -124,27 +133,31 @@ export async function GET(request: NextRequest) {
     const postIds = posts.map((post) => post.id);
 
     // Get all views for these posts in a single query
-    const allViews = postIds.length > 0
-      ? await prisma.postView.findMany({
-          where: { postId: { in: postIds } },
-          select: {
-            postId: true,
-            viewedAt: true,
-          },
-        })
-      : [];
+    const allViews =
+      postIds.length > 0
+        ? await prisma.postView.findMany({
+            where: { postId: { in: postIds } },
+            select: {
+              postId: true,
+              viewedAt: true,
+            },
+          })
+        : [];
 
     // Group views by postId and calculate total/daily counts
-    const viewStats = allViews.reduce((acc, view) => {
-      if (!acc[view.postId]) {
-        acc[view.postId] = { totalViews: 0, dailyViews: 0 };
-      }
-      acc[view.postId].totalViews++;
-      if (view.viewedAt >= oneDayAgo) {
-        acc[view.postId].dailyViews++;
-      }
-      return acc;
-    }, {} as Record<string, { totalViews: number; dailyViews: number }>);
+    const viewStats = allViews.reduce(
+      (acc, view) => {
+        if (!acc[view.postId]) {
+          acc[view.postId] = { totalViews: 0, dailyViews: 0 };
+        }
+        acc[view.postId].totalViews++;
+        if (view.viewedAt >= oneDayAgo) {
+          acc[view.postId].dailyViews++;
+        }
+        return acc;
+      },
+      {} as Record<string, { totalViews: number; dailyViews: number }>
+    );
 
     // Attach view stats to posts
     const postsWithViews = posts.map((post) => ({

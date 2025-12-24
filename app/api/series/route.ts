@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { stackServerApp } from "@/stack/server";
+import { getAuthUser } from "@/lib/auth";
 
 function generateSlug(name: string): string {
   return name
@@ -31,7 +31,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await stackServerApp.getUser();
+    const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

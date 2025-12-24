@@ -1,12 +1,12 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { stackServerApp } from "@/stack/server";
+import { getAuthUser } from "@/lib/auth";
 
 const MAX_SIZE = 500 * 1024;
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const user = await stackServerApp.getUser();
+    const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -24,10 +24,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const contentLength = request.headers.get("content-length");
     if (contentLength && parseInt(contentLength) > MAX_SIZE) {
-      return NextResponse.json(
-        { error: "파일 크기는 500KB 이하여야 합니다." },
-        { status: 413 }
-      );
+      return NextResponse.json({ error: "파일 크기는 500KB 이하여야 합니다." }, { status: 413 });
     }
 
     const thumbnailFilename = `thumbnail-${Date.now()}-${filename}`;

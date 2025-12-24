@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
-import Image from 'next/image';
-import { format } from 'date-fns';
-import { toast } from 'sonner';
-import { Loader2, Pencil, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { calculateReadingTime } from '@/lib/reading-time';
-import { useUser } from '@stackframe/stack';
-import { useRouter } from 'next/navigation';
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import Image from "next/image";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { BookOpen, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { calculateReadingTime } from "@/lib/reading-time";
+import { useUser } from "@stackframe/stack";
+import { useRouter } from "next/navigation";
 
 interface Series {
   id: string;
@@ -41,10 +41,10 @@ export function PostListClient({ initialData }: PostListClientProps) {
   const router = useRouter();
 
   const { data: posts, isPending } = useQuery({
-    queryKey: ['posts', 'home'],
+    queryKey: ["posts", "home"],
     queryFn: async () => {
-      const response = await fetch('/api/posts');
-      if (!response.ok) throw new Error('Failed to fetch posts');
+      const response = await fetch("/api/posts");
+      if (!response.ok) throw new Error("Failed to fetch posts");
       const data = await response.json();
       return data.posts;
     },
@@ -62,18 +62,18 @@ export function PostListClient({ initialData }: PostListClientProps) {
 
     try {
       const response = await fetch(`/api/posts/${postId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete post');
+        throw new Error("Failed to delete post");
       }
 
-      toast.success('포스트가 삭제되었습니다.');
+      toast.success("포스트가 삭제되었습니다.");
       router.refresh();
     } catch (error) {
-      console.error('Error deleting post:', error);
-      toast.error('포스트 삭제 중 오류가 발생했습니다.');
+      console.error("Error deleting post:", error);
+      toast.error("포스트 삭제 중 오류가 발생했습니다.");
     }
   };
 
@@ -104,9 +104,9 @@ export function PostListClient({ initialData }: PostListClientProps) {
       {posts.map((post: Post) => (
         <div key={post.id} className="relative h-full">
           <Link href={`/posts/${post.slug}`} className="block group h-full">
-            <Card className="h-full flex flex-col overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50">
-              {post.thumbnail && (
-                <div className="thumbnail-container relative aspect-video overflow-hidden">
+            <Card className="h-full flex flex-col overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50 py-0 pb-6">
+              <div className="thumbnail-container relative aspect-video overflow-hidden bg-muted">
+                {post.thumbnail ? (
                   <Image
                     src={post.thumbnail}
                     alt={post.title}
@@ -114,26 +114,45 @@ export function PostListClient({ initialData }: PostListClientProps) {
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
-                </div>
-              )}
+                ) : (
+                  <div className="default-thumbnail absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                    <Image
+                      src="/logo-byungsker.png"
+                      alt="Default thumbnail"
+                      width={120}
+                      height={56}
+                      className="opacity-50"
+                    />
+                  </div>
+                )}
+              </div>
               <CardHeader>
-                <div className="flex justify-between items-center mb-3">
-                  <div className="flex gap-1.5">
-                    {post.tags && post.tags.length > 0 ? (
-                      post.tags.slice(0, 2).map((tag) => (
-                        <Badge key={tag} variant="outline" className="font-normal">
-                          {tag}
-                        </Badge>
-                      ))
-                    ) : (
-                      <Badge variant="outline" className="font-normal">
-                        Post
+                <div className="card-meta flex justify-between items-center mb-3">
+                  <div className="card-badges flex gap-1.5 flex-wrap">
+                    {post.series && (
+                      <Badge
+                        variant="secondary"
+                        className="series-badge bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0"
+                      >
+                        <BookOpen className="h-3 w-3 mr-1" />
+                        {post.series.name}
                       </Badge>
                     )}
+                    {post.tags && post.tags.length > 0
+                      ? post.tags.slice(0, post.series ? 1 : 2).map((tag) => (
+                          <Badge key={tag} variant="outline" className="font-normal">
+                            {tag}
+                          </Badge>
+                        ))
+                      : !post.series && (
+                          <Badge variant="outline" className="font-normal">
+                            Post
+                          </Badge>
+                        )}
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="card-date flex items-center gap-2 text-xs text-muted-foreground">
                     <time dateTime={new Date(post.createdAt).toISOString()}>
-                      {format(new Date(post.createdAt), 'yyyy.MM.dd')}
+                      {format(new Date(post.createdAt), "yyyy.MM.dd")}
                     </time>
                     <span>·</span>
                     <span>{calculateReadingTime(post.content)}</span>
@@ -144,7 +163,7 @@ export function PostListClient({ initialData }: PostListClientProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="grow">
-                <CardDescription className="line-clamp-3 text-base">{post.excerpt || ''}</CardDescription>
+                <CardDescription className="line-clamp-3 text-base">{post.excerpt || ""}</CardDescription>
               </CardContent>
               <CardFooter className="pt-0 mt-auto flex justify-between items-center">
                 <span className="text-sm font-medium text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
@@ -167,12 +186,7 @@ export function PostListClient({ initialData }: PostListClientProps) {
                 </span>
                 {user && (
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => handleEdit(post.id, e)}
-                    >
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEdit(post.id, e)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button

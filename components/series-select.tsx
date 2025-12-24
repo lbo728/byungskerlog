@@ -4,13 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Series {
   id: string;
@@ -132,12 +126,7 @@ export function SeriesSelect({ value, onChange, disabled }: SeriesSelectProps) {
               disabled={isCreating}
               autoFocus
             />
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleCreateSeries}
-              disabled={isCreating || !newSeriesName.trim()}
-            >
+            <Button type="button" size="sm" onClick={handleCreateSeries} disabled={isCreating || !newSeriesName.trim()}>
               {isCreating ? "생성 중..." : "추가"}
             </Button>
             <Button
@@ -165,8 +154,7 @@ export function SeriesSelect({ value, onChange, disabled }: SeriesSelectProps) {
           onClick={() => setShowCreateForm(true)}
           disabled={disabled}
         >
-          <Plus className="mr-2 h-4 w-4" />
-          새 시리즈 만들기
+          <Plus className="mr-2 h-4 w-4" />새 시리즈 만들기
         </Button>
       )}
     </div>

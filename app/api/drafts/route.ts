@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { stackServerApp } from "@/stack/server";
+import { getAuthUser } from "@/lib/auth";
 
 // GET /api/drafts - 임시저장 목록 조회
 export async function GET() {
   try {
-    const user = await stackServerApp.getUser();
+    const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -25,7 +25,7 @@ export async function GET() {
 // POST /api/drafts - 새 임시저장 생성
 export async function POST(request: Request) {
   try {
-    const user = await stackServerApp.getUser();
+    const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import Link from 'next/link';
-import { format } from 'date-fns';
-import { Loader2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import Link from "next/link";
+import { format } from "date-fns";
+import { Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface TagData {
   tag: string;
@@ -31,10 +31,10 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
 
   // Query for all tags
   const { data: allTags, isPending } = useQuery({
-    queryKey: ['tags'],
+    queryKey: ["tags"],
     queryFn: async () => {
-      const response = await fetch('/api/tags');
-      if (!response.ok) throw new Error('Failed to fetch tags');
+      const response = await fetch("/api/tags");
+      if (!response.ok) throw new Error("Failed to fetch tags");
       return response.json() as Promise<TagData[]>;
     },
     initialData: initialTags,
@@ -43,11 +43,11 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
 
   // Query for posts by tag (only when tag is selected)
   const { data: filteredPosts, isLoading: isLoadingPosts } = useQuery({
-    queryKey: ['posts', 'by-tag', selectedTag],
+    queryKey: ["posts", "by-tag", selectedTag],
     queryFn: async () => {
       if (!selectedTag) return [];
       const response = await fetch(`/api/posts?tag=${encodeURIComponent(selectedTag)}&limit=100`);
-      if (!response.ok) throw new Error('Failed to fetch posts');
+      if (!response.ok) throw new Error("Failed to fetch posts");
       const data = await response.json();
       return data.posts || [];
     },
@@ -76,7 +76,7 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
           {allTags?.map(({ tag, count }) => (
             <Badge
               key={tag}
-              variant={selectedTag === tag ? 'default' : 'outline'}
+              variant={selectedTag === tag ? "default" : "outline"}
               className="cursor-pointer text-base px-4 py-2 hover:bg-primary/90 transition-colors"
               onClick={() => handleTagClick(tag)}
             >
@@ -104,7 +104,7 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
                     <CardHeader>
                       <div className="flex items-center justify-between mb-2">
                         <time className="text-sm text-muted-foreground" dateTime={post.createdAt}>
-                          {format(new Date(post.createdAt), 'MMMM d, yyyy')}
+                          {format(new Date(post.createdAt), "MMMM d, yyyy")}
                         </time>
                       </div>
                       <CardTitle className="text-2xl group-hover:text-primary transition-colors">

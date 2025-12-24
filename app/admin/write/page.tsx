@@ -26,7 +26,7 @@ export default function WritePage() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [content, setContent] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [isFetchingPost, setIsFetchingPost] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
@@ -38,20 +38,6 @@ export default function WritePage() {
   const [existingThumbnail, setExistingThumbnail] = useState<string | null>(null);
   const [existingSeriesId, setExistingSeriesId] = useState<string | null>(null);
   const [existingExcerpt, setExistingExcerpt] = useState<string | null>(null);
-
-  // 자동 슬러그 생성 (영문/숫자만 + 타임스탬프로 고유성 보장)
-  const generateSlug = (title: string) => {
-    const baseSlug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .trim();
-
-    const timestamp = Date.now();
-    return baseSlug ? `${baseSlug}-${timestamp}` : `post-${timestamp}`;
-  };
 
   // 태그 추가
   const addTag = (tag: string) => {
@@ -193,24 +179,27 @@ export default function WritePage() {
   }, []);
 
   // 이미지를 마크다운에 삽입
-  const insertImageMarkdown = useCallback((url: string, altText: string = "image") => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+  const insertImageMarkdown = useCallback(
+    (url: string, altText: string = "image") => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
 
-    const imageMarkdown = `![${altText}](${url})`;
-    const start = textarea.selectionStart;
-    const before = content.substring(0, start);
-    const after = content.substring(start);
-    const newContent = before + imageMarkdown + "\n" + after;
+      const imageMarkdown = `![${altText}](${url})`;
+      const start = textarea.selectionStart;
+      const before = content.substring(0, start);
+      const after = content.substring(start);
+      const newContent = before + imageMarkdown + "\n" + after;
 
-    setContent(newContent);
+      setContent(newContent);
 
-    setTimeout(() => {
-      textarea.focus();
-      const newCursorPos = start + imageMarkdown.length + 1;
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
-  }, [content]);
+      setTimeout(() => {
+        textarea.focus();
+        const newCursorPos = start + imageMarkdown.length + 1;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      }, 0);
+    },
+    [content]
+  );
 
   // 드래그 앤 드롭 핸들러
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -225,41 +214,47 @@ export default function WritePage() {
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
 
-    const files = Array.from(e.dataTransfer.files);
-    const imageFiles = files.filter(file => file.type.startsWith("image/"));
+      const files = Array.from(e.dataTransfer.files);
+      const imageFiles = files.filter((file) => file.type.startsWith("image/"));
 
-    for (const file of imageFiles) {
-      const url = await uploadImage(file);
-      if (url) {
-        insertImageMarkdown(url, file.name.replace(/\.[^/.]+$/, ""));
-      }
-    }
-  }, [uploadImage, insertImageMarkdown]);
-
-  // 클립보드 붙여넣기 핸들러
-  const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
-    const items = Array.from(e.clipboardData.items);
-    const imageItems = items.filter(item => item.type.startsWith("image/"));
-
-    if (imageItems.length === 0) return;
-
-    e.preventDefault();
-
-    for (const item of imageItems) {
-      const file = item.getAsFile();
-      if (file) {
+      for (const file of imageFiles) {
         const url = await uploadImage(file);
         if (url) {
-          insertImageMarkdown(url, "pasted-image");
+          insertImageMarkdown(url, file.name.replace(/\.[^/.]+$/, ""));
         }
       }
-    }
-  }, [uploadImage, insertImageMarkdown]);
+    },
+    [uploadImage, insertImageMarkdown]
+  );
+
+  // 클립보드 붙여넣기 핸들러
+  const handlePaste = useCallback(
+    async (e: React.ClipboardEvent) => {
+      const items = Array.from(e.clipboardData.items);
+      const imageItems = items.filter((item) => item.type.startsWith("image/"));
+
+      if (imageItems.length === 0) return;
+
+      e.preventDefault();
+
+      for (const item of imageItems) {
+        const file = item.getAsFile();
+        if (file) {
+          const url = await uploadImage(file);
+          if (url) {
+            insertImageMarkdown(url, "pasted-image");
+          }
+        }
+      }
+    },
+    [uploadImage, insertImageMarkdown]
+  );
 
   // Load existing post for edit mode or draft
   useEffect(() => {
@@ -383,74 +378,74 @@ export default function WritePage() {
                   className="text-6xl font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
                   disabled={isLoading}
                 />
-              <div className="mt-4 p-4">
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      onClick={() => removeTag(index)}
-                      className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm cursor-pointer hover:bg-primary/20 transition-colors"
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                <div className="mt-4 p-4">
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        onClick={() => removeTag(index)}
+                        className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm cursor-pointer hover:bg-primary/20 transition-colors"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <Input
+                    type="text"
+                    placeholder="태그를 입력하세요 (엔터로 등록)"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleTagInput}
+                    className="border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-muted-foreground bg-transparent"
+                    disabled={isLoading}
+                  />
                 </div>
-                <Input
-                  type="text"
-                  placeholder="태그를 입력하세요 (엔터로 등록)"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={handleTagInput}
-                  className="border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-muted-foreground bg-transparent"
-                  disabled={isLoading}
-                />
               </div>
-            </div>
 
-            <MarkdownToolbar onInsert={insertMarkdown} />
+              <MarkdownToolbar onInsert={insertMarkdown} />
 
-            <div
-              className={`relative flex-1 ${isDragging ? "ring-2 ring-primary ring-inset bg-primary/5" : ""}`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <Textarea
-                ref={textareaRef}
-                placeholder="당신의 이야기를 적어보세요... (이미지를 드래그하거나 붙여넣기 할 수 있습니다)"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                onPaste={handlePaste}
-                className="absolute inset-0 border-none rounded-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-8 font-mono text-base"
-                disabled={isLoading || isUploading}
-              />
-              {isDragging && (
-                <div className="absolute inset-0 flex items-center justify-center bg-primary/10 pointer-events-none z-10">
-                  <div className="text-primary font-medium text-lg">이미지를 여기에 놓으세요</div>
-                </div>
-              )}
-              {isUploading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-                  <div className="text-muted-foreground font-medium">이미지 업로드 중...</div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 오른쪽: 미리보기 (데스크톱만) */}
-          <div className="hidden lg:block bg-muted/20 overflow-y-auto">
-            <div className="p-8">
-              <h1 className="text-4xl font-bold mb-8">{title || "제목 없음"}</h1>
-              <div className="prose prose-lg dark:prose-invert max-w-none">
-                {content ? (
-                  <MarkdownRenderer content={content} />
-                ) : (
-                  <p className="text-muted-foreground italic">여기에 미리보기가 표시됩니다...</p>
+              <div
+                className={`relative flex-1 ${isDragging ? "ring-2 ring-primary ring-inset bg-primary/5" : ""}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <Textarea
+                  ref={textareaRef}
+                  placeholder="당신의 이야기를 적어보세요... (이미지를 드래그하거나 붙여넣기 할 수 있습니다)"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  onPaste={handlePaste}
+                  className="absolute inset-0 border-none rounded-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-8 font-mono text-base"
+                  disabled={isLoading || isUploading}
+                />
+                {isDragging && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-primary/10 pointer-events-none z-10">
+                    <div className="text-primary font-medium text-lg">이미지를 여기에 놓으세요</div>
+                  </div>
+                )}
+                {isUploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+                    <div className="text-muted-foreground font-medium">이미지 업로드 중...</div>
+                  </div>
                 )}
               </div>
             </div>
+
+            {/* 오른쪽: 미리보기 (데스크톱만) */}
+            <div className="hidden lg:block bg-muted/20 overflow-y-auto">
+              <div className="p-8">
+                <h1 className="text-4xl font-bold mb-8">{title || "제목 없음"}</h1>
+                <div className="prose prose-lg dark:prose-invert max-w-none">
+                  {content ? (
+                    <MarkdownRenderer content={content} />
+                  ) : (
+                    <p className="text-muted-foreground italic">여기에 미리보기가 표시됩니다...</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
         )}
       </div>
 
@@ -461,12 +456,7 @@ export default function WritePage() {
           <div className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
             <div className="container mx-auto px-4 h-14 flex items-center justify-between">
               <h2 className="text-lg font-semibold">미리보기</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={closePreviewModal}
-                className="gap-2"
-              >
+              <Button variant="ghost" size="sm" onClick={closePreviewModal} className="gap-2">
                 <X className="h-4 w-4" />
                 닫기
               </Button>

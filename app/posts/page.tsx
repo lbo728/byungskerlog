@@ -8,7 +8,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel
 
 export const metadata: Metadata = {
   title: "Posts | Byungsker Log",
-  description: "소프트웨어 개발, 제품 개발, 스타트업에 대한 모든 포스트를 확인하세요. 제품 주도 개발을 지향하는 개발자의 인사이트를 공유합니다.",
+  description:
+    "소프트웨어 개발, 제품 개발, 스타트업에 대한 모든 포스트를 확인하세요. 제품 주도 개발을 지향하는 개발자의 인사이트를 공유합니다.",
   alternates: {
     canonical: `${siteUrl}/posts`,
   },
@@ -27,34 +28,54 @@ async function getPosts(page: number) {
   const limit = 20;
   const skip = (page - 1) * limit;
 
-  const [posts, total] = await Promise.all([
-    prisma.post.findMany({
-      where: { published: true },
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: limit,
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        excerpt: true,
-        content: true,
-        tags: true,
-        createdAt: true,
-      },
-    }),
-    prisma.post.count({ where: { published: true } }),
-  ]);
+  try {
+    const [posts, total] = await Promise.all([
+      prisma.post.findMany({
+        where: { published: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          excerpt: true,
+          content: true,
+          thumbnail: true,
+          tags: true,
+          createdAt: true,
+          series: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      }),
+      prisma.post.count({ where: { published: true } }),
+    ]);
 
-  return {
-    posts,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-  };
+    return {
+      posts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  } catch {
+    return {
+      posts: [],
+      pagination: {
+        page,
+        limit,
+        total: 0,
+        totalPages: 0,
+      },
+    };
+  }
 }
 
 export default async function PostsPage({ searchParams }: PostsPageProps) {

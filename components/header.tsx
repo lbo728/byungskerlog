@@ -9,14 +9,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUser, useStackApp } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { PenSquare, LogOut, Menu, FileText } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { PenSquare, LogOut, Menu, FileText, Settings } from "lucide-react";
 
 const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
 
@@ -45,14 +39,7 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* 로고 */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Image
-              src="/logo-byungsker.png"
-              alt="병스커 BLOG"
-              width={180}
-              height={84}
-              className="rounded"
-              priority
-            />
+            <Image src="/logo-byungsker.png" alt="병스커 BLOG" width={180} height={84} className="rounded" priority />
           </Link>
 
           {/* 데스크톱 네비게이션 (md 이상) */}
@@ -72,6 +59,12 @@ export function Header() {
             ))}
             {isAuthorized && (
               <>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/admin/posts" className="gap-2">
+                    <Settings className="h-4 w-4" />
+                    어드민
+                  </Link>
+                </Button>
                 <Button asChild variant="ghost" size="sm">
                   <Link href="/admin/drafts" className="gap-2">
                     <FileText className="h-4 w-4" />
@@ -127,6 +120,12 @@ export function Header() {
                 {/* 사용자 관련 버튼 */}
                 {isAuthorized && (
                   <div className="flex flex-col gap-2 pt-4 border-t">
+                    <Button asChild variant="ghost" size="default" onClick={() => setIsOpen(false)}>
+                      <Link href="/admin/posts" className="gap-2 w-full justify-start">
+                        <Settings className="h-4 w-4" />
+                        어드민
+                      </Link>
+                    </Button>
                     <Button asChild variant="ghost" size="default" onClick={() => setIsOpen(false)}>
                       <Link href="/admin/drafts" className="gap-2 w-full justify-start">
                         <FileText className="h-4 w-4" />
