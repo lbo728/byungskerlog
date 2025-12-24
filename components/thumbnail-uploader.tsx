@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { ImageIcon, X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { optimizeImage } from "@/lib/image-optimizer";
 
 interface ThumbnailUploaderProps {
   value: string | null;
@@ -12,9 +13,11 @@ interface ThumbnailUploaderProps {
 }
 
 const MAX_SIZE = 500 * 1024;
+const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
 
 export function ThumbnailUploader({ value, onChange, disabled }: ThumbnailUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -27,19 +30,27 @@ export function ThumbnailUploader({ value, onChange, disabled }: ThumbnailUpload
         return;
       }
 
-      if (file.size > MAX_SIZE) {
-        setError("파일 크기는 500KB 이하여야 합니다.");
+      if (file.size > MAX_UPLOAD_SIZE) {
+        setError("파일 크기는 10MB 이하여야 합니다.");
         return;
       }
 
       setIsUploading(true);
 
       try {
-        const response = await fetch(`/api/upload/thumbnail?filename=${encodeURIComponent(file.name)}`, {
+        let optimizedFile = file;
+
+        if (file.size > MAX_SIZE) {
+          setIsOptimizing(true);
+          optimizedFile = await optimizeImage(file, MAX_SIZE);
+          setIsOptimizing(false);
+        }
+
+        const response = await fetch(`/api/upload/thumbnail?filename=${encodeURIComponent(optimizedFile.name)}`, {
           method: "POST",
-          body: file,
+          body: optimizedFile,
           headers: {
-            "Content-Length": file.size.toString(),
+            "Content-Length": optimizedFile.size.toString(),
           },
         });
 
@@ -54,6 +65,7 @@ export function ThumbnailUploader({ value, onChange, disabled }: ThumbnailUpload
         setError(err instanceof Error ? err.message : "업로드에 실패했습니다.");
       } finally {
         setIsUploading(false);
+        setIsOptimizing(false);
       }
     },
     [onChange]
@@ -136,13 +148,13 @@ export function ThumbnailUploader({ value, onChange, disabled }: ThumbnailUpload
           {isUploading ? (
             <div className="flex flex-col items-center gap-2 text-muted-foreground">
               <Upload className="h-8 w-8 animate-pulse" />
-              <span className="text-sm">업로드 중...</span>
+              <span className="text-sm">{isOptimizing ? "이미지 최적화 중..." : "업로드 중..."}</span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2 text-muted-foreground">
               <ImageIcon className="h-8 w-8" />
               <span className="text-sm">이미지를 드래그하거나 클릭하여 업로드</span>
-              <span className="text-xs">500KB 이하</span>
+              <span className="text-xs">자동 최적화 (500KB 이하로 압축)</span>
             </div>
           )}
         </label>

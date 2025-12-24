@@ -10,13 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { MarkdownToolbar } from "@/components/markdown-toolbar";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { PublishModal } from "@/components/publish-modal";
-import { ArrowLeft, Eye, X } from "lucide-react";
+import { ArrowLeft, Eye, X, ImagePlus } from "lucide-react";
+import { optimizeImage } from "@/lib/image-optimizer";
 
 export default function WritePage() {
   useUser({ or: "redirect" });
   const router = useRouter();
   const searchParams = useSearchParams();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const postId = searchParams.get("id");
   const draftIdParam = searchParams.get("draft");
@@ -38,6 +40,32 @@ export default function WritePage() {
   const [existingThumbnail, setExistingThumbnail] = useState<string | null>(null);
   const [existingSeriesId, setExistingSeriesId] = useState<string | null>(null);
   const [existingExcerpt, setExistingExcerpt] = useState<string | null>(null);
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const fetchAllTags = async () => {
+      try {
+        const response = await fetch("/api/tags");
+        if (response.ok) {
+          const data = await response.json();
+          setAllTags(data.map((item: { tag: string }) => item.tag));
+        }
+      } catch (error) {
+        console.error("Failed to fetch tags:", error);
+      }
+    };
+    fetchAllTags();
+  }, []);
+
+  const filteredSuggestions = tagInput.trim()
+    ? allTags.filter(
+        (tag) =>
+          tag.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(tag)
+      )
+    : [];
 
   // 태그 추가
   const addTag = (tag: string) => {
@@ -46,6 +74,8 @@ export default function WritePage() {
       setTags([...tags, trimmedTag]);
     }
     setTagInput("");
+    setShowTagSuggestions(false);
+    setSelectedSuggestionIndex(0);
   };
 
   // 태그 삭제
@@ -55,13 +85,43 @@ export default function WritePage() {
 
   // 태그 입력 처리
   const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // 한글 입력 조합 중일 때는 무시
     if (e.nativeEvent.isComposing) return;
 
-    if (e.key === "Enter" && tagInput.trim()) {
+    if (e.key === "ArrowDown") {
       e.preventDefault();
-      addTag(tagInput);
+      setSelectedSuggestionIndex((prev) =>
+        prev < filteredSuggestions.length - 1 ? prev + 1 : prev
+      );
+      return;
     }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : 0));
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (showTagSuggestions && filteredSuggestions.length > 0) {
+        addTag(filteredSuggestions[selectedSuggestionIndex]);
+      } else if (tagInput.trim()) {
+        addTag(tagInput);
+      }
+      return;
+    }
+
+    if (e.key === "Escape") {
+      setShowTagSuggestions(false);
+      return;
+    }
+  };
+
+  const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTagInput(value);
+    setShowTagSuggestions(value.trim().length > 0);
+    setSelectedSuggestionIndex(0);
   };
 
   const insertMarkdown = (text: string) => {
@@ -148,19 +208,27 @@ export default function WritePage() {
       return null;
     }
 
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      toast.warning("파일 크기는 5MB 이하여야 합니다.");
+      toast.warning("파일 크기는 10MB 이하여야 합니다.");
       return null;
     }
 
     setIsUploading(true);
 
     try {
-      const filename = `${Date.now()}-${file.name}`;
+      let optimizedFile = file;
+      const targetSize = 500 * 1024;
+
+      if (file.size > targetSize) {
+        toast.info("이미지 최적화 중...");
+        optimizedFile = await optimizeImage(file, targetSize);
+      }
+
+      const filename = `${Date.now()}-${optimizedFile.name}`;
       const response = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
         method: "POST",
-        body: file,
+        body: optimizedFile,
       });
 
       if (!response.ok) {
@@ -228,6 +296,28 @@ export default function WritePage() {
         if (url) {
           insertImageMarkdown(url, file.name.replace(/\.[^/.]+$/, ""));
         }
+      }
+    },
+    [uploadImage, insertImageMarkdown]
+  );
+
+  // 파일 선택 핸들러
+  const handleFileSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      for (const file of Array.from(files)) {
+        if (file.type.startsWith("image/")) {
+          const url = await uploadImage(file);
+          if (url) {
+            insertImageMarkdown(url, file.name.replace(/\.[^/.]+$/, ""));
+          }
+        }
+      }
+
+      if (imageInputRef.current) {
+        imageInputRef.current.value = "";
       }
     },
     [uploadImage, insertImageMarkdown]
@@ -326,86 +416,111 @@ export default function WritePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* 헤더 */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              나가기
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      {/* 헤더 - 메인 헤더(h-16) 바로 아래에 fixed */}
+      <header className="write-header fixed top-16 left-0 right-0 z-40 border-b border-border bg-background/95 backdrop-blur">
+        <div className="container mx-auto px-2 sm:px-4 h-14 flex items-center justify-between gap-2 max-w-full">
+          <div className="write-header-left flex items-center gap-1 sm:gap-4 min-w-0 flex-shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-1 sm:gap-2 px-2 sm:px-3">
+              <ArrowLeft className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">나가기</span>
             </Button>
-            <h1 className="text-lg font-semibold">{isEditMode ? "글 수정" : "글쓰기"}</h1>
+            <h1 className="text-base sm:text-lg font-semibold truncate">{isEditMode ? "글 수정" : "글쓰기"}</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="write-header-right flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {/* 모바일 전용 미리보기 버튼 */}
             <Button
               variant="ghost"
               size="sm"
               onClick={openPreviewModal}
-              className="lg:hidden gap-2"
+              className="lg:hidden gap-1 px-2 sm:px-3"
               disabled={isLoading}
             >
-              <Eye className="h-4 w-4" />
-              미리보기
+              <Eye className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden xs:inline sm:inline">미리보기</span>
             </Button>
             {!isEditMode && (
-              <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading || isSavingDraft}>
-                {isSavingDraft ? "저장 중..." : "임시저장"}
+              <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading || isSavingDraft} className="px-2 sm:px-3">
+                <span className="hidden sm:inline">{isSavingDraft ? "저장 중..." : "임시저장"}</span>
+                <span className="sm:hidden">{isSavingDraft ? "저장..." : "임시"}</span>
               </Button>
             )}
-            <Button variant="default" size="sm" onClick={handleOpenPublishModal} disabled={isLoading || isFetchingPost}>
-              {isEditMode ? "수정하기" : "출간하기"}
+            <Button variant="default" size="sm" onClick={handleOpenPublishModal} disabled={isLoading || isFetchingPost} className="px-2 sm:px-3">
+              <span className="hidden sm:inline">{isEditMode ? "수정하기" : "출간하기"}</span>
+              <span className="sm:hidden">{isEditMode ? "수정" : "출간"}</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto">
+      {/* 컨텐츠 - 서브 헤더(h-14) 높이만큼 margin-top */}
+      <div className="container mx-auto max-w-full overflow-x-hidden mt-14">
         {isFetchingPost ? (
-          <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
+          <div className="flex items-center justify-center min-h-[calc(100vh-7.5rem)]">
             <p className="text-muted-foreground">글을 불러오는 중...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-3.5rem)]">
-            <div className="border-r border-border flex flex-col pt-5">
-              <div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-7.5rem)]">
+            <div className="write-editor-panel border-r border-border flex flex-col pt-4 overflow-x-hidden">
+              <div className="px-2 sm:px-0">
                 <Input
                   type="text"
                   placeholder="제목을 입력하세요"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="text-6xl font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
+                  className="title-input text-2xl sm:text-4xl lg:text-5xl font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
                   disabled={isLoading}
                 />
-                <div className="mt-4 p-4">
-                  <div className="flex flex-wrap gap-2 mb-2">
+                <div className="tag-input-section mt-4 p-4">
+                  <div className="tag-list flex flex-wrap gap-2 mb-2">
                     {tags.map((tag, index) => (
                       <span
                         key={index}
                         onClick={() => removeTag(index)}
-                        className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm cursor-pointer hover:bg-primary/20 transition-colors"
+                        className="tag-item px-3 py-1 bg-primary/10 text-primary rounded-full text-sm cursor-pointer hover:bg-primary/20 transition-colors"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
-                  <Input
-                    type="text"
-                    placeholder="태그를 입력하세요 (엔터로 등록)"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={handleTagInput}
-                    className="border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-muted-foreground bg-transparent"
-                    disabled={isLoading}
-                  />
+                  <div className="tag-autocomplete relative">
+                    <Input
+                      ref={tagInputRef}
+                      type="text"
+                      placeholder="태그를 입력하세요 (엔터로 등록)"
+                      value={tagInput}
+                      onChange={handleTagInputChange}
+                      onKeyDown={handleTagInput}
+                      onFocus={() => tagInput.trim() && setShowTagSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowTagSuggestions(false), 150)}
+                      className="border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-muted-foreground bg-transparent"
+                      disabled={isLoading}
+                    />
+                    {showTagSuggestions && filteredSuggestions.length > 0 && (
+                      <ul className="tag-suggestions absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                        {filteredSuggestions.slice(0, 10).map((suggestion, index) => (
+                          <li
+                            key={suggestion}
+                            onMouseDown={() => addTag(suggestion)}
+                            className={`tag-suggestion-item px-3 py-2 cursor-pointer text-sm transition-colors ${
+                              index === selectedSuggestionIndex
+                                ? "bg-primary/10 text-primary"
+                                : "hover:bg-muted"
+                            }`}
+                          >
+                            {suggestion}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               </div>
 
               <MarkdownToolbar onInsert={insertMarkdown} />
 
               <div
-                className={`relative flex-1 ${isDragging ? "ring-2 ring-primary ring-inset bg-primary/5" : ""}`}
+                className={`content-editor relative flex-1 ${isDragging ? "ring-2 ring-primary ring-inset bg-primary/5" : ""}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -416,7 +531,7 @@ export default function WritePage() {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   onPaste={handlePaste}
-                  className="absolute inset-0 border-none rounded-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-8 font-mono text-base"
+                  className="absolute inset-0 border-none rounded-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-8 pb-16 font-mono text-base"
                   disabled={isLoading || isUploading}
                 />
                 {isDragging && (
@@ -429,6 +544,25 @@ export default function WritePage() {
                     <div className="text-muted-foreground font-medium">이미지 업로드 중...</div>
                   </div>
                 )}
+                {/* 모바일 이미지 업로드 버튼 */}
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="icon"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isLoading || isUploading}
+                  className="image-upload-button absolute bottom-4 right-4 h-12 w-12 rounded-full shadow-lg z-20"
+                >
+                  <ImagePlus className="h-5 w-5" />
+                </Button>
               </div>
             </div>
 
