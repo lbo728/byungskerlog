@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { List } from "lucide-react";
+import { List, ChevronsRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TocItem {
@@ -65,13 +65,10 @@ export function MobileToc({ content }: MobileTocProps) {
   }, [toc]);
 
   const handleTocClick = (id: string) => {
-    setIsOpen(false);
-    setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 100);
+    document.getElementById(id)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   if (toc.length === 0) return null;
@@ -84,11 +81,11 @@ export function MobileToc({ content }: MobileTocProps) {
             <List className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="mobile-toc-content w-[300px] sm:w-[350px]">
+        <SheetContent side="right" className="mobile-toc-content w-[300px] sm:w-[350px]" hideCloseButton>
           <SheetHeader>
             <SheetTitle>목차</SheetTitle>
           </SheetHeader>
-          <nav className="mobile-toc-nav mt-6 max-h-[calc(100vh-8rem)] overflow-y-auto">
+          <nav className="mobile-toc-nav mt-6 flex-1 overflow-y-auto">
             <ul className="space-y-2">
               {toc.map((item) => (
                 <li
@@ -111,6 +108,14 @@ export function MobileToc({ content }: MobileTocProps) {
               ))}
             </ul>
           </nav>
+          <SheetFooter className="mobile-toc-footer flex-row justify-start">
+            <SheetClose asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <ChevronsRight className="h-4 w-4" />
+                접기
+              </Button>
+            </SheetClose>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     </div>
