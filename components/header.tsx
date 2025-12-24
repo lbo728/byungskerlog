@@ -82,9 +82,7 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <SheetHeader>
-                <SheetTitle>메뉴</SheetTitle>
-              </SheetHeader>
+              <SheetHeader>{/* <SheetTitle>메뉴</SheetTitle> */}</SheetHeader>
               <div className="mobile-menu-content flex flex-col gap-4 mt-8">
                 <div className="nav-section flex flex-col gap-3">
                   {navItems.map((item) => (
@@ -94,7 +92,7 @@ export function Header() {
                       prefetch={true}
                       onClick={() => setIsOpen(false)}
                       className={cn(
-                        "text-lg font-medium transition-colors hover:text-primary px-2 py-2",
+                        "text-lg font-medium transition-colors hover:text-primary px-4 py-2",
                         pathname === item.href ? "text-foreground" : "text-muted-foreground"
                       )}
                     >

@@ -38,7 +38,7 @@ export function VisitorCount() {
   if (!stats) return null;
 
   return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="flex items-center gap-2 text-xs text-muted-foreground pl-4">
       <Users className="h-3.5 w-3.5" />
       <span>
         Today: {stats.today} / Total: {stats.total}
