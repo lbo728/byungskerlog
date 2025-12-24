@@ -4,6 +4,7 @@ import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { cn } from "@/lib/utils";
+import { LinkCard } from "@/components/link-card";
 import type { Components } from "react-markdown";
 import type { ReactElement, ReactNode } from "react";
 
@@ -93,11 +94,24 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       </blockquote>
     ),
     br: () => <br className="my-2" />,
-    p: ({ children, ...props }) => (
-      <p className="mt-3 mb-3" {...props}>
-        {children}
-      </p>
-    ),
+    p: ({ children, node, ...props }) => {
+      if (node && node.children && node.children.length === 1) {
+        const child = node.children[0];
+        if (child.type === "text") {
+          const text = child.value.trim();
+          const urlPattern = /^https?:\/\/[^\s]+$/;
+          if (urlPattern.test(text)) {
+            return <LinkCard url={text} />;
+          }
+        }
+      }
+
+      return (
+        <p className="mt-3 mb-3" {...props}>
+          {children}
+        </p>
+      );
+    },
   };
 
   return (
