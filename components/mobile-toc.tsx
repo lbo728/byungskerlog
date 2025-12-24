@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose, SheetFooter } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { List, ChevronsRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -108,7 +116,7 @@ export function MobileToc({ content }: MobileTocProps) {
               ))}
             </ul>
           </nav>
-          <SheetFooter className="mobile-toc-footer flex-row justify-start">
+          <SheetFooter className="mobile-toc-footer flex-row justify-end mb-4">
             <SheetClose asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <ChevronsRight className="h-4 w-4" />
