@@ -265,7 +265,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                       <div className="post-created flex items-center gap-2 flex-wrap">
                         <span>작성:</span>
                         <time dateTime={post.createdAt.toISOString()}>
-                          {format(new Date(post.createdAt), "MMMM d, yyyy")}
+                          {format(new Date(post.createdAt), "MMMM d, yyyy 'at' HH:mm")}
                         </time>
                         <span className="hidden sm:inline">·</span>
                         <span>{calculateReadingTime(post.content)}</span>
@@ -273,7 +273,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                       <div className="post-updated flex items-center gap-2">
                         <span>최종 수정:</span>
                         <time dateTime={post.updatedAt.toISOString()}>
-                          {format(new Date(post.updatedAt), "MMMM d, yyyy")}
+                          {format(new Date(post.updatedAt), "MMMM d, yyyy 'at' HH:mm")}
                         </time>
                       </div>
                     </div>
