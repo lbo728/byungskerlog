@@ -418,7 +418,7 @@ export default function WritePage() {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* 헤더 */}
-      <header className="write-header sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
+      <header className="write-header sticky top-16 z-40 border-b border-border bg-background/95 backdrop-blur">
         <div className="container mx-auto px-2 sm:px-4 h-14 flex items-center justify-between gap-2 max-w-full">
           <div className="write-header-left flex items-center gap-1 sm:gap-4 min-w-0 flex-shrink-0">
             <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-1 sm:gap-2 px-2 sm:px-3">
@@ -455,11 +455,11 @@ export default function WritePage() {
 
       <div className="container mx-auto max-w-full overflow-x-hidden">
         {isFetchingPost ? (
-          <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
+          <div className="flex items-center justify-center min-h-[calc(100vh-7.5rem)]">
             <p className="text-muted-foreground">글을 불러오는 중...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-3.5rem)]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-7.5rem)]">
             <div className="write-editor-panel border-r border-border flex flex-col pt-5 overflow-x-hidden">
               <div className="px-2 sm:px-0">
                 <Input
