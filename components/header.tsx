@@ -39,7 +39,16 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* 로고 */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Image src="/logo-byungsker.png" alt="병스커 BLOG" width={180} height={84} className="rounded" priority />
+            <Image
+              src="/logo-byungsker.png"
+              alt="병스커 BLOG"
+              width={180}
+              height={84}
+              className="logo-image rounded select-none"
+              priority
+              draggable={false}
+              onContextMenu={(e) => e.preventDefault()}
+            />
           </Link>
 
           {/* 데스크톱 네비게이션 (md 이상) */}
