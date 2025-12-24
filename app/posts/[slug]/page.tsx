@@ -46,9 +46,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
   const post = await prisma.post.findFirst({
     where: {
-      OR: [{ slug }, { subSlug: slug }],
+      OR: [{ slug: decodedSlug }, { subSlug: decodedSlug }],
     },
   });
 
@@ -104,9 +105,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 async function getPost(slug: string) {
+  const decodedSlug = decodeURIComponent(slug);
   const post = await prisma.post.findFirst({
     where: {
-      OR: [{ slug }, { subSlug: slug }],
+      OR: [{ slug: decodedSlug }, { subSlug: decodedSlug }],
     },
     include: {
       series: true,
