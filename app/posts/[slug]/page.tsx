@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       alternateLocale: ["en_US"],
       url: postUrl,
       siteName: "Byungsker Log",
-      title: post.title,
+      title: `${post.title} written by Byungsker`,
       description,
       publishedTime: post.createdAt.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
@@ -81,7 +81,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     },
     twitter: {
       card: "summary_large_image",
-      title: post.title,
+      title: `${post.title} written by Byungsker`,
       description,
       images: [imageUrl],
       creator: "@byungsker",
@@ -213,7 +213,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       <StructuredData
         type="article"
         data={{
-          title: post.title,
+          title: `${post.title} written by Byungsker`,
           description: post.excerpt || post.content.replace(/[#*`\n]/g, "").substring(0, 200) + "...",
           image: post.thumbnail || `${siteUrl}/og-image.png`,
           slug: post.slug,
