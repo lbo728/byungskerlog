@@ -1,14 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { BookOpen, Loader2, Pencil, Trash2 } from "lucide-react";
+import { BookOpen, Clock, Flame, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { useUser } from "@stackframe/stack";
 import { useRouter } from "next/navigation";
@@ -30,18 +32,22 @@ interface Post {
   createdAt: Date;
   updatedAt: Date;
   series: Series | null;
+  totalViews?: number;
 }
 
 interface PostListClientProps {
   initialData: Post[];
 }
 
+type SortType = "latest" | "popular";
+
 export function PostListClient({ initialData }: PostListClientProps) {
   const user = useUser();
   const router = useRouter();
+  const [sortType, setSortType] = useState<SortType>("latest");
 
-  const { data: posts, isPending } = useQuery({
-    queryKey: ["posts", "home"],
+  const { data: latestPosts, isPending: isLatestPending } = useQuery({
+    queryKey: ["posts", "home", "latest"],
     queryFn: async () => {
       const response = await fetch("/api/posts");
       if (!response.ok) throw new Error("Failed to fetch posts");
@@ -51,6 +57,21 @@ export function PostListClient({ initialData }: PostListClientProps) {
     initialData,
     staleTime: 5 * 60 * 1000,
   });
+
+  const { data: popularPosts, isPending: isPopularPending } = useQuery({
+    queryKey: ["posts", "home", "popular"],
+    queryFn: async () => {
+      const response = await fetch("/api/posts?sortBy=popular");
+      if (!response.ok) throw new Error("Failed to fetch posts");
+      const data = await response.json();
+      return data.posts;
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: sortType === "popular",
+  });
+
+  const posts = sortType === "popular" ? popularPosts : latestPosts;
+  const isPending = sortType === "popular" ? isPopularPending : isLatestPending;
 
   const handleDelete = async (postId: string, postTitle: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -100,7 +121,23 @@ export function PostListClient({ initialData }: PostListClientProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div className="post-list-container">
+      <nav className="post-list-tabs mb-8">
+        <Tabs value={sortType} onValueChange={(value) => setSortType(value as SortType)}>
+          <TabsList>
+            <TabsTrigger value="latest" className="gap-1.5">
+              <Clock className="h-4 w-4" />
+              최신순
+            </TabsTrigger>
+            <TabsTrigger value="popular" className="gap-1.5">
+              <Flame className="h-4 w-4" />
+              인기순
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </nav>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {posts.map((post: Post) => (
         <div key={post.id} className="relative h-full">
           <Link href={`/posts/${post.slug}`} className="block group h-full">
@@ -204,6 +241,7 @@ export function PostListClient({ initialData }: PostListClientProps) {
           </Link>
         </div>
       ))}
+      </div>
     </div>
   );
 }

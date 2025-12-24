@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const tag = searchParams.get("tag");
     const includeUnpublished = searchParams.get("includeUnpublished") === "true";
-    const sortBy = searchParams.get("sortBy") || "desc"; // "desc" or "asc"
+    const sortBy = searchParams.get("sortBy") || "desc"; // "desc", "asc", or "popular"
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
@@ -189,8 +189,14 @@ export async function GET(request: NextRequest) {
       dailyViews: viewStats[post.id]?.dailyViews || 0,
     }));
 
+    // Sort by popularity if requested
+    const sortedPosts =
+      sortBy === "popular"
+        ? postsWithViews.sort((a, b) => b.totalViews - a.totalViews)
+        : postsWithViews;
+
     return NextResponse.json({
-      posts: postsWithViews,
+      posts: sortedPosts,
       pagination: {
         page,
         limit,
