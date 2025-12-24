@@ -232,20 +232,17 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             {/* Top Ad */}
             <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_TOP || ""} className="mb-8" />
 
+            {/* 뒤로가기 버튼 */}
+            <Link
+              href="/posts"
+              className="back-to-posts inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Post
+            </Link>
+
             <article>
               <header className="mb-8">
-                {post.thumbnail && (
-                  <div className="post-thumbnail relative w-full aspect-video mb-6 rounded-lg overflow-hidden">
-                    <Image
-                      src={post.thumbnail}
-                      alt={post.title}
-                      fill
-                      className="object-cover"
-                      priority
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
-                    />
-                  </div>
-                )}
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground mb-4 leading-tight">
                   {post.title}
                 </h1>
@@ -288,6 +285,20 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               </header>
 
               <Separator className="my-8" />
+
+              {/* 섬네일 - 커스텀 이미지가 있는 경우에만 표시 */}
+              {post.thumbnail && !post.thumbnail.includes("og-image") && (
+                <div className="post-thumbnail relative w-full aspect-video mb-8 rounded-lg overflow-hidden">
+                  <Image
+                    src={post.thumbnail}
+                    alt={post.title}
+                    fill
+                    className="object-cover"
+                    priority
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+                  />
+                </div>
+              )}
 
               <MarkdownRenderer content={post.content} />
             </article>
