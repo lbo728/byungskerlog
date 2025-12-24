@@ -417,8 +417,8 @@ export default function WritePage() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* 헤더 */}
-      <header className="write-header sticky top-16 z-40 border-b border-border bg-background/95 backdrop-blur">
+      {/* 헤더 - 메인 헤더(h-16) 바로 아래에 fixed */}
+      <header className="write-header fixed top-16 left-0 right-0 z-40 border-b border-border bg-background/95 backdrop-blur">
         <div className="container mx-auto px-2 sm:px-4 h-14 flex items-center justify-between gap-2 max-w-full">
           <div className="write-header-left flex items-center gap-1 sm:gap-4 min-w-0 flex-shrink-0">
             <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-1 sm:gap-2 px-2 sm:px-3">
@@ -453,14 +453,15 @@ export default function WritePage() {
         </div>
       </header>
 
-      <div className="container mx-auto max-w-full overflow-x-hidden">
+      {/* 컨텐츠 - 서브 헤더(h-14) 높이만큼 margin-top */}
+      <div className="container mx-auto max-w-full overflow-x-hidden mt-14">
         {isFetchingPost ? (
           <div className="flex items-center justify-center min-h-[calc(100vh-7.5rem)]">
             <p className="text-muted-foreground">글을 불러오는 중...</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-7.5rem)]">
-            <div className="write-editor-panel border-r border-border flex flex-col pt-5 overflow-x-hidden">
+            <div className="write-editor-panel border-r border-border flex flex-col pt-4 overflow-x-hidden">
               <div className="px-2 sm:px-0">
                 <Input
                   type="text"
