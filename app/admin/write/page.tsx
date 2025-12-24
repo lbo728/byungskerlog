@@ -11,6 +11,7 @@ import { MarkdownToolbar } from "@/components/markdown-toolbar";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { PublishModal } from "@/components/publish-modal";
 import { ArrowLeft, Eye, X } from "lucide-react";
+import { optimizeImage } from "@/lib/image-optimizer";
 
 export default function WritePage() {
   useUser({ or: "redirect" });
@@ -148,19 +149,27 @@ export default function WritePage() {
       return null;
     }
 
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      toast.warning("파일 크기는 5MB 이하여야 합니다.");
+      toast.warning("파일 크기는 10MB 이하여야 합니다.");
       return null;
     }
 
     setIsUploading(true);
 
     try {
-      const filename = `${Date.now()}-${file.name}`;
+      let optimizedFile = file;
+      const targetSize = 500 * 1024;
+
+      if (file.size > targetSize) {
+        toast.info("이미지 최적화 중...");
+        optimizedFile = await optimizeImage(file, targetSize);
+      }
+
+      const filename = `${Date.now()}-${optimizedFile.name}`;
       const response = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
         method: "POST",
-        body: file,
+        body: optimizedFile,
       });
 
       if (!response.ok) {
