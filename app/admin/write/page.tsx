@@ -416,10 +416,10 @@ export default function WritePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* 헤더 */}
       <header className="write-header sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-2 sm:px-4 h-14 flex items-center justify-between gap-2">
+        <div className="container mx-auto px-2 sm:px-4 h-14 flex items-center justify-between gap-2 max-w-full">
           <div className="write-header-left flex items-center gap-1 sm:gap-4 min-w-0 flex-shrink-0">
             <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-1 sm:gap-2 px-2 sm:px-3">
               <ArrowLeft className="h-4 w-4 flex-shrink-0" />
@@ -453,21 +453,21 @@ export default function WritePage() {
         </div>
       </header>
 
-      <div className="container mx-auto">
+      <div className="container mx-auto max-w-full overflow-x-hidden">
         {isFetchingPost ? (
           <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
             <p className="text-muted-foreground">글을 불러오는 중...</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-3.5rem)]">
-            <div className="border-r border-border flex flex-col pt-5">
-              <div>
+            <div className="write-editor-panel border-r border-border flex flex-col pt-5 overflow-x-hidden">
+              <div className="px-2 sm:px-0">
                 <Input
                   type="text"
                   placeholder="제목을 입력하세요"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="text-6xl font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
+                  className="title-input text-2xl sm:text-4xl lg:text-5xl font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
                   disabled={isLoading}
                 />
                 <div className="tag-input-section mt-4 p-4">
