@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pencil, Trash2, Plus, X, BookOpen, Check } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Plus, X, BookOpen, Check, BarChart3, TrendingUp, Eye } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +24,7 @@ import {
 interface Post {
   id: string;
   slug: string;
+  subSlug: string | null;
   title: string;
   excerpt: string | null;
   tags: string[];
@@ -68,6 +70,10 @@ export default function AdminPostsPage() {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+
+  // Analytics states
+  const [chartPeriod, setChartPeriod] = useState<"daily" | "weekly" | "monthly">("daily");
+  const [analyticsData, setAnalyticsData] = useState<{ date: string; views: number }[]>([]);
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -303,6 +309,13 @@ export default function AdminPostsPage() {
                 <BookOpen className="h-4 w-4 mr-2" />
                 시리즈 관리
               </TabsTrigger>
+              <TabsTrigger
+                value="analytics"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4"
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                분석
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -381,12 +394,12 @@ export default function AdminPostsPage() {
                 {posts.map((post) => (
                   <div
                     key={post.id}
-                    className="border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
+                    className="post-card border border-border rounded-lg p-4 sm:p-6 hover:border-primary/50 transition-colors"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h2 className="text-xl font-semibold truncate">{post.title}</h2>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div className="post-card-content flex-1 min-w-0">
+                        <div className="post-card-header flex flex-wrap items-center gap-2 mb-2">
+                          <h2 className="text-lg sm:text-xl font-semibold truncate max-w-full">{post.title}</h2>
                           {!post.published && (
                             <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded">비공개</span>
                           )}
@@ -394,23 +407,33 @@ export default function AdminPostsPage() {
                         {post.excerpt && (
                           <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{post.excerpt}</p>
                         )}
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <div className="post-card-meta flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
                           <span>{formatDate(post.createdAt)}</span>
-                          <span className="px-2 py-0.5 bg-muted rounded">
-                            일간 {post.dailyViews || 0} / 총 {post.totalViews || 0} 조회
+                          <span className="px-2 py-0.5 bg-muted rounded whitespace-nowrap">
+                            일간 {post.dailyViews || 0} / 총 {post.totalViews || 0}
                           </span>
-                          {post.tags.length > 0 && (
-                            <div className="flex gap-2">
-                              {post.tags.map((tag, index) => (
-                                <span key={index} className="px-2 py-0.5 bg-primary/10 text-primary rounded">
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
+                        </div>
+                        <div className="post-card-slugs flex flex-wrap items-center gap-2 mt-2 text-xs">
+                          <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded font-mono">
+                            /{post.slug}
+                          </span>
+                          {post.subSlug && (
+                            <span className="px-2 py-0.5 bg-orange-500/10 text-orange-500 rounded font-mono">
+                              /{post.subSlug}
+                            </span>
                           )}
                         </div>
+                        {post.tags.length > 0 && (
+                          <div className="post-card-tags flex flex-wrap gap-1.5 mt-2">
+                            {post.tags.map((tag, index) => (
+                              <span key={index} className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="post-card-actions flex items-center gap-2 flex-shrink-0 self-end sm:self-start">
                         <Button variant="ghost" size="sm" onClick={() => router.push(`/posts/${post.slug}`)}>
                           보기
                         </Button>
@@ -532,6 +555,126 @@ export default function AdminPostsPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Analytics Tab Content */}
+      {activeTab === "analytics" && (
+        <div className="container mx-auto px-4 py-8">
+          <div className="analytics-grid grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Top 5 by Views */}
+            <section className="analytics-top-views">
+              <div className="flex items-center gap-2 mb-4">
+                <Eye className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold">조회수 TOP 5</h2>
+              </div>
+              <div className="space-y-3">
+                {posts
+                  .filter((p) => p.published)
+                  .sort((a, b) => (b.totalViews || 0) - (a.totalViews || 0))
+                  .slice(0, 5)
+                  .map((post, index) => (
+                    <div
+                      key={post.id}
+                      className="flex items-center gap-3 p-3 border border-border rounded-lg hover:border-primary/50 cursor-pointer transition-colors"
+                      onClick={() => router.push(`/posts/${post.slug}`)}
+                    >
+                      <span className="text-2xl font-bold text-muted-foreground w-8">{index + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium truncate">{post.title}</h3>
+                        <p className="text-sm text-muted-foreground">{formatDate(post.createdAt)}</p>
+                      </div>
+                      <div className="flex items-center gap-1 text-primary font-semibold">
+                        <TrendingUp className="h-4 w-4" />
+                        {post.totalViews || 0}
+                      </div>
+                    </div>
+                  ))}
+                {posts.filter((p) => p.published).length === 0 && (
+                  <p className="text-muted-foreground text-center py-8">게시된 포스트가 없습니다.</p>
+                )}
+              </div>
+            </section>
+
+            {/* Daily Views Chart */}
+            <section className="analytics-chart">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  <h2 className="text-lg font-semibold">조회수 추이</h2>
+                </div>
+                <Select value={chartPeriod} onValueChange={(v) => setChartPeriod(v as typeof chartPeriod)}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">일별</SelectItem>
+                    <SelectItem value="weekly">주간별</SelectItem>
+                    <SelectItem value="monthly">월별</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="chart-container h-[300px] border border-border rounded-lg p-4">
+                {analyticsData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={analyticsData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="date" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="views"
+                        stroke="hsl(var(--primary))"
+                        fill="hsl(var(--primary) / 0.2)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    조회수 데이터가 없습니다.
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* Summary Stats */}
+            <section className="analytics-summary lg:col-span-2">
+              <h2 className="text-lg font-semibold mb-4">전체 통계</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="stat-card p-4 border border-border rounded-lg text-center">
+                  <p className="text-3xl font-bold text-primary">
+                    {posts.filter((p) => p.published).length}
+                  </p>
+                  <p className="text-sm text-muted-foreground">게시된 글</p>
+                </div>
+                <div className="stat-card p-4 border border-border rounded-lg text-center">
+                  <p className="text-3xl font-bold text-primary">
+                    {posts.filter((p) => !p.published).length}
+                  </p>
+                  <p className="text-sm text-muted-foreground">비공개 글</p>
+                </div>
+                <div className="stat-card p-4 border border-border rounded-lg text-center">
+                  <p className="text-3xl font-bold text-primary">
+                    {posts.reduce((sum, p) => sum + (p.totalViews || 0), 0).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-muted-foreground">총 조회수</p>
+                </div>
+                <div className="stat-card p-4 border border-border rounded-lg text-center">
+                  <p className="text-3xl font-bold text-primary">
+                    {posts.reduce((sum, p) => sum + (p.dailyViews || 0), 0).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-muted-foreground">오늘 조회수</p>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
       )}
 

@@ -133,6 +133,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         slug: true,
+        subSlug: true,
         title: true,
         excerpt: true,
         content: true,
