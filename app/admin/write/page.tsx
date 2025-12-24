@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MarkdownToolbar } from "@/components/markdown-toolbar";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { PublishModal } from "@/components/publish-modal";
-import { ArrowLeft, Eye, X } from "lucide-react";
+import { ArrowLeft, Eye, X, ImagePlus } from "lucide-react";
 import { optimizeImage } from "@/lib/image-optimizer";
 
 export default function WritePage() {
@@ -18,6 +18,7 @@ export default function WritePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const postId = searchParams.get("id");
   const draftIdParam = searchParams.get("draft");
@@ -300,6 +301,28 @@ export default function WritePage() {
     [uploadImage, insertImageMarkdown]
   );
 
+  // 파일 선택 핸들러
+  const handleFileSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      for (const file of Array.from(files)) {
+        if (file.type.startsWith("image/")) {
+          const url = await uploadImage(file);
+          if (url) {
+            insertImageMarkdown(url, file.name.replace(/\.[^/.]+$/, ""));
+          }
+        }
+      }
+
+      if (imageInputRef.current) {
+        imageInputRef.current.value = "";
+      }
+    },
+    [uploadImage, insertImageMarkdown]
+  );
+
   // 클립보드 붙여넣기 핸들러
   const handlePaste = useCallback(
     async (e: React.ClipboardEvent) => {
@@ -395,34 +418,36 @@ export default function WritePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* 헤더 */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              나가기
+      <header className="write-header sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
+        <div className="container mx-auto px-2 sm:px-4 h-14 flex items-center justify-between gap-2">
+          <div className="write-header-left flex items-center gap-1 sm:gap-4 min-w-0 flex-shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-1 sm:gap-2 px-2 sm:px-3">
+              <ArrowLeft className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">나가기</span>
             </Button>
-            <h1 className="text-lg font-semibold">{isEditMode ? "글 수정" : "글쓰기"}</h1>
+            <h1 className="text-base sm:text-lg font-semibold truncate">{isEditMode ? "글 수정" : "글쓰기"}</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="write-header-right flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {/* 모바일 전용 미리보기 버튼 */}
             <Button
               variant="ghost"
               size="sm"
               onClick={openPreviewModal}
-              className="lg:hidden gap-2"
+              className="lg:hidden gap-1 px-2 sm:px-3"
               disabled={isLoading}
             >
-              <Eye className="h-4 w-4" />
-              미리보기
+              <Eye className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden xs:inline sm:inline">미리보기</span>
             </Button>
             {!isEditMode && (
-              <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading || isSavingDraft}>
-                {isSavingDraft ? "저장 중..." : "임시저장"}
+              <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading || isSavingDraft} className="px-2 sm:px-3">
+                <span className="hidden sm:inline">{isSavingDraft ? "저장 중..." : "임시저장"}</span>
+                <span className="sm:hidden">{isSavingDraft ? "저장..." : "임시"}</span>
               </Button>
             )}
-            <Button variant="default" size="sm" onClick={handleOpenPublishModal} disabled={isLoading || isFetchingPost}>
-              {isEditMode ? "수정하기" : "출간하기"}
+            <Button variant="default" size="sm" onClick={handleOpenPublishModal} disabled={isLoading || isFetchingPost} className="px-2 sm:px-3">
+              <span className="hidden sm:inline">{isEditMode ? "수정하기" : "출간하기"}</span>
+              <span className="sm:hidden">{isEditMode ? "수정" : "출간"}</span>
             </Button>
           </div>
         </div>
@@ -494,7 +519,7 @@ export default function WritePage() {
               <MarkdownToolbar onInsert={insertMarkdown} />
 
               <div
-                className={`relative flex-1 ${isDragging ? "ring-2 ring-primary ring-inset bg-primary/5" : ""}`}
+                className={`content-editor relative flex-1 ${isDragging ? "ring-2 ring-primary ring-inset bg-primary/5" : ""}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -505,7 +530,7 @@ export default function WritePage() {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   onPaste={handlePaste}
-                  className="absolute inset-0 border-none rounded-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-8 font-mono text-base"
+                  className="absolute inset-0 border-none rounded-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-8 pb-16 font-mono text-base"
                   disabled={isLoading || isUploading}
                 />
                 {isDragging && (
@@ -518,6 +543,25 @@ export default function WritePage() {
                     <div className="text-muted-foreground font-medium">이미지 업로드 중...</div>
                   </div>
                 )}
+                {/* 모바일 이미지 업로드 버튼 */}
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="icon"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isLoading || isUploading}
+                  className="image-upload-button absolute bottom-4 right-4 h-12 w-12 rounded-full shadow-lg z-20"
+                >
+                  <ImagePlus className="h-5 w-5" />
+                </Button>
               </div>
             </div>
 

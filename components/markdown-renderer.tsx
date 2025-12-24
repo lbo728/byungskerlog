@@ -94,15 +94,20 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       </blockquote>
     ),
     br: () => <br className="my-2" />,
-    p: ({ children, node, ...props }) => {
-      if (node && node.children && node.children.length === 1) {
-        const child = node.children[0];
-        if (child.type === "text") {
-          const text = child.value.trim();
-          const urlPattern = /^https?:\/\/[^\s]+$/;
-          if (urlPattern.test(text)) {
-            return <LinkCard url={text} />;
-          }
+    p: ({ children, ...props }) => {
+      if (typeof children === "string") {
+        const text = children.trim();
+        const urlPattern = /^https?:\/\/[^\s]+$/;
+        if (urlPattern.test(text)) {
+          return <LinkCard url={text} />;
+        }
+      }
+
+      if (Array.isArray(children) && children.length === 1 && typeof children[0] === "string") {
+        const text = children[0].trim();
+        const urlPattern = /^https?:\/\/[^\s]+$/;
+        if (urlPattern.test(text)) {
+          return <LinkCard url={text} />;
         }
       }
 
