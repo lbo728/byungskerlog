@@ -73,10 +73,8 @@ This is a Next.js 16-based personal blog application with admin capabilities. Th
 > 기타 참고사항, TODO, 리뷰어에게 요청사항 등을 작성해주세요. - 예: 스타일 관련 부분은 별도 PR로 분리 예정입니다.
 
 ````
-- git push를 한 경우, github action의 빌드 성공 여부까지 확인하고, 성공해야만 베이스 브랜치에 머지하고 작업을 종료해
-  - 실패한 경우, 원인을 확인하고 나한테 보고하고 이대로 나에게 해결해도 될지 물어봐야해
-
-
+- git push는 요청한 **작업 덩어리**가 전부 완료된 경우에만 수행해야한다. (한 커밋이 완료되었다고 바로 푸시하지 말 것)
+- git push 후 CI 확인 워크플로우는 `~/.claude/skills/git-ci-workflow/SKILL.md` 참조
 
 ## Code Rules
 
