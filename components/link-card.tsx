@@ -100,9 +100,9 @@ export function LinkCard({ url }: LinkCardProps) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="link-card my-4 flex overflow-hidden rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors no-underline"
+      className="link-card my-4 flex overflow-hidden rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors no-underline p-3"
     >
-      <div className="link-card-content flex-1 p-4 min-w-0">
+      <div className="link-card-content flex-1 min-w-0">
         <h4 className="link-card-title font-semibold text-foreground line-clamp-1 mb-1">
           {ogData.title || hostname}
         </h4>

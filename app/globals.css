@@ -121,3 +121,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* iOS에서 input 포커스 시 확대 방지 */
+@supports (-webkit-touch-callout: none) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
