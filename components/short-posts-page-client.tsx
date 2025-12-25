@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react";
@@ -112,12 +112,12 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
 
   return (
     <>
-      <div className="short-posts-grid grid gap-4">
+      <div className="short-posts-grid grid gap-6">
         {posts.map((post) => (
           <div key={post.id} className="relative">
-            <Link href={`/posts/${post.slug}`} className="group block">
-              <Card className="short-post-card transition-all hover:border-primary hover:shadow-md">
-                <CardHeader className="pb-3">
+            <Link href={`/posts/${post.slug}?from=short`} className="group block">
+              <Card className="short-post-card transition-colors hover:border-primary">
+                <CardHeader>
                   <div className="short-post-meta flex items-center justify-between gap-2 mb-2">
                     <div className="short-post-info flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                       {post.series && (
@@ -130,36 +130,41 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
                         </Badge>
                       )}
                       <time dateTime={new Date(post.createdAt).toISOString()}>
-                        {format(new Date(post.createdAt), "MMM d, yyyy")}
+                        {format(new Date(post.createdAt), "MMMM d, yyyy")}
                       </time>
                       <span>·</span>
                       <span>{calculateReadingTime(post.content)}</span>
                     </div>
                     {user && (
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => handleEdit(post.id, e)}>
-                          <Pencil className="h-3.5 w-3.5" />
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEdit(post.id, e)}>
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
                           onClick={(e) => handleDelete(post.id, post.title, e)}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     )}
                   </div>
-                  <CardTitle className="short-post-title text-lg leading-snug group-hover:text-primary transition-colors">
+                  <CardTitle className="short-post-title text-2xl group-hover:text-primary transition-colors">
                     {post.title}
                   </CardTitle>
+                  {post.excerpt && (
+                    <CardDescription className="line-clamp-2 text-base mt-2">
+                      {post.excerpt}
+                    </CardDescription>
+                  )}
                 </CardHeader>
                 {post.tags && post.tags.length > 0 && (
-                  <CardContent className="pt-0">
-                    <div className="short-post-tags flex flex-wrap gap-1.5">
+                  <CardContent>
+                    <div className="short-post-tags flex flex-wrap gap-2">
                       {post.tags.map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
+                        <span key={tag} className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
                           {tag}
                         </span>
                       ))}
