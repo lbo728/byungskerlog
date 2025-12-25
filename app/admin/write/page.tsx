@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { MarkdownToolbar } from "@/components/markdown-toolbar";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { PublishModal } from "@/components/publish-modal";
-import { ArrowLeft, Eye, X, ImagePlus } from "lucide-react";
+import { FloatingActionButton } from "@/components/floating-action-button";
+import { ArrowLeft, X } from "lucide-react";
 import { optimizeImage } from "@/lib/image-optimizer";
 
 export default function WritePage() {
@@ -428,17 +429,6 @@ export default function WritePage() {
             <h1 className="text-base sm:text-lg font-semibold truncate">{isEditMode ? "글 수정" : "글쓰기"}</h1>
           </div>
           <div className="write-header-right flex items-center gap-1 sm:gap-2 flex-shrink-0">
-            {/* 모바일 전용 미리보기 버튼 */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={openPreviewModal}
-              className="lg:hidden gap-1 px-2 sm:px-3"
-              disabled={isLoading}
-            >
-              <Eye className="h-4 w-4 flex-shrink-0" />
-              <span className="hidden xs:inline sm:inline">미리보기</span>
-            </Button>
             {!isEditMode && (
               <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading || isSavingDraft} className="px-2 sm:px-3">
                 <span className="hidden sm:inline">{isSavingDraft ? "저장 중..." : "임시저장"}</span>
@@ -544,7 +534,7 @@ export default function WritePage() {
                     <div className="text-muted-foreground font-medium">이미지 업로드 중...</div>
                   </div>
                 )}
-                {/* 모바일 이미지 업로드 버튼 */}
+                {/* 히든 파일 인풋 */}
                 <input
                   ref={imageInputRef}
                   type="file"
@@ -553,16 +543,6 @@ export default function WritePage() {
                   onChange={handleFileSelect}
                   className="hidden"
                 />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="icon"
-                  onClick={() => imageInputRef.current?.click()}
-                  disabled={isLoading || isUploading}
-                  className="image-upload-button absolute bottom-4 right-4 h-12 w-12 rounded-full shadow-lg z-20"
-                >
-                  <ImagePlus className="h-5 w-5" />
-                </Button>
               </div>
             </div>
 
@@ -581,6 +561,15 @@ export default function WritePage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* 플로팅 액션 버튼 (모바일/태블릿) */}
+      <div className="lg:hidden">
+        <FloatingActionButton
+          onPreview={openPreviewModal}
+          onImageUpload={() => imageInputRef.current?.click()}
+          disabled={isLoading || isUploading}
+        />
       </div>
 
       {/* 모바일 미리보기 풀 모달 */}
