@@ -264,7 +264,7 @@ export default async function PostPage({
   return (
     <div className="bg-background">
       <ReadingProgress />
-      <MobileToc content={post.content} />
+      {post.type !== "SHORT" && <MobileToc content={post.content} />}
       <StructuredData
         type="article"
         data={{
@@ -484,9 +484,11 @@ export default async function PostPage({
             <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_BOTTOM || ""} className="mt-12" />
           </div>
 
-          <aside className="hidden xl:block">
-            <TableOfContents content={post.content} />
-          </aside>
+          {post.type !== "SHORT" && (
+            <aside className="hidden xl:block">
+              <TableOfContents content={post.content} />
+            </aside>
+          )}
         </div>
       </div>
     </div>

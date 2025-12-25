@@ -138,120 +138,124 @@ export function PostListClient({ initialData }: PostListClientProps) {
         </Tabs>
       </nav>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {posts.map((post: Post) => (
-        <div key={post.id} className="relative h-full">
-          <Link href={`/posts/${post.slug}`} className="block group h-full">
-            <Card className="h-full flex flex-col overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50 py-0 pb-6">
-              {post.type !== "SHORT" && (
-                <div className="thumbnail-container relative aspect-video overflow-hidden bg-muted">
-                  {post.thumbnail ? (
-                    <Image
-                      src={post.thumbnail}
-                      alt={post.title}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div className="default-thumbnail absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+        {posts.map((post: Post) => (
+          <div key={post.id} className={`relative ${post.type !== "SHORT" ? "h-full" : ""}`}>
+            <Link href={`/posts/${post.slug}`} className={`block group ${post.type !== "SHORT" ? "h-full" : ""}`}>
+              <Card
+                className={`flex flex-col overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50 py-0 pb-6 ${post.type !== "SHORT" ? "h-full" : "py-6"}`}
+              >
+                {post.type !== "SHORT" && (
+                  <div className="thumbnail-container relative aspect-video overflow-hidden bg-muted">
+                    {post.thumbnail ? (
                       <Image
-                        src="/logo-byungsker.png"
-                        alt="Default thumbnail"
-                        width={120}
-                        height={56}
-                        className="opacity-50"
+                        src={post.thumbnail}
+                        alt={post.title}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
+                    ) : (
+                      <div className="default-thumbnail absolute inset-0 flex items-center justify-center bg-linear-to-br from-muted to-muted/50">
+                        <Image
+                          src="/logo-byungsker.png"
+                          alt="Default thumbnail"
+                          width={120}
+                          height={56}
+                          className="opacity-50"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+                <CardHeader>
+                  <div className="card-meta flex flex-col gap-2 mb-3">
+                    <div className="card-meta-row flex justify-between items-center">
+                      <div className="card-type-badges flex gap-1.5">
+                        {post.type === "SHORT" && (
+                          <Badge
+                            variant="secondary"
+                            className="short-badge bg-violet-500/10 text-violet-500 hover:bg-violet-500/20 border-0"
+                          >
+                            Short
+                          </Badge>
+                        )}
+                        {post.series && (
+                          <Badge
+                            variant="secondary"
+                            className="series-badge bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0"
+                          >
+                            <BookOpen className="h-3 w-3 mr-1" />
+                            {post.series.name}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="card-date flex items-center gap-2 text-xs text-muted-foreground">
+                        <time dateTime={new Date(post.createdAt).toISOString()}>
+                          {format(new Date(post.createdAt), "yyyy.MM.dd")}
+                        </time>
+                        <span>·</span>
+                        <span>{calculateReadingTime(post.content)}</span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              )}
-              <CardHeader>
-                <div className="card-meta flex justify-between items-center mb-3">
-                  <div className="card-badges flex gap-1.5 flex-wrap">
-                    {post.type === "SHORT" && (
-                      <Badge
-                        variant="secondary"
-                        className="short-badge bg-violet-500/10 text-violet-500 hover:bg-violet-500/20 border-0"
-                      >
-                        Short
-                      </Badge>
-                    )}
-                    {post.series && (
-                      <Badge
-                        variant="secondary"
-                        className="series-badge bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0"
-                      >
-                        <BookOpen className="h-3 w-3 mr-1" />
-                        {post.series.name}
-                      </Badge>
-                    )}
-                    {post.tags && post.tags.length > 0
-                      ? post.tags.slice(0, post.series || post.type === "SHORT" ? 1 : 2).map((tag) => (
+                    {post.tags && post.tags.length > 0 && (
+                      <div className="card-tag-badges flex gap-1.5 flex-wrap">
+                        {post.tags.slice(0, 2).map((tag) => (
                           <Badge key={tag} variant="outline" className="font-normal">
                             {tag}
                           </Badge>
-                        ))
-                      : !post.series && post.type !== "SHORT" && (
-                          <Badge variant="outline" className="font-normal">
-                            Post
-                          </Badge>
-                        )}
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="card-date flex items-center gap-2 text-xs text-muted-foreground">
-                    <time dateTime={new Date(post.createdAt).toISOString()}>
-                      {format(new Date(post.createdAt), "yyyy.MM.dd")}
-                    </time>
-                    <span>·</span>
-                    <span>{calculateReadingTime(post.content)}</span>
-                  </div>
-                </div>
-                <CardTitle className="text-xl font-bold line-clamp-2 group-hover:text-primary transition-colors">
-                  {post.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grow">
-                <CardDescription className="line-clamp-3 text-base">{post.excerpt || ""}</CardDescription>
-              </CardContent>
-              <CardFooter className="pt-0 mt-auto flex justify-between items-center">
-                <span className="text-sm font-medium text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  Read more
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-arrow-right"
-                  >
-                    <path d="M5 12h14" />
-                    <path d="m12 5 7 7-7 7" />
-                  </svg>
-                </span>
-                {user && (
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEdit(post.id, e)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={(e) => handleDelete(post.id, post.title, e)}
+                  <CardTitle className="text-xl font-bold line-clamp-2 min-h-14 group-hover:text-primary transition-colors">
+                    {post.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className={post.type !== "SHORT" ? "grow" : ""}>
+                  <CardDescription className="line-clamp-3 text-base">{post.excerpt || ""}</CardDescription>
+                </CardContent>
+                <CardFooter
+                  className={`pt-0 flex justify-between items-center ${post.type !== "SHORT" ? "mt-auto" : ""}`}
+                >
+                  <span className="text-sm font-medium text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    Read more
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="lucide lucide-arrow-right"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </CardFooter>
-            </Card>
-          </Link>
-        </div>
-      ))}
+                      <path d="M5 12h14" />
+                      <path d="m12 5 7 7-7 7" />
+                    </svg>
+                  </span>
+                  {user && (
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEdit(post.id, e)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={(e) => handleDelete(post.id, post.title, e)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </CardFooter>
+              </Card>
+            </Link>
+          </div>
+        ))}
       </div>
     </div>
   );
