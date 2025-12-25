@@ -31,6 +31,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     // Revalidate paths
     revalidatePath("/");
     revalidatePath("/posts");
+    revalidatePath("/short-posts");
     revalidatePath("/tags");
     revalidatePath(`/posts/${post.slug}`);
 
@@ -70,7 +71,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { id } = await params;
     const body = await request.json();
-    const { title, slug, excerpt, content, tags, published, thumbnail, seriesId } = body;
+    const { title, slug, excerpt, content, tags, published, thumbnail, seriesId, type } = body;
 
     // Update post
     const post = await prisma.post.update({
@@ -81,6 +82,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         ...(excerpt !== undefined && { excerpt }),
         ...(content !== undefined && { content }),
         ...(tags !== undefined && { tags }),
+        ...(type !== undefined && { type }),
         ...(published !== undefined && { published }),
         ...(thumbnail !== undefined && { thumbnail }),
         ...(seriesId !== undefined && { seriesId }),
@@ -90,6 +92,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // Revalidate paths
     revalidatePath("/");
     revalidatePath("/posts");
+    revalidatePath("/short-posts");
     revalidatePath("/tags");
     revalidatePath(`/posts/${post.slug}`);
 

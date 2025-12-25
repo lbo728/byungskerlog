@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, slug: requestedSlug, excerpt, content, tags, published, thumbnail, seriesId } = body;
+    const { title, slug: requestedSlug, excerpt, content, tags, published, thumbnail, seriesId, type } = body;
 
     // Validate required fields
     if (!title || !requestedSlug || !content) {
@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
         excerpt: excerpt || null,
         content,
         tags: tags || [],
+        type: type || "LONG",
         published: published ?? false,
         thumbnail: thumbnail || null,
         seriesId: seriesId || null,
@@ -59,6 +60,7 @@ export async function POST(request: NextRequest) {
     // On-demand revalidation
     revalidatePath("/");
     revalidatePath("/posts");
+    revalidatePath("/short-posts");
     revalidatePath("/tags");
     revalidatePath(`/posts/${slug}`);
 
@@ -84,12 +86,14 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get("sortBy") || "desc"; // "desc", "asc", or "popular"
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
+    const type = searchParams.get("type"); // "LONG", "SHORT", or null for all
 
     const skip = (page - 1) * limit;
 
     type WhereClause = {
       published?: boolean;
       tags?: { has: string };
+      type?: "LONG" | "SHORT";
       createdAt?: {
         gte?: Date;
         lt?: Date;
@@ -105,6 +109,11 @@ export async function GET(request: NextRequest) {
 
     if (tag) {
       where.tags = { has: tag };
+    }
+
+    // Filter by post type
+    if (type && (type === "LONG" || type === "SHORT")) {
+      where.type = type;
     }
 
     // Add date range filter
@@ -139,6 +148,7 @@ export async function GET(request: NextRequest) {
         content: true,
         thumbnail: true,
         tags: true,
+        type: true,
         published: true,
         createdAt: true,
         updatedAt: true,
