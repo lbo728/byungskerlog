@@ -41,7 +41,7 @@ export function FloatingActionButton({
   return (
     <div
       ref={containerRef}
-      className="fab-container fixed bottom-6 right-6 z-50 flex flex-col-reverse items-end gap-3"
+      className="fab-container fixed bottom-4 right-4 z-50 flex flex-col-reverse items-end gap-3"
     >
       {/* 액션 버튼들 */}
       <div
