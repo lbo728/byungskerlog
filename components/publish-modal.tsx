@@ -14,6 +14,7 @@ interface PublishModalProps {
   title: string;
   content: string;
   tags: string[];
+  postType: "LONG" | "SHORT";
   isEditMode: boolean;
   postId?: string;
   draftId?: string | null;
@@ -39,6 +40,7 @@ export function PublishModal({
   title,
   content,
   tags,
+  postType,
   isEditMode,
   postId,
   draftId,
@@ -82,6 +84,7 @@ export function PublishModal({
         excerpt: excerpt.trim() || null,
         content,
         tags,
+        type: postType,
         published: true,
         thumbnail,
         seriesId,
@@ -126,7 +129,7 @@ export function PublishModal({
     } finally {
       setIsPublishing(false);
     }
-  }, [title, content, tags, excerpt, thumbnail, seriesId, isEditMode, postId, draftId, onOpenChange, onPublishSuccess]);
+  }, [title, content, tags, postType, excerpt, thumbnail, seriesId, isEditMode, postId, draftId, onOpenChange, onPublishSuccess]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
