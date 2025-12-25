@@ -25,6 +25,7 @@ export function Header() {
 
   const navItems = [
     { label: "Post", href: "/posts" },
+    { label: "Short", href: "/short-posts" },
     { label: "Series", href: "/series" },
     { label: "Tags", href: "/tags" },
     { label: "About", href: "/about" },
