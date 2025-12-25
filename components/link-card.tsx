@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ExternalLink } from "lucide-react";
 
 interface OGData {
@@ -19,8 +19,17 @@ export function LinkCard({ url }: LinkCardProps) {
   const [ogData, setOgData] = useState<OGData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+  }, []);
 
   useEffect(() => {
+    setImageError(false);
+    setIsLoading(true);
+    setError(false);
+
     const fetchOgData = async () => {
       try {
         const response = await fetch(`/api/og?url=${encodeURIComponent(url)}`);
@@ -67,7 +76,7 @@ export function LinkCard({ url }: LinkCardProps) {
           <div className="h-4 bg-muted rounded w-full" />
           <div className="h-4 bg-muted rounded w-1/4" />
         </div>
-        <div className="hidden sm:block w-[200px] h-[120px] bg-muted" />
+        <div className="w-[120px] sm:w-[200px] h-[100px] sm:h-[120px] bg-muted flex-shrink-0" />
       </div>
     );
   }
@@ -107,14 +116,15 @@ export function LinkCard({ url }: LinkCardProps) {
           <span className="truncate">{ogData.siteName || hostname}</span>
         </div>
       </div>
-      {ogData.image && (
-        <div className="link-card-image hidden sm:block w-[200px] h-[120px] flex-shrink-0">
+      {ogData.image && !imageError && (
+        <div className="link-card-image w-[100px] sm:w-[200px] h-[80px] sm:h-[120px] flex-shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={ogData.image}
             alt={ogData.title || ""}
             className="w-full h-full object-cover"
             loading="lazy"
+            onError={handleImageError}
           />
         </div>
       )}
