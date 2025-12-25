@@ -31,6 +31,7 @@ async function getPosts() {
         content: true,
         thumbnail: true,
         tags: true,
+        type: true,
         createdAt: true,
         updatedAt: true,
         series: {

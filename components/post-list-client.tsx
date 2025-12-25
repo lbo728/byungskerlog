@@ -29,6 +29,7 @@ interface Post {
   content: string;
   thumbnail: string | null;
   tags: string[];
+  type: "LONG" | "SHORT";
   createdAt: Date;
   updatedAt: Date;
   series: Series | null;
@@ -142,30 +143,40 @@ export function PostListClient({ initialData }: PostListClientProps) {
         <div key={post.id} className="relative h-full">
           <Link href={`/posts/${post.slug}`} className="block group h-full">
             <Card className="h-full flex flex-col overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50 py-0 pb-6">
-              <div className="thumbnail-container relative aspect-video overflow-hidden bg-muted">
-                {post.thumbnail ? (
-                  <Image
-                    src={post.thumbnail}
-                    alt={post.title}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
-                ) : (
-                  <div className="default-thumbnail absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+              {post.type !== "SHORT" && (
+                <div className="thumbnail-container relative aspect-video overflow-hidden bg-muted">
+                  {post.thumbnail ? (
                     <Image
-                      src="/logo-byungsker.png"
-                      alt="Default thumbnail"
-                      width={120}
-                      height={56}
-                      className="opacity-50"
+                      src={post.thumbnail}
+                      alt={post.title}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <div className="default-thumbnail absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                      <Image
+                        src="/logo-byungsker.png"
+                        alt="Default thumbnail"
+                        width={120}
+                        height={56}
+                        className="opacity-50"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
               <CardHeader>
                 <div className="card-meta flex justify-between items-center mb-3">
                   <div className="card-badges flex gap-1.5 flex-wrap">
+                    {post.type === "SHORT" && (
+                      <Badge
+                        variant="secondary"
+                        className="short-badge bg-violet-500/10 text-violet-500 hover:bg-violet-500/20 border-0"
+                      >
+                        Short
+                      </Badge>
+                    )}
                     {post.series && (
                       <Badge
                         variant="secondary"
@@ -176,12 +187,12 @@ export function PostListClient({ initialData }: PostListClientProps) {
                       </Badge>
                     )}
                     {post.tags && post.tags.length > 0
-                      ? post.tags.slice(0, post.series ? 1 : 2).map((tag) => (
+                      ? post.tags.slice(0, post.series || post.type === "SHORT" ? 1 : 2).map((tag) => (
                           <Badge key={tag} variant="outline" className="font-normal">
                             {tag}
                           </Badge>
                         ))
-                      : !post.series && (
+                      : !post.series && post.type !== "SHORT" && (
                           <Badge variant="outline" className="font-normal">
                             Post
                           </Badge>

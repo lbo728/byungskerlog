@@ -12,6 +12,7 @@ import { PostActions } from "@/components/post-actions";
 import { ReadingProgress } from "@/components/reading-progress";
 import { AdSense } from "@/components/adsense";
 import { Comments } from "@/components/comments";
+import { ShortPostsNav } from "@/components/short-posts-nav";
 import { ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
 import Image from "next/image";
 import { calculateReadingTime } from "@/lib/reading-time";
@@ -209,9 +210,46 @@ async function getRelatedPosts(tags: string[], currentSlug: string) {
   return posts;
 }
 
-export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
+async function getShortPostsNav(createdAt: Date, currentSlug: string, postType: string) {
+  if (postType !== "SHORT") return { prevShortPost: null, nextShortPost: null };
+
+  const [prevShortPost, nextShortPost] = await Promise.all([
+    prisma.post.findFirst({
+      where: {
+        published: true,
+        type: "SHORT",
+        slug: { not: currentSlug },
+        createdAt: { lt: createdAt },
+      },
+      orderBy: { createdAt: "desc" },
+      select: { slug: true, title: true },
+    }),
+    prisma.post.findFirst({
+      where: {
+        published: true,
+        type: "SHORT",
+        slug: { not: currentSlug },
+        createdAt: { gt: createdAt },
+      },
+      orderBy: { createdAt: "asc" },
+      select: { slug: true, title: true },
+    }),
+  ]);
+
+  return { prevShortPost, nextShortPost };
+}
+
+export default async function PostPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ from?: string }>;
+}) {
   const { slug } = await params;
+  const { from } = await searchParams;
   const post = await getPost(slug);
+  const isFromShort = from === "short";
 
   if (!post) {
     notFound();
@@ -220,6 +258,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const seriesPosts = await getSeriesPosts(post.seriesId);
   const { prevPost, nextPost } = await getPrevNextPosts(post.createdAt, post.seriesId, post.slug);
   const relatedPosts = await getRelatedPosts(post.tags || [], post.slug);
+  const { prevShortPost, nextShortPost } = await getShortPostsNav(post.createdAt, post.slug, post.type);
   const currentSeriesIndex = seriesPosts.findIndex((p) => p.slug === post.slug);
 
   return (
@@ -247,11 +286,11 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
             {/* 뒤로가기 버튼 */}
             <Link
-              href="/posts"
+              href={isFromShort ? "/short-posts" : "/posts"}
               className="back-to-posts inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
             >
               <ArrowLeft className="h-4 w-4" />
-              Post
+              {isFromShort ? "Short" : "Post"}
             </Link>
 
             <article>
@@ -430,6 +469,11 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                   </div>
                 </section>
               </>
+            )}
+
+            {/* 짧은 글 네비게이션 (SHORT 타입인 경우) */}
+            {post.type === "SHORT" && (prevShortPost || nextShortPost) && (
+              <ShortPostsNav prevShortPost={prevShortPost} nextShortPost={nextShortPost} />
             )}
 
             {/* 댓글 */}
