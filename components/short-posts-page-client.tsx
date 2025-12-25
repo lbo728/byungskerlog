@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react";
@@ -112,69 +112,83 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
 
   return (
     <>
-      <div className="short-posts-grid grid gap-6">
-        {posts.map((post) => (
-          <div key={post.id} className="relative">
-            <Link href={`/posts/${post.slug}?from=short`} className="group block">
-              <Card className="short-post-card transition-colors hover:border-primary">
-                <CardHeader>
-                  <div className="short-post-meta flex items-center justify-between gap-2 mb-2">
-                    <div className="short-post-info flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                      {post.series && (
-                        <Badge
-                          variant="secondary"
-                          className="series-badge bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0"
-                        >
-                          <BookOpen className="h-3 w-3 mr-1" />
-                          {post.series.name}
-                        </Badge>
-                      )}
-                      <time dateTime={new Date(post.createdAt).toISOString()}>
-                        {format(new Date(post.createdAt), "MMMM d, yyyy")}
-                      </time>
-                      <span>·</span>
-                      <span>{calculateReadingTime(post.content)}</span>
-                    </div>
-                    {user && (
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEdit(post.id, e)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={(e) => handleDelete(post.id, post.title, e)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+      <div className="short-posts-table rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[60%]">제목</TableHead>
+              <TableHead className="hidden sm:table-cell">읽는 시간</TableHead>
+              <TableHead className="text-right">작성일</TableHead>
+              {user && <TableHead className="w-[100px]"></TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {posts.map((post) => (
+              <TableRow key={post.id} className="group">
+                <TableCell>
+                  <Link
+                    href={`/posts/${post.slug}?from=short`}
+                    className="short-post-link block hover:text-primary transition-colors"
+                  >
+                    <div className="short-post-title-wrapper flex flex-col gap-1">
+                      <span className="short-post-title font-medium text-base group-hover:text-primary transition-colors">
+                        {post.title}
+                      </span>
+                      <div className="short-post-badges flex items-center gap-2 flex-wrap">
+                        {post.series && (
+                          <Badge
+                            variant="secondary"
+                            className="series-badge bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0 text-xs"
+                          >
+                            <BookOpen className="h-3 w-3 mr-1" />
+                            {post.series.name}
+                          </Badge>
+                        )}
+                        {post.tags && post.tags.length > 0 && (
+                          <>
+                            {post.tags.slice(0, 2).map((tag) => (
+                              <Badge key={tag} variant="outline" className="text-xs font-normal">
+                                {tag}
+                              </Badge>
+                            ))}
+                            {post.tags.length > 2 && (
+                              <span className="text-xs text-muted-foreground">+{post.tags.length - 2}</span>
+                            )}
+                          </>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <CardTitle className="short-post-title text-2xl group-hover:text-primary transition-colors">
-                    {post.title}
-                  </CardTitle>
-                  {post.excerpt && (
-                    <CardDescription className="line-clamp-2 text-base mt-2">
-                      {post.excerpt}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                {post.tags && post.tags.length > 0 && (
-                  <CardContent>
-                    <div className="short-post-tags flex flex-wrap gap-2">
-                      {post.tags.map((tag) => (
-                        <span key={tag} className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                          {tag}
-                        </span>
-                      ))}
                     </div>
-                  </CardContent>
+                  </Link>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
+                  {calculateReadingTime(post.content)}
+                </TableCell>
+                <TableCell className="text-right text-muted-foreground text-sm whitespace-nowrap">
+                  <time dateTime={new Date(post.createdAt).toISOString()}>
+                    {format(new Date(post.createdAt), "yyyy.MM.dd")}
+                  </time>
+                </TableCell>
+                {user && (
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEdit(post.id, e)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={(e) => handleDelete(post.id, post.title, e)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 )}
-              </Card>
-            </Link>
-          </div>
-        ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       {pagination.totalPages > 1 && (

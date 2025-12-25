@@ -138,11 +138,11 @@ export function PostListClient({ initialData }: PostListClientProps) {
         </Tabs>
       </nav>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
       {posts.map((post: Post) => (
-        <div key={post.id} className="relative h-full">
-          <Link href={`/posts/${post.slug}`} className="block group h-full">
-            <Card className="h-full flex flex-col overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50 py-0 pb-6">
+        <div key={post.id} className={`relative ${post.type !== "SHORT" ? "h-full" : ""}`}>
+          <Link href={`/posts/${post.slug}`} className={`block group ${post.type !== "SHORT" ? "h-full" : ""}`}>
+            <Card className={`overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50 ${post.type !== "SHORT" ? "h-full flex flex-col py-0 pb-6" : "py-4"}`}>
               {post.type !== "SHORT" && (
                 <div className="thumbnail-container relative aspect-video overflow-hidden bg-muted">
                   {post.thumbnail ? (
@@ -210,10 +210,10 @@ export function PostListClient({ initialData }: PostListClientProps) {
                   {post.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grow">
+              <CardContent className={post.type !== "SHORT" ? "grow" : ""}>
                 <CardDescription className="line-clamp-3 text-base">{post.excerpt || ""}</CardDescription>
               </CardContent>
-              <CardFooter className="pt-0 mt-auto flex justify-between items-center">
+              <CardFooter className={`pt-0 flex justify-between items-center ${post.type !== "SHORT" ? "mt-auto" : ""}`}>
                 <span className="text-sm font-medium text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                   Read more
                   <svg
