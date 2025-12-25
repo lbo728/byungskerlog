@@ -44,6 +44,7 @@ export default function WritePage() {
   const [existingThumbnail, setExistingThumbnail] = useState<string | null>(null);
   const [existingSeriesId, setExistingSeriesId] = useState<string | null>(null);
   const [existingExcerpt, setExistingExcerpt] = useState<string | null>(null);
+  const [postType, setPostType] = useState<"LONG" | "SHORT">("LONG");
   const [allTags, setAllTags] = useState<string[]>([]);
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
@@ -392,6 +393,7 @@ export default function WritePage() {
           setTitle(post.title);
           setTags(post.tags || []);
           setContent(post.content);
+          setPostType(post.type || "LONG");
           setExistingThumbnail(post.thumbnail || null);
           setExistingSeriesId(post.seriesId || null);
           setExistingExcerpt(post.excerpt || null);
@@ -558,6 +560,29 @@ export default function WritePage() {
                     )}
                   </div>
                 </div>
+                <div className="post-type-section mt-4 px-4 flex items-center gap-4">
+                  <span className="text-sm text-muted-foreground">글 유형:</span>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={postType === "LONG" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setPostType("LONG")}
+                      className="h-8"
+                    >
+                      Long Post
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={postType === "SHORT" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setPostType("SHORT")}
+                      className="h-8"
+                    >
+                      Short Post
+                    </Button>
+                  </div>
+                </div>
               </div>
 
               <MarkdownToolbar onInsert={insertMarkdown} />
@@ -664,6 +689,7 @@ export default function WritePage() {
         title={title}
         content={content}
         tags={tags}
+        postType={postType}
         isEditMode={isEditMode}
         postId={postId || undefined}
         draftId={draftId}
