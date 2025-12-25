@@ -18,17 +18,33 @@ interface CodeComponentProps {
   children?: ReactNode;
 }
 
+const URL_LINE_REGEX = /^(https?:\/\/[^\s]+)$/;
+
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  const urlLinePattern = /^(https?:\/\/[^\s]+)$/gm;
-  const processedContent = content.replace(urlLinePattern, '\n<standalone-link href="$1"></standalone-link>\n');
+  const lines = content.split("\n");
+  const segments: { type: "markdown" | "url"; content: string }[] = [];
+
+  let markdownBuffer: string[] = [];
+
+  const flushMarkdown = () => {
+    if (markdownBuffer.length > 0) {
+      segments.push({ type: "markdown", content: markdownBuffer.join("\n") });
+      markdownBuffer = [];
+    }
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (URL_LINE_REGEX.test(trimmed)) {
+      flushMarkdown();
+      segments.push({ type: "url", content: trimmed });
+    } else {
+      markdownBuffer.push(line);
+    }
+  }
+  flushMarkdown();
 
   const components: Components = {
-    "standalone-link": ({ href }: { href?: string }) => {
-      if (href) {
-        return <LinkCard url={href} />;
-      }
-      return null;
-    },
     h1: ({ children, ...props }) => {
       const text = String(children);
       const id = text
@@ -112,9 +128,20 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
   return (
     <div className="prose prose-lg dark:prose-invert max-w-none">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={components}>
-        {processedContent}
-      </ReactMarkdown>
+      {segments.map((segment, index) =>
+        segment.type === "url" ? (
+          <LinkCard key={index} url={segment.content} />
+        ) : (
+          <ReactMarkdown
+            key={index}
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+            components={components}
+          >
+            {segment.content}
+          </ReactMarkdown>
+        )
+      )}
     </div>
   );
 }
