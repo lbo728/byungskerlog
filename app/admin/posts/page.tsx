@@ -28,6 +28,7 @@ interface Post {
   title: string;
   excerpt: string | null;
   tags: string[];
+  type: "LONG" | "SHORT";
   published: boolean;
   createdAt: string;
   updatedAt: string;
@@ -66,6 +67,7 @@ export default function AdminPostsPage() {
 
   // Filter states
   const [selectedTag, setSelectedTag] = useState<string>("all");
+  const [selectedType, setSelectedType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("desc");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
@@ -88,6 +90,10 @@ export default function AdminPostsPage() {
 
       if (selectedTag && selectedTag !== "all") {
         params.append("tag", selectedTag);
+      }
+
+      if (selectedType && selectedType !== "all") {
+        params.append("type", selectedType);
       }
 
       if (startDate) {
@@ -115,7 +121,7 @@ export default function AdminPostsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedTag, sortBy, startDate, endDate]);
+  }, [selectedTag, selectedType, sortBy, startDate, endDate]);
 
   useEffect(() => {
     fetchPosts();
@@ -128,6 +134,7 @@ export default function AdminPostsPage() {
 
   const handleResetFilters = () => {
     setSelectedTag("all");
+    setSelectedType("all");
     setSortBy("desc");
     setStartDate("");
     setEndDate("");
@@ -346,6 +353,20 @@ export default function AdminPostsPage() {
                 </div>
 
                 <div className="flex-1 min-w-[200px]">
+                  <label className="text-sm font-medium mb-2 block">유형</label>
+                  <Select value={selectedType} onValueChange={setSelectedType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="모든 유형" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">모든 유형</SelectItem>
+                      <SelectItem value="LONG">Long</SelectItem>
+                      <SelectItem value="SHORT">Short</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex-1 min-w-[200px]">
                   <label className="text-sm font-medium mb-2 block">정렬</label>
                   <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger>
@@ -400,6 +421,9 @@ export default function AdminPostsPage() {
                       <div className="post-card-content flex-1 min-w-0">
                         <div className="post-card-header flex flex-wrap items-center gap-2 mb-2">
                           <h2 className="text-lg sm:text-xl font-semibold truncate max-w-full">{post.title}</h2>
+                          {post.type === "SHORT" && (
+                            <span className="px-2 py-0.5 text-xs bg-violet-500/10 text-violet-500 rounded">Short</span>
+                          )}
                           {!post.published && (
                             <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded">비공개</span>
                           )}
