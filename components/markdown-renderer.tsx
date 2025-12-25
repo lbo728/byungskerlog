@@ -6,7 +6,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { cn } from "@/lib/utils";
 import { LinkCard } from "@/components/link-card";
 import type { Components } from "react-markdown";
-import React, { type ReactElement, type ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 interface MarkdownRendererProps {
   content: string;
@@ -19,7 +19,16 @@ interface CodeComponentProps {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
+  const urlLinePattern = /^(https?:\/\/[^\s]+)$/gm;
+  const processedContent = content.replace(urlLinePattern, '\n<standalone-link href="$1"></standalone-link>\n');
+
   const components: Components = {
+    "standalone-link": ({ href }: { href?: string }) => {
+      if (href) {
+        return <LinkCard url={href} />;
+      }
+      return null;
+    },
     h1: ({ children, ...props }) => {
       const text = String(children);
       const id = text
@@ -94,45 +103,17 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       </blockquote>
     ),
     br: () => <br className="my-2" />,
-    p: ({ children, ...props }) => {
-      const urlPattern = /^https?:\/\/[^\s]+$/;
-
-      const getUrlFromChild = (child: ReactNode): string | null => {
-        if (typeof child === "string") {
-          const text = child.trim();
-          if (urlPattern.test(text)) return text;
-        }
-        if (React.isValidElement(child)) {
-          const element = child as ReactElement<{ href?: string }>;
-          if (element.props?.href && urlPattern.test(element.props.href)) {
-            return element.props.href;
-          }
-        }
-        return null;
-      };
-
-      if (!Array.isArray(children)) {
-        const url = getUrlFromChild(children);
-        if (url) return <LinkCard url={url} />;
-      }
-
-      if (Array.isArray(children) && children.length === 1) {
-        const url = getUrlFromChild(children[0]);
-        if (url) return <LinkCard url={url} />;
-      }
-
-      return (
-        <p className="mt-3 mb-3" {...props}>
-          {children}
-        </p>
-      );
-    },
+    p: ({ children, ...props }) => (
+      <p className="mt-3 mb-3" {...props}>
+        {children}
+      </p>
+    ),
   };
 
   return (
     <div className="prose prose-lg dark:prose-invert max-w-none">
       <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={components}>
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );
