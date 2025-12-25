@@ -103,7 +103,7 @@ export function LinkCard({ url }: LinkCardProps) {
       className="link-card my-4 flex overflow-hidden rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors no-underline p-3"
     >
       <div className="link-card-content flex-1 min-w-0">
-        <h4 className="link-card-title font-semibold text-foreground line-clamp-1 mb-1">
+        <h4 className="link-card-title font-semibold text-foreground line-clamp-1">
           {ogData.title || hostname}
         </h4>
         {ogData.description && (
@@ -117,7 +117,7 @@ export function LinkCard({ url }: LinkCardProps) {
         </div>
       </div>
       {ogData.image && !imageError && (
-        <div className="link-card-image w-[100px] sm:w-[200px] h-[80px] sm:h-[120px] flex-shrink-0">
+        <div className="link-card-image w-[100px] sm:w-[200px] h-[80px] sm:h-[120px] flex-shrink-0 overflow-hidden rounded-lg ml-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={ogData.image}

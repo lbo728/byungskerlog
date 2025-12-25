@@ -164,19 +164,19 @@ export function Header() {
         <div className="admin-sub-gnb hidden md:block border-t border-border/40 bg-muted/50">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex h-12 items-center gap-4">
-              <Button asChild variant="ghost" size="sm">
+              <Button asChild variant="ghost" size="sm" onClick={() => setIsAdminMenuOpen(false)}>
                 <Link href="/admin/write" className="gap-2">
                   <PenSquare className="h-4 w-4" />
                   글쓰기
                 </Link>
               </Button>
-              <Button asChild variant="ghost" size="sm">
+              <Button asChild variant="ghost" size="sm" onClick={() => setIsAdminMenuOpen(false)}>
                 <Link href="/admin/drafts" className="gap-2">
                   <FileText className="h-4 w-4" />
                   임시저장
                 </Link>
               </Button>
-              <Button asChild variant="ghost" size="sm">
+              <Button asChild variant="ghost" size="sm" onClick={() => setIsAdminMenuOpen(false)}>
                 <Link href="/admin/posts" className="gap-2">
                   <FolderOpen className="h-4 w-4" />
                   포스트 관리

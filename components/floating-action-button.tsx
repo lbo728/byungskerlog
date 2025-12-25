@@ -41,8 +41,7 @@ export function FloatingActionButton({
   return (
     <div
       ref={containerRef}
-      className="fab-container fixed z-[9999] flex flex-col-reverse items-end gap-3"
-      style={{ bottom: 16, right: 16 }}
+      className="fab-container fixed bottom-4 right-4 z-[9999] flex flex-col-reverse items-end gap-3"
     >
       {/* 액션 버튼들 */}
       <div
