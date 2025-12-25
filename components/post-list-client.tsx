@@ -138,11 +138,11 @@ export function PostListClient({ initialData }: PostListClientProps) {
         </Tabs>
       </nav>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {posts.map((post: Post) => (
-        <div key={post.id} className={`relative ${post.type !== "SHORT" ? "h-full" : ""}`}>
-          <Link href={`/posts/${post.slug}`} className={`block group ${post.type !== "SHORT" ? "h-full" : ""}`}>
-            <Card className={`overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50 ${post.type !== "SHORT" ? "h-full flex flex-col py-0 pb-6" : "py-4"}`}>
+        <div key={post.id} className="relative h-full">
+          <Link href={`/posts/${post.slug}`} className="block group h-full">
+            <Card className="h-full flex flex-col overflow-hidden border-border/40 bg-card/50 hover:bg-card hover:shadow-md transition-all duration-300 group-hover:border-primary/50 py-0 pb-6">
               {post.type !== "SHORT" && (
                 <div className="thumbnail-container relative aspect-video overflow-hidden bg-muted">
                   {post.thumbnail ? (
@@ -166,56 +166,54 @@ export function PostListClient({ initialData }: PostListClientProps) {
                   )}
                 </div>
               )}
-              <CardHeader className={post.type === "SHORT" ? "pb-3" : ""}>
-                <div className="card-meta flex justify-between items-center mb-3">
-                  <div className="card-badges flex gap-1.5 flex-wrap">
-                    {post.type === "SHORT" && (
-                      <Badge
-                        variant="secondary"
-                        className="short-badge bg-violet-500/10 text-violet-500 hover:bg-violet-500/20 border-0"
-                      >
-                        Short
-                      </Badge>
-                    )}
-                    {post.series && (
-                      <Badge
-                        variant="secondary"
-                        className="series-badge bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0"
-                      >
-                        <BookOpen className="h-3 w-3 mr-1" />
-                        {post.series.name}
-                      </Badge>
-                    )}
-                    {post.tags && post.tags.length > 0
-                      ? post.tags.slice(0, post.series || post.type === "SHORT" ? 1 : 2).map((tag) => (
-                          <Badge key={tag} variant="outline" className="font-normal">
-                            {tag}
-                          </Badge>
-                        ))
-                      : !post.series && post.type !== "SHORT" && (
-                          <Badge variant="outline" className="font-normal">
-                            Post
-                          </Badge>
-                        )}
+              <CardHeader>
+                <div className="card-meta flex flex-col gap-2 mb-3">
+                  <div className="card-meta-row flex justify-between items-center">
+                    <div className="card-type-badges flex gap-1.5">
+                      {post.type === "SHORT" && (
+                        <Badge
+                          variant="secondary"
+                          className="short-badge bg-violet-500/10 text-violet-500 hover:bg-violet-500/20 border-0"
+                        >
+                          Short
+                        </Badge>
+                      )}
+                      {post.series && (
+                        <Badge
+                          variant="secondary"
+                          className="series-badge bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0"
+                        >
+                          <BookOpen className="h-3 w-3 mr-1" />
+                          {post.series.name}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="card-date flex items-center gap-2 text-xs text-muted-foreground">
+                      <time dateTime={new Date(post.createdAt).toISOString()}>
+                        {format(new Date(post.createdAt), "yyyy.MM.dd")}
+                      </time>
+                      <span>·</span>
+                      <span>{calculateReadingTime(post.content)}</span>
+                    </div>
                   </div>
-                  <div className="card-date flex items-center gap-2 text-xs text-muted-foreground">
-                    <time dateTime={new Date(post.createdAt).toISOString()}>
-                      {format(new Date(post.createdAt), "yyyy.MM.dd")}
-                    </time>
-                    <span>·</span>
-                    <span>{calculateReadingTime(post.content)}</span>
-                  </div>
+                  {post.tags && post.tags.length > 0 && (
+                    <div className="card-tag-badges flex gap-1.5 flex-wrap">
+                      {post.tags.slice(0, 2).map((tag) => (
+                        <Badge key={tag} variant="outline" className="font-normal">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <CardTitle className={`font-bold group-hover:text-primary transition-colors ${post.type === "SHORT" ? "text-lg line-clamp-1" : "text-xl line-clamp-2"}`}>
+                <CardTitle className="text-xl font-bold line-clamp-2 group-hover:text-primary transition-colors">
                   {post.title}
                 </CardTitle>
               </CardHeader>
-              {post.type !== "SHORT" && (
-                <CardContent className="grow">
-                  <CardDescription className="line-clamp-3 text-base">{post.excerpt || ""}</CardDescription>
-                </CardContent>
-              )}
-              <CardFooter className={`pt-0 flex justify-between items-center ${post.type !== "SHORT" ? "mt-auto" : ""}`}>
+              <CardContent className={post.type !== "SHORT" ? "grow" : ""}>
+                <CardDescription className="line-clamp-3 text-base">{post.excerpt || ""}</CardDescription>
+              </CardContent>
+              <CardFooter className="pt-0 mt-auto flex justify-between items-center">
                 <span className="text-sm font-medium text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                   Read more
                   <svg

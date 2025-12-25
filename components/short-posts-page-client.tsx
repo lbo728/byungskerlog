@@ -5,7 +5,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { useUser } from "@stackframe/stack";
 import { useRouter } from "next/navigation";
@@ -143,7 +143,7 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
                     </span>
                   ))}
                   {post.tags.length > 2 && (
-                    <span className="text-xs text-muted-foreground">...</span>
+                    <Plus className="h-3 w-3 text-muted-foreground" />
                   )}
                 </div>
               )}
