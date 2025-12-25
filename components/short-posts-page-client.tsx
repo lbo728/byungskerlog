@@ -4,10 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { BookOpen, ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { useUser } from "@stackframe/stack";
 import { useRouter } from "next/navigation";
@@ -112,84 +110,68 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
 
   return (
     <>
-      <div className="short-posts-table rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[60%]">제목</TableHead>
-              <TableHead className="hidden sm:table-cell">읽는 시간</TableHead>
-              <TableHead className="text-right">작성일</TableHead>
-              {user && <TableHead className="w-[100px]"></TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {posts.map((post) => (
-              <TableRow key={post.id} className="group">
-                <TableCell>
-                  <Link
-                    href={`/posts/${post.slug}?from=short`}
-                    className="short-post-link block hover:text-primary transition-colors"
+      <ul className="short-posts-list divide-y divide-border">
+        {posts.map((post) => (
+          <li key={post.id} className="short-post-item group">
+            <Link
+              href={`/posts/${post.slug}?from=short`}
+              className="short-post-row flex items-center gap-4 py-4 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
+            >
+              <time
+                dateTime={new Date(post.createdAt).toISOString()}
+                className="short-post-date text-sm text-muted-foreground shrink-0 w-[85px]"
+              >
+                {format(new Date(post.createdAt), "yyyy.MM.dd")}
+              </time>
+
+              <span className="short-post-title flex-1 font-medium text-foreground group-hover:text-primary transition-colors truncate">
+                {post.title}
+              </span>
+
+              <span className="short-post-reading-time text-sm text-muted-foreground shrink-0 hidden sm:block">
+                {calculateReadingTime(post.content)}
+              </span>
+
+              {post.tags && post.tags.length > 0 && (
+                <div className="short-post-tags flex items-center gap-1.5 shrink-0 hidden md:flex">
+                  {post.tags.slice(0, 2).map((tag) => (
+                    <span
+                      key={tag}
+                      className="tag-item px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                  {post.tags.length > 2 && (
+                    <span className="text-xs text-muted-foreground">...</span>
+                  )}
+                </div>
+              )}
+
+              {user && (
+                <div className="short-post-actions flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={(e) => handleEdit(post.id, e)}
                   >
-                    <div className="short-post-title-wrapper flex flex-col gap-1">
-                      <span className="short-post-title font-medium text-base group-hover:text-primary transition-colors">
-                        {post.title}
-                      </span>
-                      <div className="short-post-badges flex items-center gap-2 flex-wrap">
-                        {post.series && (
-                          <Badge
-                            variant="secondary"
-                            className="series-badge bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0 text-xs"
-                          >
-                            <BookOpen className="h-3 w-3 mr-1" />
-                            {post.series.name}
-                          </Badge>
-                        )}
-                        {post.tags && post.tags.length > 0 && (
-                          <>
-                            {post.tags.slice(0, 2).map((tag) => (
-                              <Badge key={tag} variant="outline" className="text-xs font-normal">
-                                {tag}
-                              </Badge>
-                            ))}
-                            {post.tags.length > 2 && (
-                              <span className="text-xs text-muted-foreground">+{post.tags.length - 2}</span>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                </TableCell>
-                <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
-                  {calculateReadingTime(post.content)}
-                </TableCell>
-                <TableCell className="text-right text-muted-foreground text-sm whitespace-nowrap">
-                  <time dateTime={new Date(post.createdAt).toISOString()}>
-                    {format(new Date(post.createdAt), "yyyy.MM.dd")}
-                  </time>
-                </TableCell>
-                {user && (
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEdit(post.id, e)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={(e) => handleDelete(post.id, post.title, e)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    onClick={(e) => handleDelete(post.id, post.title, e)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
+            </Link>
+          </li>
+        ))}
+      </ul>
 
       {pagination.totalPages > 1 && (
         <div className="short-posts-pagination flex items-center justify-center gap-2 mt-10">

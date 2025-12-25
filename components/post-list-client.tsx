@@ -166,7 +166,7 @@ export function PostListClient({ initialData }: PostListClientProps) {
                   )}
                 </div>
               )}
-              <CardHeader>
+              <CardHeader className={post.type === "SHORT" ? "pb-3" : ""}>
                 <div className="card-meta flex justify-between items-center mb-3">
                   <div className="card-badges flex gap-1.5 flex-wrap">
                     {post.type === "SHORT" && (
@@ -206,13 +206,15 @@ export function PostListClient({ initialData }: PostListClientProps) {
                     <span>{calculateReadingTime(post.content)}</span>
                   </div>
                 </div>
-                <CardTitle className="text-xl font-bold line-clamp-2 group-hover:text-primary transition-colors">
+                <CardTitle className={`font-bold group-hover:text-primary transition-colors ${post.type === "SHORT" ? "text-lg line-clamp-1" : "text-xl line-clamp-2"}`}>
                   {post.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent className={post.type !== "SHORT" ? "grow" : ""}>
-                <CardDescription className="line-clamp-3 text-base">{post.excerpt || ""}</CardDescription>
-              </CardContent>
+              {post.type !== "SHORT" && (
+                <CardContent className="grow">
+                  <CardDescription className="line-clamp-3 text-base">{post.excerpt || ""}</CardDescription>
+                </CardContent>
+              )}
               <CardFooter className={`pt-0 flex justify-between items-center ${post.type !== "SHORT" ? "mt-auto" : ""}`}>
                 <span className="text-sm font-medium text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                   Read more
