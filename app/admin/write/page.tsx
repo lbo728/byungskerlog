@@ -10,7 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { MarkdownToolbar } from "@/components/markdown-toolbar";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { PublishModal } from "@/components/publish-modal";
-import { ArrowLeft, Eye, X, ImagePlus } from "lucide-react";
+import { FloatingActionButton } from "@/components/floating-action-button";
+import { ArrowLeft, X } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 import { optimizeImage } from "@/lib/image-optimizer";
 
 export default function WritePage() {
@@ -31,7 +34,8 @@ export default function WritePage() {
   const [isLoading] = useState(false);
   const [isFetchingPost, setIsFetchingPost] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [scrollPosition, setScrollPosition] = useState(0);
+  const [scrollRatio, setScrollRatio] = useState(0);
+  const previewContentRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(draftIdParam);
@@ -187,17 +191,45 @@ export default function WritePage() {
 
   // 모바일 미리보기 모달 열기
   const openPreviewModal = () => {
-    setScrollPosition(window.scrollY);
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const ratio = textarea.scrollTop / (textarea.scrollHeight - textarea.clientHeight || 1);
+      setScrollRatio(Math.max(0, Math.min(1, ratio)));
+    }
     setIsPreviewModalOpen(true);
     document.body.style.overflow = "hidden";
   };
 
+  // 미리보기가 열릴 때 스크롤 위치 적용
+  useEffect(() => {
+    if (isPreviewModalOpen && previewContentRef.current) {
+      const previewEl = previewContentRef.current;
+      const targetScroll = scrollRatio * (previewEl.scrollHeight - previewEl.clientHeight);
+      previewEl.scrollTop = targetScroll;
+    }
+  }, [isPreviewModalOpen, scrollRatio]);
+
   // 모바일 미리보기 모달 닫기
   const closePreviewModal = () => {
+    const previewEl = previewContentRef.current;
+    let ratio = scrollRatio;
+
+    if (previewEl) {
+      ratio = previewEl.scrollTop / (previewEl.scrollHeight - previewEl.clientHeight || 1);
+      ratio = Math.max(0, Math.min(1, ratio));
+      setScrollRatio(ratio);
+    }
+
     setIsPreviewModalOpen(false);
     document.body.style.overflow = "";
+
+    // 에디터에 스크롤 위치 적용 (계산된 ratio 직접 사용)
     setTimeout(() => {
-      window.scrollTo(0, scrollPosition);
+      const textarea = textareaRef.current;
+      if (textarea) {
+        const targetScroll = ratio * (textarea.scrollHeight - textarea.clientHeight);
+        textarea.scrollTop = targetScroll;
+      }
     }, 0);
   };
 
@@ -417,44 +449,55 @@ export default function WritePage() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* 헤더 - 메인 헤더(h-16) 바로 아래에 fixed */}
-      <header className="write-header fixed top-16 left-0 right-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-2 sm:px-4 h-14 flex items-center justify-between gap-2 max-w-full">
-          <div className="write-header-left flex items-center gap-1 sm:gap-4 min-w-0 flex-shrink-0">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-1 sm:gap-2 px-2 sm:px-3">
-              <ArrowLeft className="h-4 w-4 flex-shrink-0" />
-              <span className="hidden sm:inline">나가기</span>
-            </Button>
-            <h1 className="text-base sm:text-lg font-semibold truncate">{isEditMode ? "글 수정" : "글쓰기"}</h1>
+      {/* 통합 헤더 - 메인 헤더 + 서브 헤더 */}
+      <header className="write-header-wrapper fixed top-0 left-0 right-0 z-50 w-full bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+        {/* 메인 헤더 영역 */}
+        <div className="write-main-header border-b border-border/40">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex h-16 items-center">
+              <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <Image
+                  src="/logo-byungsker.png"
+                  alt="병스커 BLOG"
+                  width={180}
+                  height={84}
+                  className="logo-image rounded select-none"
+                  priority
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                />
+              </Link>
+            </div>
           </div>
-          <div className="write-header-right flex items-center gap-1 sm:gap-2 flex-shrink-0">
-            {/* 모바일 전용 미리보기 버튼 */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={openPreviewModal}
-              className="lg:hidden gap-1 px-2 sm:px-3"
-              disabled={isLoading}
-            >
-              <Eye className="h-4 w-4 flex-shrink-0" />
-              <span className="hidden xs:inline sm:inline">미리보기</span>
-            </Button>
-            {!isEditMode && (
-              <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading || isSavingDraft} className="px-2 sm:px-3">
-                <span className="hidden sm:inline">{isSavingDraft ? "저장 중..." : "임시저장"}</span>
-                <span className="sm:hidden">{isSavingDraft ? "저장..." : "임시"}</span>
+        </div>
+        {/* 서브 헤더 영역 */}
+        <div className="write-sub-header border-b border-border">
+          <div className="container mx-auto px-2 sm:px-4 h-14 flex items-center justify-between gap-2 max-w-full">
+            <div className="write-header-left flex items-center gap-1 sm:gap-4 min-w-0 flex-shrink-0">
+              <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-1 sm:gap-2 px-2 sm:px-3">
+                <ArrowLeft className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">나가기</span>
               </Button>
-            )}
-            <Button variant="default" size="sm" onClick={handleOpenPublishModal} disabled={isLoading || isFetchingPost} className="px-2 sm:px-3">
-              <span className="hidden sm:inline">{isEditMode ? "수정하기" : "출간하기"}</span>
-              <span className="sm:hidden">{isEditMode ? "수정" : "출간"}</span>
-            </Button>
+              <h1 className="text-base sm:text-lg font-semibold truncate">{isEditMode ? "글 수정" : "글쓰기"}</h1>
+            </div>
+            <div className="write-header-right flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {!isEditMode && (
+                <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading || isSavingDraft} className="px-2 sm:px-3">
+                  <span className="hidden sm:inline">{isSavingDraft ? "저장 중..." : "임시저장"}</span>
+                  <span className="sm:hidden">{isSavingDraft ? "저장..." : "임시"}</span>
+                </Button>
+              )}
+              <Button variant="default" size="sm" onClick={handleOpenPublishModal} disabled={isLoading || isFetchingPost} className="px-2 sm:px-3">
+                <span className="hidden sm:inline">{isEditMode ? "수정하기" : "출간하기"}</span>
+                <span className="sm:hidden">{isEditMode ? "수정" : "출간"}</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* 컨텐츠 - 서브 헤더(h-14) 높이만큼 margin-top */}
-      <div className="container mx-auto max-w-full overflow-x-hidden mt-14">
+      {/* 컨텐츠 - 헤더 높이(h-16 + h-14 = 7.5rem) 만큼 패딩 */}
+      <div className="container mx-auto max-w-full overflow-x-hidden pt-[7.5rem]">
         {isFetchingPost ? (
           <div className="flex items-center justify-center min-h-[calc(100vh-7.5rem)]">
             <p className="text-muted-foreground">글을 불러오는 중...</p>
@@ -468,7 +511,7 @@ export default function WritePage() {
                   placeholder="제목을 입력하세요"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="title-input text-2xl sm:text-4xl lg:text-5xl font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
+                  className="title-input text-base font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
                   disabled={isLoading}
                 />
                 <div className="tag-input-section mt-4 p-4">
@@ -544,7 +587,7 @@ export default function WritePage() {
                     <div className="text-muted-foreground font-medium">이미지 업로드 중...</div>
                   </div>
                 )}
-                {/* 모바일 이미지 업로드 버튼 */}
+                {/* 히든 파일 인풋 */}
                 <input
                   ref={imageInputRef}
                   type="file"
@@ -553,16 +596,6 @@ export default function WritePage() {
                   onChange={handleFileSelect}
                   className="hidden"
                 />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="icon"
-                  onClick={() => imageInputRef.current?.click()}
-                  disabled={isLoading || isUploading}
-                  className="image-upload-button absolute bottom-4 right-4 h-12 w-12 rounded-full shadow-lg z-20"
-                >
-                  <ImagePlus className="h-5 w-5" />
-                </Button>
               </div>
             </div>
 
@@ -583,6 +616,17 @@ export default function WritePage() {
         )}
       </div>
 
+      {/* 플로팅 액션 버튼 (모바일/태블릿) */}
+      <div className="lg:hidden">
+        <FloatingActionButton
+          onPreview={openPreviewModal}
+          onClosePreview={closePreviewModal}
+          isPreviewActive={isPreviewModalOpen}
+          onImageUpload={() => imageInputRef.current?.click()}
+          disabled={isLoading || isUploading}
+        />
+      </div>
+
       {/* 모바일 미리보기 풀 모달 */}
       {isPreviewModalOpen && (
         <div className="fixed inset-0 z-[100] bg-background">
@@ -598,7 +642,7 @@ export default function WritePage() {
           </div>
 
           {/* 모달 콘텐츠 */}
-          <div className="overflow-y-auto h-[calc(100vh-3.5rem)]">
+          <div ref={previewContentRef} className="overflow-y-auto h-[calc(100vh-3.5rem)]">
             <div className="container mx-auto p-4 sm:p-8">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8">{title || "제목 없음"}</h1>
               <div className="prose prose-sm sm:prose-base md:prose-lg dark:prose-invert max-w-none">

@@ -18,7 +18,32 @@ interface CodeComponentProps {
   children?: ReactNode;
 }
 
+const URL_LINE_REGEX = /^(https?:\/\/[^\s]+)$/;
+
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
+  const lines = content.split("\n");
+  const segments: { type: "markdown" | "url"; content: string }[] = [];
+
+  let markdownBuffer: string[] = [];
+
+  const flushMarkdown = () => {
+    if (markdownBuffer.length > 0) {
+      segments.push({ type: "markdown", content: markdownBuffer.join("\n") });
+      markdownBuffer = [];
+    }
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (URL_LINE_REGEX.test(trimmed)) {
+      flushMarkdown();
+      segments.push({ type: "url", content: trimmed });
+    } else {
+      markdownBuffer.push(line);
+    }
+  }
+  flushMarkdown();
+
   const components: Components = {
     h1: ({ children, ...props }) => {
       const text = String(children);
@@ -94,36 +119,29 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       </blockquote>
     ),
     br: () => <br className="my-2" />,
-    p: ({ children, ...props }) => {
-      if (typeof children === "string") {
-        const text = children.trim();
-        const urlPattern = /^https?:\/\/[^\s]+$/;
-        if (urlPattern.test(text)) {
-          return <LinkCard url={text} />;
-        }
-      }
-
-      if (Array.isArray(children) && children.length === 1 && typeof children[0] === "string") {
-        const text = children[0].trim();
-        const urlPattern = /^https?:\/\/[^\s]+$/;
-        if (urlPattern.test(text)) {
-          return <LinkCard url={text} />;
-        }
-      }
-
-      return (
-        <p className="mt-3 mb-3" {...props}>
-          {children}
-        </p>
-      );
-    },
+    p: ({ children, ...props }) => (
+      <p className="mt-3 mb-3" {...props}>
+        {children}
+      </p>
+    ),
   };
 
   return (
     <div className="prose prose-lg dark:prose-invert max-w-none">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={components}>
-        {content}
-      </ReactMarkdown>
+      {segments.map((segment, index) =>
+        segment.type === "url" ? (
+          <LinkCard key={index} url={segment.content} />
+        ) : (
+          <ReactMarkdown
+            key={index}
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+            components={components}
+          >
+            {segment.content}
+          </ReactMarkdown>
+        )
+      )}
     </div>
   );
 }
