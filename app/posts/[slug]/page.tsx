@@ -279,8 +279,8 @@ export default async function PostPage({
       />
       <ViewTracker slug={slug} />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-12">
-          <div className="max-w-3xl">
+        <div className={post.type === "SHORT" ? "flex justify-center" : "grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-12"}>
+          <div className="max-w-3xl w-full">
             {/* Top Ad */}
             <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_TOP || ""} className="mb-8" />
 

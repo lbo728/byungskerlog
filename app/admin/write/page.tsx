@@ -1,26 +1,44 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { MarkdownToolbar } from "@/components/markdown-toolbar";
-import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { PublishModal } from "@/components/publish-modal";
-import { FloatingActionButton } from "@/components/floating-action-button";
-import { ArrowLeft, X } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { VisitorCount } from "@/components/visitor-count";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { optimizeImage } from "@/lib/image-optimizer";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { Markdown } from "tiptap-markdown";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import TiptapLink from "@tiptap/extension-link";
+import { EmbedCard } from "@/components/tiptap/embed-card-extension";
+import { LinkModal } from "@/components/tiptap/link-modal";
+import { WriteTocDesktop, WriteTocMobile } from "@/components/write-toc";
+import { common, createLowlight } from "lowlight";
+
+const lowlight = createLowlight(common);
+
+const navItems = [
+  { label: "Post", href: "/posts" },
+  { label: "Short", href: "/short-posts" },
+  { label: "Series", href: "/series" },
+  { label: "Tags", href: "/tags" },
+  { label: "About", href: "/about" },
+];
 
 export default function WritePage() {
   useUser({ or: "redirect" });
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const postId = searchParams.get("id");
@@ -33,9 +51,6 @@ export default function WritePage() {
   const [content, setContent] = useState("");
   const [isLoading] = useState(false);
   const [isFetchingPost, setIsFetchingPost] = useState(false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [scrollRatio, setScrollRatio] = useState(0);
-  const previewContentRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(draftIdParam);
@@ -49,6 +64,135 @@ export default function WritePage() {
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
   const tagInputRef = useRef<HTMLInputElement>(null);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
+  const [currentLinkUrl, setCurrentLinkUrl] = useState("");
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        codeBlock: false,
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
+        defaultLanguage: "javascript",
+      }),
+      TiptapLink.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: false,
+        HTMLAttributes: {
+          class: "text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer",
+        },
+      }),
+      EmbedCard,
+      Markdown.configure({
+        html: true,
+        transformPastedText: true,
+        transformCopiedText: true,
+        linkify: true,
+      }),
+    ],
+    content,
+    immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      interface EditorStorageWithMarkdown extends Record<string, unknown> {
+        markdown?: {
+          getMarkdown: () => string;
+        };
+      }
+      const storage = editor.storage as unknown as EditorStorageWithMarkdown;
+      const markdown = storage.markdown?.getMarkdown() || editor.getText();
+      setContent(markdown);
+    },
+    editorProps: {
+      attributes: {
+        class: "prose prose-lg dark:prose-invert max-w-none focus:outline-none p-8 pb-16 min-h-full",
+      },
+    },
+  });
+
+  const openLinkModal = useCallback(() => {
+    if (!editor) return;
+
+    const { from, to } = editor.state.selection;
+    const text = editor.state.doc.textBetween(from, to, " ");
+    setSelectedText(text);
+
+    const linkMark = editor.getAttributes("link");
+    setCurrentLinkUrl(linkMark.href || "");
+
+    setIsLinkModalOpen(true);
+  }, [editor]);
+
+  const handleLinkSubmit = useCallback((url: string) => {
+    if (!editor) return;
+
+    if (selectedText) {
+      editor.chain().focus().setLink({ href: url }).run();
+    } else {
+      editor.chain().focus().insertContent(`<a href="${url}">${url}</a>`).run();
+    }
+  }, [editor, selectedText]);
+
+  const handleLinkRemove = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().unsetLink().run();
+  }, [editor]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+K: 링크 삽입 모달
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        openLinkModal();
+        return;
+      }
+
+      // Tab/Shift+Tab: 리스트 들여쓰기
+      if (e.key === "Tab" && editor?.isFocused) {
+        const { state } = editor;
+        const { $from } = state.selection;
+
+        // 리스트 아이템 내부인지 확인
+        let isInList = false;
+        for (let d = $from.depth; d > 0; d--) {
+          const node = $from.node(d);
+          if (node.type.name === "listItem") {
+            isInList = true;
+            break;
+          }
+        }
+
+        if (isInList) {
+          e.preventDefault();
+          if (e.shiftKey) {
+            editor.chain().focus().liftListItem("listItem").run();
+          } else {
+            editor.chain().focus().sinkListItem("listItem").run();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [openLinkModal, editor]);
+
+  useEffect(() => {
+    if (editor && content) {
+      interface EditorStorageWithMarkdown extends Record<string, unknown> {
+        markdown?: {
+          getMarkdown: () => string;
+        };
+      }
+      const storage = editor.storage as unknown as EditorStorageWithMarkdown;
+      const currentMarkdown = storage.markdown?.getMarkdown() || editor.getText();
+      if (content !== currentMarkdown) {
+        editor.commands.setContent(content);
+      }
+    }
+  }, [content, editor]);
 
   useEffect(() => {
     const fetchAllTags = async () => {
@@ -129,32 +273,6 @@ export default function WritePage() {
     setSelectedSuggestionIndex(0);
   };
 
-  const insertMarkdown = (text: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = content.substring(start, end);
-
-    let newText = text;
-
-    if (selectedText && text.includes("텍스트")) {
-      newText = text.replace("텍스트", selectedText);
-    }
-
-    const before = content.substring(0, start);
-    const after = content.substring(end);
-    const newContent = before + newText + after;
-
-    setContent(newContent);
-
-    setTimeout(() => {
-      textarea.focus();
-      const newCursorPos = start + newText.length;
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
-  };
 
   const handleTempSave = async () => {
     setIsSavingDraft(true);
@@ -188,50 +306,6 @@ export default function WritePage() {
     } finally {
       setIsSavingDraft(false);
     }
-  };
-
-  // 모바일 미리보기 모달 열기
-  const openPreviewModal = () => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      const ratio = textarea.scrollTop / (textarea.scrollHeight - textarea.clientHeight || 1);
-      setScrollRatio(Math.max(0, Math.min(1, ratio)));
-    }
-    setIsPreviewModalOpen(true);
-    document.body.style.overflow = "hidden";
-  };
-
-  // 미리보기가 열릴 때 스크롤 위치 적용
-  useEffect(() => {
-    if (isPreviewModalOpen && previewContentRef.current) {
-      const previewEl = previewContentRef.current;
-      const targetScroll = scrollRatio * (previewEl.scrollHeight - previewEl.clientHeight);
-      previewEl.scrollTop = targetScroll;
-    }
-  }, [isPreviewModalOpen, scrollRatio]);
-
-  // 모바일 미리보기 모달 닫기
-  const closePreviewModal = () => {
-    const previewEl = previewContentRef.current;
-    let ratio = scrollRatio;
-
-    if (previewEl) {
-      ratio = previewEl.scrollTop / (previewEl.scrollHeight - previewEl.clientHeight || 1);
-      ratio = Math.max(0, Math.min(1, ratio));
-      setScrollRatio(ratio);
-    }
-
-    setIsPreviewModalOpen(false);
-    document.body.style.overflow = "";
-
-    // 에디터에 스크롤 위치 적용 (계산된 ratio 직접 사용)
-    setTimeout(() => {
-      const textarea = textareaRef.current;
-      if (textarea) {
-        const targetScroll = ratio * (textarea.scrollHeight - textarea.clientHeight);
-        textarea.scrollTop = targetScroll;
-      }
-    }, 0);
   };
 
   // 이미지 업로드 함수
@@ -282,24 +356,13 @@ export default function WritePage() {
   // 이미지를 마크다운에 삽입
   const insertImageMarkdown = useCallback(
     (url: string, altText: string = "image") => {
-      const textarea = textareaRef.current;
-      if (!textarea) return;
+      if (!editor) return;
 
-      const imageMarkdown = `![${altText}](${url})`;
-      const start = textarea.selectionStart;
-      const before = content.substring(0, start);
-      const after = content.substring(start);
-      const newContent = before + imageMarkdown + "\n" + after;
-
-      setContent(newContent);
-
-      setTimeout(() => {
-        textarea.focus();
-        const newCursorPos = start + imageMarkdown.length + 1;
-        textarea.setSelectionRange(newCursorPos, newCursorPos);
-      }, 0);
+      const imageMarkdown = `![${altText}](${url})\n`;
+      editor.commands.insertContent(imageMarkdown);
+      editor.commands.focus();
     },
-    [content]
+    [editor]
   );
 
   // 드래그 앤 드롭 핸들러
@@ -356,28 +419,6 @@ export default function WritePage() {
     [uploadImage, insertImageMarkdown]
   );
 
-  // 클립보드 붙여넣기 핸들러
-  const handlePaste = useCallback(
-    async (e: React.ClipboardEvent) => {
-      const items = Array.from(e.clipboardData.items);
-      const imageItems = items.filter((item) => item.type.startsWith("image/"));
-
-      if (imageItems.length === 0) return;
-
-      e.preventDefault();
-
-      for (const item of imageItems) {
-        const file = item.getAsFile();
-        if (file) {
-          const url = await uploadImage(file);
-          if (url) {
-            insertImageMarkdown(url, "pasted-image");
-          }
-        }
-      }
-    },
-    [uploadImage, insertImageMarkdown]
-  );
 
   // Load existing post for edit mode or draft
   useEffect(() => {
@@ -456,7 +497,7 @@ export default function WritePage() {
         {/* 메인 헤더 영역 */}
         <div className="write-main-header border-b border-border/40">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex h-16 items-center">
+            <div className="flex h-16 items-center justify-between">
               <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <Image
                   src="/logo-byungsker.png"
@@ -469,44 +510,70 @@ export default function WritePage() {
                   onContextMenu={(e) => e.preventDefault()}
                 />
               </Link>
+
+              <nav className="desktop-nav hidden md:flex items-center gap-6">
+                {navItems.map((item) => {
+                  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      prefetch={true}
+                      className={cn(
+                        "text-sm font-medium transition-colors hover:text-primary",
+                        isActive ? "text-foreground" : "text-muted-foreground"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+                <VisitorCount />
+                <ThemeToggle />
+              </nav>
             </div>
           </div>
         </div>
         {/* 서브 헤더 영역 */}
-        <div className="write-sub-header border-b border-border">
-          <div className="container mx-auto px-2 sm:px-4 h-14 flex items-center justify-between gap-2 max-w-full">
-            <div className="write-header-left flex items-center gap-1 sm:gap-4 min-w-0 flex-shrink-0">
-              <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-1 sm:gap-2 px-2 sm:px-3">
-                <ArrowLeft className="h-4 w-4 flex-shrink-0" />
-                <span className="hidden sm:inline">나가기</span>
-              </Button>
-              <h1 className="text-base sm:text-lg font-semibold truncate">{isEditMode ? "글 수정" : "글쓰기"}</h1>
-            </div>
-            <div className="write-header-right flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              {!isEditMode && (
-                <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading || isSavingDraft} className="px-2 sm:px-3">
-                  <span className="hidden sm:inline">{isSavingDraft ? "저장 중..." : "임시저장"}</span>
-                  <span className="sm:hidden">{isSavingDraft ? "저장..." : "임시"}</span>
+        <div className="write-sub-header border-b border-border bg-muted/30">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex h-12 items-center justify-between">
+              <div className="write-header-left flex items-center gap-4">
+                <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">나가기</span>
                 </Button>
-              )}
-              <Button variant="default" size="sm" onClick={handleOpenPublishModal} disabled={isLoading || isFetchingPost} className="px-2 sm:px-3">
-                <span className="hidden sm:inline">{isEditMode ? "수정하기" : "출간하기"}</span>
-                <span className="sm:hidden">{isEditMode ? "수정" : "출간"}</span>
-              </Button>
+                <h1 className="text-sm font-medium text-muted-foreground">{isEditMode ? "글 수정" : "글쓰기"}</h1>
+              </div>
+              <div className="write-header-right flex items-center gap-2">
+                {!isEditMode && (
+                  <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading || isSavingDraft}>
+                    {isSavingDraft ? "저장 중..." : "임시저장"}
+                  </Button>
+                )}
+                <Button variant="default" size="sm" onClick={handleOpenPublishModal} disabled={isLoading || isFetchingPost}>
+                  {isEditMode ? "수정하기" : "출간하기"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* 컨텐츠 - 헤더 높이(h-16 + h-14 = 7.5rem) 만큼 패딩 */}
-      <div className="container mx-auto max-w-full overflow-x-hidden pt-[7.5rem]">
+      {/* 컨텐츠 - 헤더 높이(h-16 + h-12 = 7rem) 만큼 패딩 */}
+      <div className="container mx-auto max-w-full overflow-x-hidden pt-28">
         {isFetchingPost ? (
-          <div className="flex items-center justify-center min-h-[calc(100vh-7.5rem)]">
+          <div className="flex items-center justify-center min-h-[calc(100vh-7rem)]">
             <p className="text-muted-foreground">글을 불러오는 중...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-7.5rem)]">
-            <div className="write-editor-panel border-r border-border flex flex-col pt-4 overflow-x-hidden">
+          <div className="write-editor-container relative flex justify-center min-h-[calc(100vh-7rem)]">
+            {/* 데스크톱 TOC - 에디터 우측에 고정 */}
+            <aside className="write-toc-sidebar hidden xl:block fixed right-8 top-32 w-64 z-30">
+              <WriteTocDesktop content={content} editorSelector=".tiptap-editor" />
+            </aside>
+
+            <div className="write-editor-panel w-full max-w-4xl flex flex-col pt-4 overflow-x-hidden xl:mr-72">
               <div className="px-2 sm:px-0">
                 <Input
                   type="text"
@@ -562,23 +629,13 @@ export default function WritePage() {
                 </div>
                 </div>
 
-              <MarkdownToolbar onInsert={insertMarkdown} />
-
               <div
                 className={`content-editor relative flex-1 ${isDragging ? "ring-2 ring-primary ring-inset bg-primary/5" : ""}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
-                <Textarea
-                  ref={textareaRef}
-                  placeholder="당신의 이야기를 적어보세요... (이미지를 드래그하거나 붙여넣기 할 수 있습니다)"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  onPaste={handlePaste}
-                  className="absolute inset-0 border-none rounded-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-8 pb-16 font-mono text-base"
-                  disabled={isLoading || isUploading}
-                />
+                <EditorContent editor={editor} className="tiptap-editor h-full overflow-y-auto" />
                 {isDragging && (
                   <div className="absolute inset-0 flex items-center justify-center bg-primary/10 pointer-events-none z-10">
                     <div className="text-primary font-medium text-lg">이미지를 여기에 놓으세요</div>
@@ -589,7 +646,6 @@ export default function WritePage() {
                     <div className="text-muted-foreground font-medium">이미지 업로드 중...</div>
                   </div>
                 )}
-                {/* 히든 파일 인풋 */}
                 <input
                   ref={imageInputRef}
                   type="file"
@@ -600,64 +656,9 @@ export default function WritePage() {
                 />
               </div>
             </div>
-
-            {/* 오른쪽: 미리보기 (데스크톱만) */}
-            <div className="hidden lg:block bg-muted/20 overflow-y-auto">
-              <div className="p-8">
-                <h1 className="text-4xl font-bold mb-8">{title || "제목 없음"}</h1>
-                <div className="prose prose-lg dark:prose-invert max-w-none">
-                  {content ? (
-                    <MarkdownRenderer content={content} />
-                  ) : (
-                    <p className="text-muted-foreground italic">여기에 미리보기가 표시됩니다...</p>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>
-
-      {/* 플로팅 액션 버튼 (모바일/태블릿) */}
-      <div className="lg:hidden">
-        <FloatingActionButton
-          onPreview={openPreviewModal}
-          onClosePreview={closePreviewModal}
-          isPreviewActive={isPreviewModalOpen}
-          onImageUpload={() => imageInputRef.current?.click()}
-          disabled={isLoading || isUploading}
-        />
-      </div>
-
-      {/* 모바일 미리보기 풀 모달 */}
-      {isPreviewModalOpen && (
-        <div className="fixed inset-0 z-[100] bg-background">
-          {/* 모달 헤더 */}
-          <div className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
-            <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">미리보기</h2>
-              <Button variant="ghost" size="sm" onClick={closePreviewModal} className="gap-2">
-                <X className="h-4 w-4" />
-                닫기
-              </Button>
-            </div>
-          </div>
-
-          {/* 모달 콘텐츠 */}
-          <div ref={previewContentRef} className="overflow-y-auto h-[calc(100vh-3.5rem)]">
-            <div className="container mx-auto p-4 sm:p-8">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8">{title || "제목 없음"}</h1>
-              <div className="prose prose-sm sm:prose-base md:prose-lg dark:prose-invert max-w-none">
-                {content ? (
-                  <MarkdownRenderer content={content} />
-                ) : (
-                  <p className="text-muted-foreground italic">여기에 미리보기가 표시됩니다...</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 발행 모달 */}
       <PublishModal
@@ -675,6 +676,18 @@ export default function WritePage() {
         initialExcerpt={existingExcerpt}
         initialType={existingType}
       />
+
+      <LinkModal
+        isOpen={isLinkModalOpen}
+        onClose={() => setIsLinkModalOpen(false)}
+        onSubmit={handleLinkSubmit}
+        onRemove={currentLinkUrl ? handleLinkRemove : undefined}
+        initialUrl={currentLinkUrl}
+        selectedText={selectedText}
+      />
+
+      {/* 모바일 TOC 플로팅 버튼 */}
+      <WriteTocMobile content={content} editorSelector=".tiptap-editor" />
     </div>
   );
 }
