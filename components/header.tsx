@@ -28,6 +28,7 @@ export function Header() {
     { label: "Short", href: "/short-posts" },
     { label: "Series", href: "/series" },
     { label: "Tags", href: "/tags" },
+    { label: "Product", href: "/products" },
     { label: "About", href: "/about" },
   ];
 
