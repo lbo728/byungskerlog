@@ -1,14 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PublishModal } from "@/components/publish-modal";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { VisitorCount } from "@/components/visitor-count";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { optimizeImage } from "@/lib/image-optimizer";
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -23,9 +26,18 @@ import { common, createLowlight } from "lowlight";
 
 const lowlight = createLowlight(common);
 
+const navItems = [
+  { label: "Post", href: "/posts" },
+  { label: "Short", href: "/short-posts" },
+  { label: "Series", href: "/series" },
+  { label: "Tags", href: "/tags" },
+  { label: "About", href: "/about" },
+];
+
 export default function WritePage() {
   useUser({ or: "redirect" });
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -485,7 +497,7 @@ export default function WritePage() {
         {/* 메인 헤더 영역 */}
         <div className="write-main-header border-b border-border/40">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex h-16 items-center">
+            <div className="flex h-16 items-center justify-between">
               <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <Image
                   src="/logo-byungsker.png"
@@ -498,45 +510,66 @@ export default function WritePage() {
                   onContextMenu={(e) => e.preventDefault()}
                 />
               </Link>
+
+              <nav className="desktop-nav hidden md:flex items-center gap-6">
+                {navItems.map((item) => {
+                  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      prefetch={true}
+                      className={cn(
+                        "text-sm font-medium transition-colors hover:text-primary",
+                        isActive ? "text-foreground" : "text-muted-foreground"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+                <VisitorCount />
+                <ThemeToggle />
+              </nav>
             </div>
           </div>
         </div>
         {/* 서브 헤더 영역 */}
-        <div className="write-sub-header border-b border-border">
-          <div className="container mx-auto px-2 sm:px-4 h-14 flex items-center justify-between gap-2 max-w-full">
-            <div className="write-header-left flex items-center gap-1 sm:gap-4 min-w-0 flex-shrink-0">
-              <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-1 sm:gap-2 px-2 sm:px-3">
-                <ArrowLeft className="h-4 w-4 flex-shrink-0" />
-                <span className="hidden sm:inline">나가기</span>
-              </Button>
-              <h1 className="text-base sm:text-lg font-semibold truncate">{isEditMode ? "글 수정" : "글쓰기"}</h1>
-            </div>
-            <div className="write-header-right flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              {!isEditMode && (
-                <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading || isSavingDraft} className="px-2 sm:px-3">
-                  <span className="hidden sm:inline">{isSavingDraft ? "저장 중..." : "임시저장"}</span>
-                  <span className="sm:hidden">{isSavingDraft ? "저장..." : "임시"}</span>
+        <div className="write-sub-header border-b border-border bg-muted/30">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex h-12 items-center justify-between">
+              <div className="write-header-left flex items-center gap-4">
+                <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">나가기</span>
                 </Button>
-              )}
-              <Button variant="default" size="sm" onClick={handleOpenPublishModal} disabled={isLoading || isFetchingPost} className="px-2 sm:px-3">
-                <span className="hidden sm:inline">{isEditMode ? "수정하기" : "출간하기"}</span>
-                <span className="sm:hidden">{isEditMode ? "수정" : "출간"}</span>
-              </Button>
+                <h1 className="text-sm font-medium text-muted-foreground">{isEditMode ? "글 수정" : "글쓰기"}</h1>
+              </div>
+              <div className="write-header-right flex items-center gap-2">
+                {!isEditMode && (
+                  <Button variant="ghost" size="sm" onClick={handleTempSave} disabled={isLoading || isSavingDraft}>
+                    {isSavingDraft ? "저장 중..." : "임시저장"}
+                  </Button>
+                )}
+                <Button variant="default" size="sm" onClick={handleOpenPublishModal} disabled={isLoading || isFetchingPost}>
+                  {isEditMode ? "수정하기" : "출간하기"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* 컨텐츠 - 헤더 높이(h-16 + h-14 = 7.5rem) 만큼 패딩 */}
-      <div className="container mx-auto max-w-full overflow-x-hidden pt-[7.5rem]">
+      {/* 컨텐츠 - 헤더 높이(h-16 + h-12 = 7rem) 만큼 패딩 */}
+      <div className="container mx-auto max-w-full overflow-x-hidden pt-28">
         {isFetchingPost ? (
-          <div className="flex items-center justify-center min-h-[calc(100vh-7.5rem)]">
+          <div className="flex items-center justify-center min-h-[calc(100vh-7rem)]">
             <p className="text-muted-foreground">글을 불러오는 중...</p>
           </div>
         ) : (
-          <div className="write-editor-container relative flex justify-center min-h-[calc(100vh-7.5rem)]">
+          <div className="write-editor-container relative flex justify-center min-h-[calc(100vh-7rem)]">
             {/* 데스크톱 TOC - 에디터 우측에 고정 */}
-            <aside className="write-toc-sidebar hidden xl:block fixed right-8 top-36 w-64 z-30">
+            <aside className="write-toc-sidebar hidden xl:block fixed right-8 top-32 w-64 z-30">
               <WriteTocDesktop content={content} editorSelector=".tiptap-editor" />
             </aside>
 
