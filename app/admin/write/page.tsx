@@ -77,6 +77,7 @@ export default function WritePage() {
         html: true,
         transformPastedText: true,
         transformCopiedText: true,
+        linkify: true,
       }),
     ],
     content,
@@ -100,15 +101,25 @@ export default function WritePage() {
 
   useEffect(() => {
     if (editor && content) {
+      interface MarkdownParser {
+        parse: (content: string) => unknown;
+      }
       interface EditorStorageWithMarkdown extends Record<string, unknown> {
         markdown?: {
           getMarkdown: () => string;
+          parser?: MarkdownParser;
         };
       }
       const storage = editor.storage as unknown as EditorStorageWithMarkdown;
       const currentMarkdown = storage.markdown?.getMarkdown() || editor.getText();
       if (content !== currentMarkdown) {
-        editor.commands.setContent(content);
+        const parser = storage.markdown?.parser;
+        if (parser) {
+          const parsed = parser.parse(content);
+          editor.commands.setContent(parsed);
+        } else {
+          editor.commands.setContent(content);
+        }
       }
     }
   }, [content, editor]);

@@ -347,3 +347,37 @@
   border-left-color: oklch(0.4 0 0);
   color: oklch(0.708 0 0);
 }
+
+/* 링크 스타일 */
+.tiptap-editor .ProseMirror a,
+.tiptap-editor .prose a,
+.tiptap-editor a {
+  color: oklch(0.6 0.2 250) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.tiptap-editor .ProseMirror a:hover,
+.tiptap-editor .prose a:hover,
+.tiptap-editor a:hover {
+  color: oklch(0.5 0.2 250) !important;
+}
+
+.dark .tiptap-editor .ProseMirror a,
+.dark .tiptap-editor .prose a,
+.dark .tiptap-editor a {
+  color: oklch(0.7 0.2 250) !important;
+}
+
+.dark .tiptap-editor .ProseMirror a:hover,
+.dark .tiptap-editor .prose a:hover,
+.dark .tiptap-editor a:hover {
+  color: oklch(0.8 0.2 250) !important;
+}
+
+/* EmbedCard 래퍼 스타일 */
+.tiptap-editor .embed-card-wrapper {
+  margin: 1rem 0;
+}

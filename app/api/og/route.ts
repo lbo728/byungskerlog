@@ -73,22 +73,38 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
 
+    const baseUrl = new URL(url);
+
+    let image = getMetaContent("og:image") || getMetaContent("twitter:image");
+
+    if (!image) {
+      const appleTouchIcon = html.match(/<link[^>]*rel=["']apple-touch-icon["'][^>]*href=["']([^"']*)["']/i);
+      const faviconLarge = html.match(/<link[^>]*rel=["']icon["'][^>]*sizes=["'](\d+)x\d+["'][^>]*href=["']([^"']*)["']/i);
+      const favicon = html.match(/<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']*)["']/i);
+      image = appleTouchIcon?.[1] || faviconLarge?.[2] || favicon?.[1] || null;
+    }
+
+    if (image) {
+      image = image.replace(/^\.\//, "").replace(/\/\.\//g, "/");
+    }
+
+    if (image && !image.startsWith("http")) {
+      if (image.startsWith("//")) {
+        image = `https:${image}`;
+      } else if (image.startsWith("/")) {
+        image = `${baseUrl.origin}${image}`;
+      } else {
+        image = `${baseUrl.origin}/${image}`;
+      }
+    }
+
     const ogData: OGData = {
       title: getMetaContent("og:title") || (titleMatch ? titleMatch[1].trim() : null),
       description: getMetaContent("og:description") || getMetaContent("description"),
-      image: getMetaContent("og:image"),
+      image,
       siteName: getMetaContent("og:site_name"),
       url: url,
     };
-
-    if (ogData.image && !ogData.image.startsWith("http")) {
-      const baseUrl = new URL(url);
-      if (ogData.image.startsWith("/")) {
-        ogData.image = `${baseUrl.origin}${ogData.image}`;
-      } else {
-        ogData.image = `${baseUrl.origin}/${ogData.image}`;
-      }
-    }
 
     return NextResponse.json(ogData, {
       headers: {
