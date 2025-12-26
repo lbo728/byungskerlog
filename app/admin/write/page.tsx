@@ -18,6 +18,7 @@ import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import TiptapLink from "@tiptap/extension-link";
 import { EmbedCard } from "@/components/tiptap/embed-card-extension";
 import { LinkModal } from "@/components/tiptap/link-modal";
+import { WriteTocDesktop, WriteTocMobile } from "@/components/write-toc";
 import { common, createLowlight } from "lowlight";
 
 const lowlight = createLowlight(common);
@@ -506,8 +507,13 @@ export default function WritePage() {
             <p className="text-muted-foreground">글을 불러오는 중...</p>
           </div>
         ) : (
-          <div className="write-editor-container flex justify-center min-h-[calc(100vh-7.5rem)]">
-            <div className="write-editor-panel w-full max-w-4xl flex flex-col pt-4 overflow-x-hidden">
+          <div className="write-editor-container relative flex justify-center min-h-[calc(100vh-7.5rem)]">
+            {/* 데스크톱 TOC - 에디터 우측에 고정 */}
+            <aside className="write-toc-sidebar hidden xl:block fixed right-8 top-36 w-64 z-30">
+              <WriteTocDesktop content={content} editorSelector=".tiptap-editor" />
+            </aside>
+
+            <div className="write-editor-panel w-full max-w-4xl flex flex-col pt-4 overflow-x-hidden xl:mr-72">
               <div className="px-2 sm:px-0">
                 <Input
                   type="text"
@@ -619,6 +625,9 @@ export default function WritePage() {
         initialUrl={currentLinkUrl}
         selectedText={selectedText}
       />
+
+      {/* 모바일 TOC 플로팅 버튼 */}
+      <WriteTocMobile content={content} editorSelector=".tiptap-editor" />
     </div>
   );
 }
