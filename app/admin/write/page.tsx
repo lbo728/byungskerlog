@@ -19,6 +19,7 @@ import { Markdown } from "tiptap-markdown";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import TiptapLink from "@tiptap/extension-link";
 import { EmbedCard } from "@/components/tiptap/embed-card-extension";
+import { LinkModal } from "@/components/tiptap/link-modal";
 import { common, createLowlight } from "lowlight";
 
 const lowlight = createLowlight(common);
@@ -54,6 +55,9 @@ export default function WritePage() {
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
   const tagInputRef = useRef<HTMLInputElement>(null);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
+  const [currentLinkUrl, setCurrentLinkUrl] = useState("");
 
   const editor = useEditor({
     extensions: [
@@ -99,27 +103,57 @@ export default function WritePage() {
     },
   });
 
+  const openLinkModal = useCallback(() => {
+    if (!editor) return;
+
+    const { from, to } = editor.state.selection;
+    const text = editor.state.doc.textBetween(from, to, " ");
+    setSelectedText(text);
+
+    const linkMark = editor.getAttributes("link");
+    setCurrentLinkUrl(linkMark.href || "");
+
+    setIsLinkModalOpen(true);
+  }, [editor]);
+
+  const handleLinkSubmit = useCallback((url: string) => {
+    if (!editor) return;
+
+    if (selectedText) {
+      editor.chain().focus().setLink({ href: url }).run();
+    } else {
+      editor.chain().focus().insertContent(`<a href="${url}">${url}</a>`).run();
+    }
+  }, [editor, selectedText]);
+
+  const handleLinkRemove = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().unsetLink().run();
+  }, [editor]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        openLinkModal();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [openLinkModal]);
+
   useEffect(() => {
     if (editor && content) {
-      interface MarkdownParser {
-        parse: (content: string) => unknown;
-      }
       interface EditorStorageWithMarkdown extends Record<string, unknown> {
         markdown?: {
           getMarkdown: () => string;
-          parser?: MarkdownParser;
         };
       }
       const storage = editor.storage as unknown as EditorStorageWithMarkdown;
       const currentMarkdown = storage.markdown?.getMarkdown() || editor.getText();
       if (content !== currentMarkdown) {
-        const parser = storage.markdown?.parser;
-        if (parser) {
-          const parsed = parser.parse(content);
-          editor.commands.setContent(parsed);
-        } else {
-          editor.commands.setContent(content);
-        }
+        editor.commands.setContent(content);
       }
     }
   }, [content, editor]);
@@ -647,6 +681,15 @@ export default function WritePage() {
         initialSeriesId={existingSeriesId}
         initialExcerpt={existingExcerpt}
         initialType={existingType}
+      />
+
+      <LinkModal
+        isOpen={isLinkModalOpen}
+        onClose={() => setIsLinkModalOpen(false)}
+        onSubmit={handleLinkSubmit}
+        onRemove={currentLinkUrl ? handleLinkRemove : undefined}
+        initialUrl={currentLinkUrl}
+        selectedText={selectedText}
       />
     </div>
   );
