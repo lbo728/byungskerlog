@@ -2,7 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { cn } from "@/lib/utils";
 import { LinkCard } from "@/components/link-card";
 import type { Components } from "react-markdown";
@@ -84,7 +84,19 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     code: ({ inline, className, children, ...props }: CodeComponentProps): ReactElement => {
       const match = /language-(\w+)/.exec(className || "");
       return !inline && match ? (
-        <SyntaxHighlighter style={vscDarkPlus} language={match[1]} PreTag="div" className="rounded-lg !my-6">
+        <SyntaxHighlighter
+          style={oneDark}
+          language={match[1]}
+          PreTag="div"
+          className="rounded-lg !my-6"
+          customStyle={{
+            backgroundColor: "#282c34",
+            padding: "1rem",
+            borderRadius: "0.5rem",
+            fontSize: "0.875rem",
+            lineHeight: "1.5",
+          }}
+        >
           {String(children).replace(/\n$/, "")}
         </SyntaxHighlighter>
       ) : (
@@ -112,7 +124,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     img: ({ src, alt, ...props }) => <img src={src} alt={alt || ""} className="rounded-lg shadow-md my-6" {...props} />,
     blockquote: ({ children, ...props }) => (
       <blockquote
-        className="border-l-4 border-primary/50 pl-4 italic my-6 text-muted-foreground before:content-[''] after:content-['']"
+        className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic my-6 text-muted-foreground [&>p]:my-0"
         {...props}
       >
         {children}
