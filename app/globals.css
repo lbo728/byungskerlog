@@ -138,47 +138,64 @@
 }
 
 /* Syntax Highlighting - One Dark Theme */
-.tiptap-editor pre code.hljs {
+.tiptap-editor pre code.hljs,
+.tiptap-editor .ProseMirror pre code {
   display: block;
   overflow-x: auto;
   padding: 1em;
 }
 
-.tiptap-editor .hljs {
+.tiptap-editor .hljs,
+.tiptap-editor .ProseMirror pre code {
   color: #abb2bf;
   background: #282c34;
 }
 
 .tiptap-editor .hljs-comment,
-.tiptap-editor .hljs-quote {
-  color: #5c6370;
+.tiptap-editor .hljs-quote,
+.tiptap-editor .ProseMirror .hljs-comment,
+.tiptap-editor .ProseMirror .hljs-quote {
+  color: #5c6370 !important;
   font-style: italic;
 }
 
 .tiptap-editor .hljs-doctag,
 .tiptap-editor .hljs-keyword,
-.tiptap-editor .hljs-formula {
-  color: #c678dd;
+.tiptap-editor .hljs-formula,
+.tiptap-editor .ProseMirror .hljs-doctag,
+.tiptap-editor .ProseMirror .hljs-keyword,
+.tiptap-editor .ProseMirror .hljs-formula {
+  color: #c678dd !important;
 }
 
 .tiptap-editor .hljs-section,
 .tiptap-editor .hljs-name,
 .tiptap-editor .hljs-selector-tag,
 .tiptap-editor .hljs-deletion,
-.tiptap-editor .hljs-subst {
-  color: #e06c75;
+.tiptap-editor .hljs-subst,
+.tiptap-editor .ProseMirror .hljs-section,
+.tiptap-editor .ProseMirror .hljs-name,
+.tiptap-editor .ProseMirror .hljs-selector-tag,
+.tiptap-editor .ProseMirror .hljs-deletion,
+.tiptap-editor .ProseMirror .hljs-subst {
+  color: #e06c75 !important;
 }
 
-.tiptap-editor .hljs-literal {
-  color: #56b6c2;
+.tiptap-editor .hljs-literal,
+.tiptap-editor .ProseMirror .hljs-literal {
+  color: #56b6c2 !important;
 }
 
 .tiptap-editor .hljs-string,
 .tiptap-editor .hljs-regexp,
 .tiptap-editor .hljs-addition,
 .tiptap-editor .hljs-attribute,
-.tiptap-editor .hljs-meta .hljs-string {
-  color: #98c379;
+.tiptap-editor .hljs-meta .hljs-string,
+.tiptap-editor .ProseMirror .hljs-string,
+.tiptap-editor .ProseMirror .hljs-regexp,
+.tiptap-editor .ProseMirror .hljs-addition,
+.tiptap-editor .ProseMirror .hljs-attribute {
+  color: #98c379 !important;
 }
 
 .tiptap-editor .hljs-attr,
@@ -188,8 +205,16 @@
 .tiptap-editor .hljs-selector-class,
 .tiptap-editor .hljs-selector-attr,
 .tiptap-editor .hljs-selector-pseudo,
-.tiptap-editor .hljs-number {
-  color: #d19a66;
+.tiptap-editor .hljs-number,
+.tiptap-editor .ProseMirror .hljs-attr,
+.tiptap-editor .ProseMirror .hljs-variable,
+.tiptap-editor .ProseMirror .hljs-template-variable,
+.tiptap-editor .ProseMirror .hljs-type,
+.tiptap-editor .ProseMirror .hljs-selector-class,
+.tiptap-editor .ProseMirror .hljs-selector-attr,
+.tiptap-editor .ProseMirror .hljs-selector-pseudo,
+.tiptap-editor .ProseMirror .hljs-number {
+  color: #d19a66 !important;
 }
 
 .tiptap-editor .hljs-symbol,
@@ -197,25 +222,37 @@
 .tiptap-editor .hljs-link,
 .tiptap-editor .hljs-meta,
 .tiptap-editor .hljs-selector-id,
-.tiptap-editor .hljs-title {
-  color: #61aeee;
+.tiptap-editor .hljs-title,
+.tiptap-editor .ProseMirror .hljs-symbol,
+.tiptap-editor .ProseMirror .hljs-bullet,
+.tiptap-editor .ProseMirror .hljs-link,
+.tiptap-editor .ProseMirror .hljs-meta,
+.tiptap-editor .ProseMirror .hljs-selector-id,
+.tiptap-editor .ProseMirror .hljs-title {
+  color: #61aeee !important;
 }
 
 .tiptap-editor .hljs-built_in,
 .tiptap-editor .hljs-title.class_,
-.tiptap-editor .hljs-class .hljs-title {
-  color: #e6c07b;
+.tiptap-editor .hljs-class .hljs-title,
+.tiptap-editor .ProseMirror .hljs-built_in,
+.tiptap-editor .ProseMirror .hljs-title.class_,
+.tiptap-editor .ProseMirror .hljs-class .hljs-title {
+  color: #e6c07b !important;
 }
 
-.tiptap-editor .hljs-emphasis {
+.tiptap-editor .hljs-emphasis,
+.tiptap-editor .ProseMirror .hljs-emphasis {
   font-style: italic;
 }
 
-.tiptap-editor .hljs-strong {
+.tiptap-editor .hljs-strong,
+.tiptap-editor .ProseMirror .hljs-strong {
   font-weight: bold;
 }
 
-.tiptap-editor .hljs-link {
+.tiptap-editor .hljs-link,
+.tiptap-editor .ProseMirror .hljs-link {
   text-decoration: underline;
 }
 
@@ -278,22 +315,32 @@
 }
 
 /* 불릿 포인트 행간 조정 */
+.tiptap-editor .ProseMirror ul,
+.tiptap-editor .ProseMirror ol,
 .tiptap-editor .prose ul,
 .tiptap-editor .prose ol,
 .tiptap-editor ul,
 .tiptap-editor ol {
-  padding-left: 1.5rem;
+  padding-left: 1.5rem !important;
   margin: 0.5rem 0 !important;
 }
 
+.tiptap-editor .ProseMirror li,
 .tiptap-editor .prose li,
 .tiptap-editor li {
   margin: 0.125rem 0 !important;
+  padding-left: 0 !important;
 }
 
+.tiptap-editor .ProseMirror li > p,
+.tiptap-editor .prose li > p,
+.tiptap-editor li > p,
+.tiptap-editor .ProseMirror li p,
 .tiptap-editor .prose li p,
 .tiptap-editor li p {
   margin: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 /* 인용문 스타일 - 따옴표 제거 */
