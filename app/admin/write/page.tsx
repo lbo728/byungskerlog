@@ -17,6 +17,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import TiptapLink from "@tiptap/extension-link";
 import { common, createLowlight } from "lowlight";
 
 const lowlight = createLowlight(common);
@@ -61,6 +62,14 @@ export default function WritePage() {
       CodeBlockLowlight.configure({
         lowlight,
         defaultLanguage: "javascript",
+      }),
+      TiptapLink.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+        HTMLAttributes: {
+          class: "text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer",
+        },
       }),
       Markdown.configure({
         html: true,
