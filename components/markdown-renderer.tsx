@@ -2,7 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { oneDarkCustom } from "@/lib/syntax-theme";
 import { cn } from "@/lib/utils";
 import { LinkCard } from "@/components/link-card";
 import type { Components } from "react-markdown";
@@ -85,23 +85,21 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       const match = /language-(\w+)/.exec(className || "");
       return !inline && match ? (
         <SyntaxHighlighter
-          style={oneDark}
+          style={oneDarkCustom}
           language={match[1]}
           PreTag="div"
-          className="rounded-lg !my-6"
-          customStyle={{
-            backgroundColor: "#282c34",
-            padding: "1rem",
-            borderRadius: "0.5rem",
-            fontSize: "0.875rem",
-            lineHeight: "1.5",
-          }}
+          className="syntax-highlighter rounded-lg !my-6"
         >
           {String(children).replace(/\n$/, "")}
         </SyntaxHighlighter>
       ) : (
         <code
-          className={cn("relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold", className)}
+          className={cn(
+            "inline-code relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm",
+            "bg-[oklch(0.97_0_0)] text-[oklch(0.45_0.15_30)]",
+            "dark:bg-[oklch(0.269_0_0)] dark:text-[oklch(0.85_0.15_30)]",
+            className
+          )}
           {...props}
         >
           {children}
@@ -124,7 +122,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     img: ({ src, alt, ...props }) => <img src={src} alt={alt || ""} className="rounded-lg shadow-md my-6" {...props} />,
     blockquote: ({ children, ...props }) => (
       <blockquote
-        className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic my-6 text-muted-foreground [&>p]:my-0"
+        className="blockquote border-l-4 border-[oklch(0.8_0_0)] dark:border-[oklch(0.4_0_0)] pl-4 italic my-4 text-muted-foreground [&>p]:my-0"
         {...props}
       >
         {children}
@@ -135,6 +133,21 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       <p className="mt-3 mb-3" {...props}>
         {children}
       </p>
+    ),
+    ul: ({ children, ...props }) => (
+      <ul className="list-disc pl-6 my-2 [&>li]:my-0.5 [&>li>p]:my-0" {...props}>
+        {children}
+      </ul>
+    ),
+    ol: ({ children, ...props }) => (
+      <ol className="list-decimal pl-6 my-2 [&>li]:my-0.5 [&>li>p]:my-0" {...props}>
+        {children}
+      </ol>
+    ),
+    li: ({ children, ...props }) => (
+      <li className="my-0.5 [&>p]:my-0" {...props}>
+        {children}
+      </li>
     ),
   };
 
