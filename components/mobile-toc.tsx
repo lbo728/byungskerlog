@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Sheet,
   SheetContent,
@@ -27,6 +27,8 @@ interface MobileTocProps {
 export function MobileToc({ content }: MobileTocProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeId, setActiveId] = useState<string>("");
+  const tocContainerRef = useRef<HTMLElement>(null);
+  const activeItemRef = useRef<HTMLButtonElement>(null);
 
   const toc = useMemo(() => {
     const headingRegex = /^(#{1,3})\s+(.+)$/gm;
@@ -72,6 +74,24 @@ export function MobileToc({ content }: MobileTocProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [toc]);
 
+  // 활성 항목이 변경되면 TOC 내에서 자동 스크롤
+  useEffect(() => {
+    if (activeItemRef.current && tocContainerRef.current) {
+      const container = tocContainerRef.current;
+      const activeItem = activeItemRef.current;
+
+      const containerRect = container.getBoundingClientRect();
+      const itemRect = activeItem.getBoundingClientRect();
+
+      if (itemRect.top < containerRect.top || itemRect.bottom > containerRect.bottom) {
+        activeItem.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }
+  }, [activeId]);
+
   const handleTocClick = (id: string) => {
     document.getElementById(id)?.scrollIntoView({
       behavior: "smooth",
@@ -98,27 +118,31 @@ export function MobileToc({ content }: MobileTocProps) {
           <SheetHeader>
             <SheetTitle>목차</SheetTitle>
           </SheetHeader>
-          <nav className="mobile-toc-nav mt-6 flex-1 overflow-y-auto">
+          <nav ref={tocContainerRef} className="mobile-toc-nav mt-6 flex-1 overflow-y-auto">
             <ul className="space-y-2">
-              {toc.map((item) => (
-                <li
-                  key={item.id}
-                  className={cn("transition-all duration-200", item.level === 2 && "ml-0", item.level === 3 && "ml-4")}
-                >
-                  <button
-                    onClick={() => handleTocClick(item.id)}
-                    className={cn(
-                      "toc-item block w-full text-left text-sm py-2 px-3 rounded-md transition-all duration-200",
-                      "hover:bg-accent hover:text-accent-foreground",
-                      activeId === item.id
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "text-muted-foreground border-l-2 border-transparent"
-                    )}
+              {toc.map((item) => {
+                const isActive = activeId === item.id;
+                return (
+                  <li
+                    key={item.id}
+                    className={cn("transition-all duration-200", item.level === 2 && "ml-0", item.level === 3 && "ml-4")}
                   >
-                    {item.text}
-                  </button>
-                </li>
-              ))}
+                    <button
+                      ref={isActive ? activeItemRef : null}
+                      onClick={() => handleTocClick(item.id)}
+                      className={cn(
+                        "toc-item block w-full text-left text-sm py-2 px-3 rounded-md transition-all duration-200",
+                        "hover:bg-accent hover:text-accent-foreground",
+                        isActive
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "text-muted-foreground border-l-2 border-transparent"
+                      )}
+                    >
+                      {item.text}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </nav>
           <SheetFooter className="mobile-toc-footer flex-row justify-end mb-4">
