@@ -6,10 +6,8 @@ import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { PublishModal } from "@/components/publish-modal";
-import { FloatingActionButton } from "@/components/floating-action-button";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { optimizeImage } from "@/lib/image-optimizer";
@@ -40,8 +38,6 @@ export default function WritePage() {
   const [content, setContent] = useState("");
   const [isLoading] = useState(false);
   const [isFetchingPost, setIsFetchingPost] = useState(false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const previewContentRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(draftIdParam);
@@ -270,19 +266,6 @@ export default function WritePage() {
     } finally {
       setIsSavingDraft(false);
     }
-  };
-
-  // 모바일 미리보기 모달 열기
-  const openPreviewModal = () => {
-    setIsPreviewModalOpen(true);
-    document.body.style.overflow = "hidden";
-  };
-
-
-  // 모바일 미리보기 모달 닫기
-  const closePreviewModal = () => {
-    setIsPreviewModalOpen(false);
-    document.body.style.overflow = "";
   };
 
   // 이미지 업로드 함수
@@ -523,8 +506,8 @@ export default function WritePage() {
             <p className="text-muted-foreground">글을 불러오는 중...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-7.5rem)]">
-            <div className="write-editor-panel border-r border-border flex flex-col pt-4 overflow-x-hidden">
+          <div className="write-editor-container flex justify-center min-h-[calc(100vh-7.5rem)]">
+            <div className="write-editor-panel w-full max-w-4xl flex flex-col pt-4 overflow-x-hidden">
               <div className="px-2 sm:px-0">
                 <Input
                   type="text"
@@ -607,64 +590,9 @@ export default function WritePage() {
                 />
               </div>
             </div>
-
-            {/* 오른쪽: 미리보기 (데스크톱만) */}
-            <div className="hidden lg:block bg-muted/20 overflow-y-auto">
-              <div className="p-8">
-                <h1 className="text-4xl font-bold mb-8">{title || "제목 없음"}</h1>
-                <div className="prose prose-lg dark:prose-invert max-w-none">
-                  {content ? (
-                    <MarkdownRenderer content={content} />
-                  ) : (
-                    <p className="text-muted-foreground italic">여기에 미리보기가 표시됩니다...</p>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>
-
-      {/* 플로팅 액션 버튼 (모바일/태블릿) */}
-      <div className="lg:hidden">
-        <FloatingActionButton
-          onPreview={openPreviewModal}
-          onClosePreview={closePreviewModal}
-          isPreviewActive={isPreviewModalOpen}
-          onImageUpload={() => imageInputRef.current?.click()}
-          disabled={isLoading || isUploading}
-        />
-      </div>
-
-      {/* 모바일 미리보기 풀 모달 */}
-      {isPreviewModalOpen && (
-        <div className="fixed inset-0 z-[100] bg-background">
-          {/* 모달 헤더 */}
-          <div className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
-            <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">미리보기</h2>
-              <Button variant="ghost" size="sm" onClick={closePreviewModal} className="gap-2">
-                <X className="h-4 w-4" />
-                닫기
-              </Button>
-            </div>
-          </div>
-
-          {/* 모달 콘텐츠 */}
-          <div ref={previewContentRef} className="overflow-y-auto h-[calc(100vh-3.5rem)]">
-            <div className="container mx-auto p-4 sm:p-8">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8">{title || "제목 없음"}</h1>
-              <div className="prose prose-sm sm:prose-base md:prose-lg dark:prose-invert max-w-none">
-                {content ? (
-                  <MarkdownRenderer content={content} />
-                ) : (
-                  <p className="text-muted-foreground italic">여기에 미리보기가 표시됩니다...</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 발행 모달 */}
       <PublishModal
