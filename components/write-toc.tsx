@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -112,40 +112,68 @@ function useActiveHeading(toc: TocItem[], editorSelector: string = ".tiptap-edit
 export function WriteTocDesktop({ content, editorSelector = ".tiptap-editor" }: WriteTocProps) {
   const toc = useMemo(() => extractHeadings(content), [content]);
   const activeText = useActiveHeading(toc, editorSelector);
+  const tocContainerRef = useRef<HTMLDivElement>(null);
+  const activeItemRef = useRef<HTMLButtonElement>(null);
+
+  // 활성 항목이 변경되면 TOC 내에서 자동 스크롤
+  useEffect(() => {
+    if (activeItemRef.current && tocContainerRef.current) {
+      const container = tocContainerRef.current;
+      const activeItem = activeItemRef.current;
+
+      const containerRect = container.getBoundingClientRect();
+      const itemRect = activeItem.getBoundingClientRect();
+
+      // 활성 항목이 컨테이너 뷰포트 밖에 있으면 스크롤
+      if (itemRect.top < containerRect.top || itemRect.bottom > containerRect.bottom) {
+        activeItem.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }
+  }, [activeText]);
 
   if (toc.length === 0) return null;
 
   return (
     <nav className="write-toc-desktop sticky top-32 hidden xl:block">
-      <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-6 shadow-lg max-h-[calc(100vh-10rem)] overflow-y-auto">
+      <div
+        ref={tocContainerRef}
+        className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-6 shadow-lg max-h-[calc(100vh-10rem)] overflow-y-auto"
+      >
         <h2 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">
           목차
         </h2>
         <ul className="space-y-2.5">
-          {toc.map((item, index) => (
-            <li
-              key={`${item.id}-${index}`}
-              className={cn(
-                "transition-all duration-200",
-                item.level === 1 && "ml-0",
-                item.level === 2 && "ml-0",
-                item.level === 3 && "ml-4"
-              )}
-            >
-              <button
-                onClick={() => scrollToHeading(item.text, editorSelector)}
+          {toc.map((item, index) => {
+            const isActive = activeText === item.text;
+            return (
+              <li
+                key={`${item.id}-${index}`}
                 className={cn(
-                  "toc-item block w-full text-left text-sm py-1.5 px-3 rounded-md transition-all duration-200",
-                  "hover:bg-accent hover:text-accent-foreground",
-                  activeText === item.text
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground border-l-2 border-transparent"
+                  "transition-all duration-200",
+                  item.level === 1 && "ml-0",
+                  item.level === 2 && "ml-0",
+                  item.level === 3 && "ml-4"
                 )}
               >
-                {item.text}
-              </button>
-            </li>
-          ))}
+                <button
+                  ref={isActive ? activeItemRef : null}
+                  onClick={() => scrollToHeading(item.text, editorSelector)}
+                  className={cn(
+                    "toc-item block w-full text-left text-sm py-1.5 px-3 rounded-md transition-all duration-200",
+                    "hover:bg-accent hover:text-accent-foreground",
+                    isActive
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground border-l-2 border-transparent"
+                  )}
+                >
+                  {item.text}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </nav>
