@@ -70,9 +70,12 @@ function useActiveHeading(toc: TocItem[], editorSelector: string = ".tiptap-edit
     const headings = editor.querySelectorAll("h1, h2, h3");
     let currentActiveText = "";
 
+    // 헤더 높이(7rem = 112px) + 여유 공간을 고려한 임계값
+    const threshold = 180;
+
     for (const heading of headings) {
       const rect = heading.getBoundingClientRect();
-      if (rect.top <= 150) {
+      if (rect.top <= threshold) {
         currentActiveText = heading.textContent?.trim() || "";
       }
     }
@@ -83,11 +86,25 @@ function useActiveHeading(toc: TocItem[], editorSelector: string = ".tiptap-edit
   }, [editorSelector]);
 
   useEffect(() => {
+    const editor = document.querySelector(editorSelector);
+    const editorContainer = editor?.closest(".tiptap-editor");
+
+    // window 스크롤과 에디터 컨테이너 스크롤 모두 감지
     window.addEventListener("scroll", updateActiveHeading, { passive: true });
+    editorContainer?.addEventListener("scroll", updateActiveHeading, { passive: true });
+
+    // 초기 실행
     updateActiveHeading();
 
-    return () => window.removeEventListener("scroll", updateActiveHeading);
-  }, [updateActiveHeading, toc]);
+    // 콘텐츠 변경 시에도 업데이트
+    const interval = setInterval(updateActiveHeading, 500);
+
+    return () => {
+      window.removeEventListener("scroll", updateActiveHeading);
+      editorContainer?.removeEventListener("scroll", updateActiveHeading);
+      clearInterval(interval);
+    };
+  }, [updateActiveHeading, toc, editorSelector]);
 
   return activeText;
 }
