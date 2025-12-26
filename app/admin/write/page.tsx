@@ -18,6 +18,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import TiptapLink from "@tiptap/extension-link";
+import { EmbedCard } from "@/components/tiptap/embed-card-extension";
 import { common, createLowlight } from "lowlight";
 
 const lowlight = createLowlight(common);
@@ -66,11 +67,12 @@ export default function WritePage() {
       TiptapLink.configure({
         openOnClick: false,
         autolink: true,
-        linkOnPaste: true,
+        linkOnPaste: false,
         HTMLAttributes: {
           class: "text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer",
         },
       }),
+      EmbedCard,
       Markdown.configure({
         html: true,
         transformPastedText: true,
