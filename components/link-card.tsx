@@ -100,29 +100,30 @@ export function LinkCard({ url }: LinkCardProps) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="link-card my-4 flex overflow-hidden rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors no-underline p-3"
+      className="link-card my-4 flex overflow-hidden rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors p-3"
+      style={{ textDecoration: "none" }}
     >
       <div className="link-card-content flex-1 min-w-0">
-        <h4 className="link-card-title font-semibold text-foreground line-clamp-1">
+        <h4 className="link-card-title font-semibold text-foreground line-clamp-1" style={{ textDecoration: "none" }}>
           {ogData.title || hostname}
         </h4>
         {ogData.description && (
-          <p className="link-card-description text-sm text-muted-foreground line-clamp-2 mb-2">
+          <p className="link-card-description text-sm text-muted-foreground line-clamp-2 mb-2" style={{ textDecoration: "none" }}>
             {ogData.description}
           </p>
         )}
-        <div className="link-card-meta flex items-center gap-1 text-xs text-muted-foreground">
+        <div className="link-card-meta flex items-center gap-1 text-xs text-muted-foreground" style={{ textDecoration: "none" }}>
           <ExternalLink className="h-3 w-3" />
           <span className="truncate">{ogData.siteName || hostname}</span>
         </div>
       </div>
       {ogData.image && !imageError && (
-        <div className="link-card-image w-[100px] sm:w-[200px] h-[80px] sm:h-[120px] flex-shrink-0 overflow-hidden rounded-lg ml-3">
+        <div className="link-card-image w-[100px] sm:w-[180px] flex-shrink-0 overflow-hidden rounded-lg ml-3 bg-muted flex items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={ogData.image}
             alt={ogData.title || ""}
-            className="w-full h-full object-cover"
+            className="max-w-full max-h-[120px] object-contain"
             loading="lazy"
             onError={handleImageError}
           />
