@@ -6,8 +6,6 @@ import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { MarkdownToolbar } from "@/components/markdown-toolbar";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { PublishModal } from "@/components/publish-modal";
 import { FloatingActionButton } from "@/components/floating-action-button";
@@ -15,12 +13,18 @@ import { ArrowLeft, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { optimizeImage } from "@/lib/image-optimizer";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { Markdown } from "tiptap-markdown";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { common, createLowlight } from "lowlight";
+
+const lowlight = createLowlight(common);
 
 export default function WritePage() {
   useUser({ or: "redirect" });
   const router = useRouter();
   const searchParams = useSearchParams();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const postId = searchParams.get("id");
@@ -34,7 +38,6 @@ export default function WritePage() {
   const [isLoading] = useState(false);
   const [isFetchingPost, setIsFetchingPost] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [scrollRatio, setScrollRatio] = useState(0);
   const previewContentRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -49,6 +52,55 @@ export default function WritePage() {
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
   const tagInputRef = useRef<HTMLInputElement>(null);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        codeBlock: false,
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
+        defaultLanguage: "javascript",
+      }),
+      Markdown.configure({
+        html: true,
+        transformPastedText: true,
+        transformCopiedText: true,
+      }),
+    ],
+    content,
+    immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      interface EditorStorageWithMarkdown extends Record<string, unknown> {
+        markdown?: {
+          getMarkdown: () => string;
+        };
+      }
+      const storage = editor.storage as unknown as EditorStorageWithMarkdown;
+      const markdown = storage.markdown?.getMarkdown() || editor.getText();
+      setContent(markdown);
+    },
+    editorProps: {
+      attributes: {
+        class: "prose prose-lg dark:prose-invert max-w-none focus:outline-none p-8 pb-16 min-h-full",
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (editor && content) {
+      interface EditorStorageWithMarkdown extends Record<string, unknown> {
+        markdown?: {
+          getMarkdown: () => string;
+        };
+      }
+      const storage = editor.storage as unknown as EditorStorageWithMarkdown;
+      const currentMarkdown = storage.markdown?.getMarkdown() || editor.getText();
+      if (content !== currentMarkdown) {
+        editor.commands.setContent(content);
+      }
+    }
+  }, [content, editor]);
 
   useEffect(() => {
     const fetchAllTags = async () => {
@@ -129,32 +181,6 @@ export default function WritePage() {
     setSelectedSuggestionIndex(0);
   };
 
-  const insertMarkdown = (text: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = content.substring(start, end);
-
-    let newText = text;
-
-    if (selectedText && text.includes("텍스트")) {
-      newText = text.replace("텍스트", selectedText);
-    }
-
-    const before = content.substring(0, start);
-    const after = content.substring(end);
-    const newContent = before + newText + after;
-
-    setContent(newContent);
-
-    setTimeout(() => {
-      textarea.focus();
-      const newCursorPos = start + newText.length;
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
-  };
 
   const handleTempSave = async () => {
     setIsSavingDraft(true);
@@ -192,46 +218,15 @@ export default function WritePage() {
 
   // 모바일 미리보기 모달 열기
   const openPreviewModal = () => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      const ratio = textarea.scrollTop / (textarea.scrollHeight - textarea.clientHeight || 1);
-      setScrollRatio(Math.max(0, Math.min(1, ratio)));
-    }
     setIsPreviewModalOpen(true);
     document.body.style.overflow = "hidden";
   };
 
-  // 미리보기가 열릴 때 스크롤 위치 적용
-  useEffect(() => {
-    if (isPreviewModalOpen && previewContentRef.current) {
-      const previewEl = previewContentRef.current;
-      const targetScroll = scrollRatio * (previewEl.scrollHeight - previewEl.clientHeight);
-      previewEl.scrollTop = targetScroll;
-    }
-  }, [isPreviewModalOpen, scrollRatio]);
 
   // 모바일 미리보기 모달 닫기
   const closePreviewModal = () => {
-    const previewEl = previewContentRef.current;
-    let ratio = scrollRatio;
-
-    if (previewEl) {
-      ratio = previewEl.scrollTop / (previewEl.scrollHeight - previewEl.clientHeight || 1);
-      ratio = Math.max(0, Math.min(1, ratio));
-      setScrollRatio(ratio);
-    }
-
     setIsPreviewModalOpen(false);
     document.body.style.overflow = "";
-
-    // 에디터에 스크롤 위치 적용 (계산된 ratio 직접 사용)
-    setTimeout(() => {
-      const textarea = textareaRef.current;
-      if (textarea) {
-        const targetScroll = ratio * (textarea.scrollHeight - textarea.clientHeight);
-        textarea.scrollTop = targetScroll;
-      }
-    }, 0);
   };
 
   // 이미지 업로드 함수
@@ -282,24 +277,13 @@ export default function WritePage() {
   // 이미지를 마크다운에 삽입
   const insertImageMarkdown = useCallback(
     (url: string, altText: string = "image") => {
-      const textarea = textareaRef.current;
-      if (!textarea) return;
+      if (!editor) return;
 
-      const imageMarkdown = `![${altText}](${url})`;
-      const start = textarea.selectionStart;
-      const before = content.substring(0, start);
-      const after = content.substring(start);
-      const newContent = before + imageMarkdown + "\n" + after;
-
-      setContent(newContent);
-
-      setTimeout(() => {
-        textarea.focus();
-        const newCursorPos = start + imageMarkdown.length + 1;
-        textarea.setSelectionRange(newCursorPos, newCursorPos);
-      }, 0);
+      const imageMarkdown = `![${altText}](${url})\n`;
+      editor.commands.insertContent(imageMarkdown);
+      editor.commands.focus();
     },
-    [content]
+    [editor]
   );
 
   // 드래그 앤 드롭 핸들러
@@ -356,28 +340,6 @@ export default function WritePage() {
     [uploadImage, insertImageMarkdown]
   );
 
-  // 클립보드 붙여넣기 핸들러
-  const handlePaste = useCallback(
-    async (e: React.ClipboardEvent) => {
-      const items = Array.from(e.clipboardData.items);
-      const imageItems = items.filter((item) => item.type.startsWith("image/"));
-
-      if (imageItems.length === 0) return;
-
-      e.preventDefault();
-
-      for (const item of imageItems) {
-        const file = item.getAsFile();
-        if (file) {
-          const url = await uploadImage(file);
-          if (url) {
-            insertImageMarkdown(url, "pasted-image");
-          }
-        }
-      }
-    },
-    [uploadImage, insertImageMarkdown]
-  );
 
   // Load existing post for edit mode or draft
   useEffect(() => {
@@ -562,23 +524,13 @@ export default function WritePage() {
                 </div>
                 </div>
 
-              <MarkdownToolbar onInsert={insertMarkdown} />
-
               <div
                 className={`content-editor relative flex-1 ${isDragging ? "ring-2 ring-primary ring-inset bg-primary/5" : ""}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
-                <Textarea
-                  ref={textareaRef}
-                  placeholder="당신의 이야기를 적어보세요... (이미지를 드래그하거나 붙여넣기 할 수 있습니다)"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  onPaste={handlePaste}
-                  className="absolute inset-0 border-none rounded-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-8 pb-16 font-mono text-base"
-                  disabled={isLoading || isUploading}
-                />
+                <EditorContent editor={editor} className="tiptap-editor h-full overflow-y-auto" />
                 {isDragging && (
                   <div className="absolute inset-0 flex items-center justify-center bg-primary/10 pointer-events-none z-10">
                     <div className="text-primary font-medium text-lg">이미지를 여기에 놓으세요</div>
@@ -589,7 +541,6 @@ export default function WritePage() {
                     <div className="text-muted-foreground font-medium">이미지 업로드 중...</div>
                   </div>
                 )}
-                {/* 히든 파일 인풋 */}
                 <input
                   ref={imageInputRef}
                   type="file"
