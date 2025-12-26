@@ -82,7 +82,7 @@ export function TableOfContents({ content }: { content: string }) {
     <nav className="sticky top-24 hidden xl:block">
       <div
         ref={tocContainerRef}
-        className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-6 shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto"
+        className="toc-container p-6 max-h-[calc(100vh-8rem)] overflow-y-auto bg-transparent"
       >
         <h2 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">목차</h2>
         <ul className="space-y-2.5">

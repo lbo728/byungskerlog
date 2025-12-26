@@ -444,3 +444,44 @@
 .prose .link-card:hover {
   text-decoration: none !important;
 }
+
+/* Post Detail 페이지 prose 스타일 - 따옴표/백틱 제거 */
+.prose blockquote::before,
+.prose blockquote::after {
+  content: none !important;
+}
+
+.prose blockquote p::before,
+.prose blockquote p::after {
+  content: none !important;
+}
+
+.prose code::before,
+.prose code::after {
+  content: none !important;
+}
+
+/* TOC 스크롤바 스타일 - 배경 투명 */
+.toc-container {
+  background: transparent !important;
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.5 0 0 / 30%) transparent;
+}
+
+.toc-container::-webkit-scrollbar {
+  width: 6px;
+  background: transparent;
+}
+
+.toc-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.toc-container::-webkit-scrollbar-thumb {
+  background: oklch(0.5 0 0 / 30%);
+  border-radius: 3px;
+}
+
+.toc-container::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.5 0 0 / 50%);
+}
