@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { List, ChevronsRight } from "lucide-react";
-import { useState } from "react";
 
 interface TocItem {
   id: string;
@@ -61,8 +60,41 @@ function scrollToHeading(text: string, editorSelector: string = ".tiptap-editor"
   }
 }
 
-export function WriteTocDesktop({ content, editorSelector }: WriteTocProps) {
+function useActiveHeading(toc: TocItem[], editorSelector: string = ".tiptap-editor") {
+  const [activeText, setActiveText] = useState<string>("");
+
+  const updateActiveHeading = useCallback(() => {
+    const editor = document.querySelector(editorSelector);
+    if (!editor) return;
+
+    const headings = editor.querySelectorAll("h1, h2, h3");
+    let currentActiveText = "";
+
+    for (const heading of headings) {
+      const rect = heading.getBoundingClientRect();
+      if (rect.top <= 150) {
+        currentActiveText = heading.textContent?.trim() || "";
+      }
+    }
+
+    if (currentActiveText) {
+      setActiveText(currentActiveText);
+    }
+  }, [editorSelector]);
+
+  useEffect(() => {
+    window.addEventListener("scroll", updateActiveHeading, { passive: true });
+    updateActiveHeading();
+
+    return () => window.removeEventListener("scroll", updateActiveHeading);
+  }, [updateActiveHeading, toc]);
+
+  return activeText;
+}
+
+export function WriteTocDesktop({ content, editorSelector = ".tiptap-editor" }: WriteTocProps) {
   const toc = useMemo(() => extractHeadings(content), [content]);
+  const activeText = useActiveHeading(toc, editorSelector);
 
   if (toc.length === 0) return null;
 
@@ -88,7 +120,9 @@ export function WriteTocDesktop({ content, editorSelector }: WriteTocProps) {
                 className={cn(
                   "toc-item block w-full text-left text-sm py-1.5 px-3 rounded-md transition-all duration-200",
                   "hover:bg-accent hover:text-accent-foreground",
-                  "text-muted-foreground border-l-2 border-transparent"
+                  activeText === item.text
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground border-l-2 border-transparent"
                 )}
               >
                 {item.text}
@@ -101,9 +135,10 @@ export function WriteTocDesktop({ content, editorSelector }: WriteTocProps) {
   );
 }
 
-export function WriteTocMobile({ content, editorSelector }: WriteTocProps) {
+export function WriteTocMobile({ content, editorSelector = ".tiptap-editor" }: WriteTocProps) {
   const [isOpen, setIsOpen] = useState(false);
   const toc = useMemo(() => extractHeadings(content), [content]);
+  const activeText = useActiveHeading(toc, editorSelector);
 
   const handleTocClick = (text: string) => {
     scrollToHeading(text, editorSelector);
@@ -151,7 +186,9 @@ export function WriteTocMobile({ content, editorSelector }: WriteTocProps) {
                     className={cn(
                       "toc-item block w-full text-left text-sm py-2 px-3 rounded-md transition-all duration-200",
                       "hover:bg-accent hover:text-accent-foreground",
-                      "text-muted-foreground border-l-2 border-transparent"
+                      activeText === item.text
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-muted-foreground border-l-2 border-transparent"
                     )}
                   >
                     {item.text}
