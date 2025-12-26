@@ -17,6 +17,14 @@ function EmbedCardComponent({ node }: NodeViewProps) {
   );
 }
 
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    embedCard: {
+      setEmbedCard: (options: { url: string }) => ReturnType;
+    };
+  }
+}
+
 export const EmbedCard = Node.create({
   name: "embedCard",
   group: "block",
@@ -47,13 +55,58 @@ export const EmbedCard = Node.create({
     return ReactNodeViewRenderer(EmbedCardComponent);
   },
 
+  addCommands() {
+    return {
+      setEmbedCard:
+        (options) =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs: options,
+          });
+        },
+    };
+  },
+
   addStorage() {
     return {
       markdown: {
         serialize(state: { write: (text: string) => void }, node: { attrs: { url: string } }) {
-          state.write(node.attrs.url + "\n\n");
+          state.write("\n" + node.attrs.url + "\n\n");
         },
-        parse: {},
+        parse: {
+          setup(markdownit: { block: { ruler: { before: (name: string, ruleName: string, rule: (state: unknown, startLine: number, endLine: number, silent: boolean) => boolean) => void } } }) {
+            markdownit.block.ruler.before("paragraph", "embedCard", (state: unknown, startLine: number, endLine: number, silent: boolean) => {
+              const typedState = state as {
+                src: string;
+                bMarks: number[];
+                eMarks: number[];
+                tShift: number[];
+                line: number;
+                push: (type: string, tag: string, nesting: number) => { content: string; map: [number, number] };
+              };
+              const pos = typedState.bMarks[startLine] + typedState.tShift[startLine];
+              const max = typedState.eMarks[startLine];
+              const line = typedState.src.slice(pos, max).trim();
+
+              if (!URL_REGEX.test(line)) {
+                return false;
+              }
+
+              if (silent) {
+                return true;
+              }
+
+              const token = typedState.push("embedCard", "", 0);
+              token.content = line;
+              token.map = [startLine, startLine + 1];
+              typedState.line = startLine + 1;
+
+              return true;
+            });
+          },
+          updateDOM() {},
+        },
       },
     };
   },
