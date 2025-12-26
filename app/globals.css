@@ -381,3 +381,19 @@
 .tiptap-editor .embed-card-wrapper {
   margin: 1rem 0;
 }
+
+/* EmbedCard 링크 밑줄 제거 */
+.tiptap-editor .embed-card-wrapper a,
+.tiptap-editor .embed-card-wrapper a *,
+.prose .embed-card-wrapper a,
+.prose .embed-card-wrapper a *,
+.prose .link-card,
+.prose .link-card * {
+  text-decoration: none !important;
+}
+
+.tiptap-editor .embed-card-wrapper a:hover,
+.prose .embed-card-wrapper a:hover,
+.prose .link-card:hover {
+  text-decoration: none !important;
+}
