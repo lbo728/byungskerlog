@@ -130,15 +130,42 @@ export default function WritePage() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+K: 링크 삽입 모달
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         openLinkModal();
+        return;
+      }
+
+      // Tab/Shift+Tab: 리스트 들여쓰기
+      if (e.key === "Tab" && editor?.isFocused) {
+        const { state } = editor;
+        const { $from } = state.selection;
+
+        // 리스트 아이템 내부인지 확인
+        let isInList = false;
+        for (let d = $from.depth; d > 0; d--) {
+          const node = $from.node(d);
+          if (node.type.name === "listItem") {
+            isInList = true;
+            break;
+          }
+        }
+
+        if (isInList) {
+          e.preventDefault();
+          if (e.shiftKey) {
+            editor.chain().focus().liftListItem("listItem").run();
+          } else {
+            editor.chain().focus().sinkListItem("listItem").run();
+          }
+        }
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [openLinkModal]);
+  }, [openLinkModal, editor]);
 
   useEffect(() => {
     if (editor && content) {
