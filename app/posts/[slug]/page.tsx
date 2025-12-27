@@ -13,6 +13,7 @@ import { ReadingProgress } from "@/components/reading-progress";
 import { AdSense } from "@/components/adsense";
 import { Comments } from "@/components/comments";
 import { ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
+import { ShortPostsNav } from "@/components/short-posts-nav";
 import Image from "next/image";
 import { calculateReadingTime } from "@/lib/reading-time";
 import type { Metadata } from "next";
@@ -134,8 +135,8 @@ async function getSeriesPosts(seriesId: string | null) {
   return posts;
 }
 
-async function getPrevNextPosts(createdAt: Date, seriesId: string | null, currentSlug: string, postType: string) {
-  const typeFilter = postType === "SHORT" ? { type: "SHORT" as const } : {};
+async function getPrevNextPosts(createdAt: Date, seriesId: string | null, currentSlug: string, isFromShort: boolean, postType: string) {
+  const typeFilter = isFromShort && postType === "SHORT" ? { type: "SHORT" as const } : {};
 
   if (seriesId) {
     const seriesPosts = await prisma.post.findMany({
@@ -188,10 +189,10 @@ async function getPrevNextPosts(createdAt: Date, seriesId: string | null, curren
   return { prevPost, nextPost };
 }
 
-async function getRelatedPosts(tags: string[], currentSlug: string, postType: string) {
+async function getRelatedPosts(tags: string[], currentSlug: string, isFromShort: boolean, postType: string) {
   if (!tags || tags.length === 0) return [];
 
-  const typeFilter = postType === "SHORT" ? { type: "SHORT" as const } : {};
+  const typeFilter = isFromShort && postType === "SHORT" ? { type: "SHORT" as const } : {};
 
   const posts = await prisma.post.findMany({
     where: {
@@ -214,6 +215,35 @@ async function getRelatedPosts(tags: string[], currentSlug: string, postType: st
   return posts;
 }
 
+async function getShortPostsNav(createdAt: Date, currentSlug: string, postType: string) {
+  if (postType !== "SHORT") return { prevShortPost: null, nextShortPost: null };
+
+  const [prevShortPost, nextShortPost] = await Promise.all([
+    prisma.post.findFirst({
+      where: {
+        published: true,
+        type: "SHORT",
+        slug: { not: currentSlug },
+        createdAt: { lt: createdAt },
+      },
+      orderBy: { createdAt: "desc" },
+      select: { slug: true, title: true },
+    }),
+    prisma.post.findFirst({
+      where: {
+        published: true,
+        type: "SHORT",
+        slug: { not: currentSlug },
+        createdAt: { gt: createdAt },
+      },
+      orderBy: { createdAt: "asc" },
+      select: { slug: true, title: true },
+    }),
+  ]);
+
+  return { prevShortPost, nextShortPost };
+}
+
 export default async function PostPage({
   params,
   searchParams,
@@ -231,8 +261,9 @@ export default async function PostPage({
   }
 
   const seriesPosts = await getSeriesPosts(post.seriesId);
-  const { prevPost, nextPost } = await getPrevNextPosts(post.createdAt, post.seriesId, post.slug, post.type);
-  const relatedPosts = await getRelatedPosts(post.tags || [], post.slug, post.type);
+  const { prevPost, nextPost } = await getPrevNextPosts(post.createdAt, post.seriesId, post.slug, isFromShort, post.type);
+  const relatedPosts = await getRelatedPosts(post.tags || [], post.slug, isFromShort, post.type);
+  const { prevShortPost, nextShortPost } = await getShortPostsNav(post.createdAt, post.slug, post.type);
   const currentSeriesIndex = seriesPosts.findIndex((p) => p.slug === post.slug);
 
   return (
@@ -443,6 +474,11 @@ export default async function PostPage({
                   </div>
                 </section>
               </>
+            )}
+
+            {/* 짧은 글 네비게이션 (Short 메뉴가 아닌 곳에서 진입한 SHORT 타입인 경우) */}
+            {!isFromShort && post.type === "SHORT" && (prevShortPost || nextShortPost) && (
+              <ShortPostsNav prevShortPost={prevShortPost} nextShortPost={nextShortPost} />
             )}
 
             {/* 댓글 */}
