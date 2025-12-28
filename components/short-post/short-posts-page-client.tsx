@@ -115,59 +115,86 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
           <li key={post.id} className="short-post-item group">
             <Link
               href={`/short/${post.slug}`}
-              className="short-post-row flex items-center gap-4 py-4 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
+              className="short-post-link block py-4 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
             >
-              <time
-                dateTime={new Date(post.createdAt).toISOString()}
-                className="short-post-date text-sm text-muted-foreground shrink-0 w-[85px]"
-              >
-                {format(new Date(post.createdAt), "yyyy.MM.dd")}
-              </time>
+              <div className="short-post-row flex items-center gap-4">
+                <time
+                  dateTime={new Date(post.createdAt).toISOString()}
+                  className="short-post-date text-sm text-muted-foreground shrink-0 w-[85px]"
+                >
+                  {format(new Date(post.createdAt), "yyyy.MM.dd")}
+                </time>
 
-              <span className="short-post-title flex-1 font-medium text-foreground group-hover:text-primary transition-colors truncate">
-                {post.title}
-              </span>
+                <span className="short-post-title flex-1 font-medium text-foreground group-hover:text-primary transition-colors truncate">
+                  {post.title}
+                </span>
 
-              <span className="short-post-reading-time text-sm text-muted-foreground shrink-0 hidden sm:block">
-                {calculateReadingTime(post.content)}
-              </span>
+                <span className="short-post-reading-time text-sm text-muted-foreground shrink-0 hidden sm:block">
+                  {calculateReadingTime(post.content)}
+                </span>
 
-              {post.tags && post.tags.length > 0 && (
-                <div className="short-post-tags flex items-center gap-1.5 shrink-0 hidden md:flex">
-                  {post.tags.slice(0, 2).map((tag) => (
-                    <span
-                      key={tag}
-                      className="tag-item px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground"
+                {post.tags && post.tags.length > 0 && (
+                  <div className="short-post-tags items-center gap-1.5 shrink-0 hidden md:flex">
+                    {post.tags.slice(0, 2).map((tag) => (
+                      <span
+                        key={tag}
+                        className="tag-item px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {post.tags.length > 2 && (
+                      <Plus className="h-3 w-3 text-muted-foreground" />
+                    )}
+                  </div>
+                )}
+
+                {user && (
+                  <div className="short-post-actions flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={(e) => handleEdit(post.id, e)}
                     >
-                      {tag}
-                    </span>
-                  ))}
-                  {post.tags.length > 2 && (
-                    <Plus className="h-3 w-3 text-muted-foreground" />
-                  )}
-                </div>
-              )}
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={(e) => handleDelete(post.id, post.title, e)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+              </div>
 
-              {user && (
-                <div className="short-post-actions flex items-center gap-1 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={(e) => handleEdit(post.id, e)}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
-                    onClick={(e) => handleDelete(post.id, post.title, e)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              )}
+              {/* Mobile: 2nd row for reading time and tags */}
+              <div className="short-post-mobile-meta flex items-center gap-2 mt-1.5 ml-[101px] sm:hidden">
+                <span className="text-xs text-muted-foreground">
+                  {calculateReadingTime(post.content)}
+                </span>
+                {post.tags && post.tags.length > 0 && (
+                  <>
+                    <span className="text-muted-foreground">·</span>
+                    <div className="flex items-center gap-1">
+                      {post.tags.slice(0, 2).map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-1.5 py-0.5 text-xs rounded bg-muted text-muted-foreground"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {post.tags.length > 2 && (
+                        <span className="text-xs text-muted-foreground">+{post.tags.length - 2}</span>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </Link>
           </li>
         ))}
