@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { PostsPageClient } from "@/components/posts-page-client";
+import { PostsPageClient } from "@/components/pages";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;

@@ -14,8 +14,8 @@
 
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { MarkdownRenderer } from "@/components/markdown-renderer";
-import { FloatingActionButton } from "@/components/floating-action-button";
+import { MarkdownRenderer } from "@/components/post";
+import { FloatingActionButton } from "@/components/layout";
 import { X } from "lucide-react";
 
 interface WritePreviewDesktopProps {

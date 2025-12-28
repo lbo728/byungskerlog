@@ -7,8 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MarkdownToolbar } from "@/components/markdown-toolbar";
-import { MarkdownRenderer } from "@/components/markdown-renderer";
+import { MarkdownToolbar } from "@/components/editor";
+import { MarkdownRenderer } from "@/components/post";
 
 interface AboutEditModalProps {
   open: boolean;

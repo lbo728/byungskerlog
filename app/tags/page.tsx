@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { TagsPageClient } from "@/components/tags-page-client";
+import { TagsPageClient } from "@/components/pages";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;
