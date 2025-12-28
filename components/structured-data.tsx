@@ -29,43 +29,59 @@ export function StructuredData({ type, data }: StructuredDataProps) {
   const getStructuredData = () => {
     const baseOrganization = {
       "@type": "Organization",
+      "@id": `${siteUrl}/#organization`,
       name: "Byungsker Log",
+      alternateName: ["byungskerlog", "병스커 블로그", "병스커", "Byungsker"],
       url: siteUrl,
       logo: {
         "@type": "ImageObject",
         url: `${siteUrl}/logo-byungsker.png`,
+        width: 400,
+        height: 186,
       },
     };
 
     const baseWebSite = {
-      "@context": "https://schema.org",
       "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      name: "Byungsker Log",
+      alternateName: ["byungskerlog", "병스커 블로그", "병스커", "Byungsker"],
+      url: siteUrl,
+      description: "제품 주도 개발을 지향하는 개발자, 이병우의 기술 블로그",
+      publisher: { "@id": `${siteUrl}/#organization` },
+      inLanguage: "ko-KR",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${siteUrl}/posts?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    };
+
+    const baseBlog = {
+      "@type": "Blog",
+      "@id": `${siteUrl}/#blog`,
       name: "Byungsker Log",
       url: siteUrl,
       description: "제품 주도 개발을 지향하는 개발자, 이병우의 기술 블로그",
-      publisher: baseOrganization,
+      publisher: { "@id": `${siteUrl}/#organization` },
+      isPartOf: { "@id": `${siteUrl}/#website` },
       inLanguage: "ko-KR",
     };
 
     if (type === "website" || type === "blog") {
       return {
-        ...baseWebSite,
-        "@type": type === "blog" ? "Blog" : "WebSite",
-        potentialAction: {
-          "@type": "SearchAction",
-          target: {
-            "@type": "EntryPoint",
-            urlTemplate: `${siteUrl}/posts?q={search_term_string}`,
-          },
-          "query-input": "required name=search_term_string",
-        },
+        "@context": "https://schema.org",
+        "@graph": [baseOrganization, baseWebSite, baseBlog],
       };
     }
 
     if (type === "article" && data) {
-      return {
-        "@context": "https://schema.org",
+      const articleSchema = {
         "@type": "BlogPosting",
+        "@id": `${siteUrl}/posts/${data.slug}/#article`,
         headline: data.title,
         description: data.description,
         image: data.image || `${siteUrl}/og-image.png`,
@@ -73,16 +89,22 @@ export function StructuredData({ type, data }: StructuredDataProps) {
         dateModified: data.dateModified,
         author: {
           "@type": "Person",
+          "@id": `${siteUrl}/#author`,
           name: "이병우 (Byungsker)",
           url: siteUrl,
         },
-        publisher: baseOrganization,
+        publisher: { "@id": `${siteUrl}/#organization` },
+        isPartOf: { "@id": `${siteUrl}/#blog` },
         mainEntityOfPage: {
           "@type": "WebPage",
           "@id": `${siteUrl}/posts/${data.slug}`,
         },
         keywords: data.tags?.join(", "),
         inLanguage: "ko-KR",
+      };
+      return {
+        "@context": "https://schema.org",
+        "@graph": [baseOrganization, baseWebSite, baseBlog, articleSchema],
       };
     }
 
@@ -114,7 +136,10 @@ export function StructuredData({ type, data }: StructuredDataProps) {
       };
     }
 
-    return baseWebSite;
+    return {
+      "@context": "https://schema.org",
+      "@graph": [baseOrganization, baseWebSite, baseBlog],
+    };
   };
 
   const structuredData = getStructuredData();
