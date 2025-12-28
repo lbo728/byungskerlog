@@ -7,7 +7,6 @@ import {
   getSeriesPosts,
   getPrevNextPosts,
   getRelatedPosts,
-  getShortPostsNav,
 } from "@/lib/post-data";
 
 export const revalidate = 3600;
@@ -17,7 +16,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel
 export async function generateStaticParams() {
   try {
     const posts = await prisma.post.findMany({
-      where: { published: true },
+      where: { published: true, type: "SHORT" },
       select: { slug: true, subSlug: true },
     });
 
@@ -51,7 +50,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
-  const canonicalUrl = `${siteUrl}/posts/${post.slug}`;
+  const canonicalUrl = `${siteUrl}/short/${post.slug}`;
   const imageUrl = post.thumbnail || `${siteUrl}/og-image.png`;
   const description = post.excerpt || post.content.replace(/[#*`\n]/g, "").substring(0, 200) + "...";
 
@@ -94,7 +93,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function PostPage({
+export default async function ShortPostPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -106,19 +105,18 @@ export default async function PostPage({
     notFound();
   }
 
+  if (post.type !== "SHORT") {
+    notFound();
+  }
+
   const seriesPosts = await getSeriesPosts(post.seriesId);
   const { prevPost, nextPost } = await getPrevNextPosts(
     post.createdAt,
     post.seriesId,
     post.slug,
-    false
+    true
   );
-  const relatedPosts = await getRelatedPosts(post.tags || [], post.slug, false);
-  const { prevShortPost, nextShortPost } = await getShortPostsNav(
-    post.createdAt,
-    post.slug,
-    post.type
-  );
+  const relatedPosts = await getRelatedPosts(post.tags || [], post.slug, true);
 
   return (
     <PostDetail
@@ -128,9 +126,9 @@ export default async function PostPage({
       prevPost={prevPost}
       nextPost={nextPost}
       relatedPosts={relatedPosts}
-      prevShortPost={prevShortPost}
-      nextShortPost={nextShortPost}
-      isFromShort={false}
+      prevShortPost={null}
+      nextShortPost={null}
+      isFromShort={true}
     />
   );
 }

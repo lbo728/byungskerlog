@@ -41,7 +41,7 @@ export function ShortPostsNav({ prevShortPost, nextShortPost }: ShortPostsNavPro
       <CollapsibleContent className="short-posts-nav-content">
         <nav className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
           {prevShortPost ? (
-            <Link href={`/posts/${prevShortPost.slug}?from=short`} className="group">
+            <Link href={`/short/${prevShortPost.slug}`} className="group">
               <Card className="h-full transition-colors hover:border-violet-500/50 border-violet-500/20">
                 <CardHeader className="pb-3">
                   <div className="flex items-center text-sm text-violet-500 mb-2">
@@ -58,7 +58,7 @@ export function ShortPostsNav({ prevShortPost, nextShortPost }: ShortPostsNavPro
             <div />
           )}
           {nextShortPost ? (
-            <Link href={`/posts/${nextShortPost.slug}?from=short`} className="group">
+            <Link href={`/short/${nextShortPost.slug}`} className="group">
               <Card className="h-full transition-colors hover:border-violet-500/50 border-violet-500/20">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-end text-sm text-violet-500 mb-2">

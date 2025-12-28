@@ -114,7 +114,7 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
         {posts.map((post) => (
           <li key={post.id} className="short-post-item group">
             <Link
-              href={`/posts/${post.slug}?from=short`}
+              href={`/short/${post.slug}`}
               className="short-post-row flex items-center gap-4 py-4 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
             >
               <time
