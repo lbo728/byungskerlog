@@ -96,6 +96,21 @@ export const metadata: Metadata = {
       "naver-site-verification": "b5fe47a6ed7b521763b6c03524d676baba809a52",
     },
   },
+  applicationName: "Byungsker Log",
+  appleWebApp: {
+    title: "Byungsker Log",
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [{ url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({
