@@ -241,7 +241,7 @@ export const EmbedCard = Node.create({
   },
 
   addProseMirrorPlugins() {
-    const extensionThis = this;
+    const nodeType = this.type;
 
     return [
       new Plugin({
@@ -255,7 +255,7 @@ export const EmbedCard = Node.create({
               const { selection } = state;
 
               if (selection.empty) {
-                const node = extensionThis.type.create({ url: text });
+                const node = nodeType.create({ url: text });
                 const transaction = state.tr.replaceSelectionWith(node);
                 dispatch(transaction);
                 return true;
