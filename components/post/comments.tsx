@@ -1,7 +1,7 @@
 "use client";
 
 import Giscus from "@giscus/react";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/common";
 
 interface CommentsProps {
   slug: string;

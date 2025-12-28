@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Share2 } from "lucide-react";
-import { SubSlugModal } from "@/components/sub-slug-modal";
+import { SubSlugModal } from "@/components/modals";
 
 interface PostActionsProps {
   postId: string;

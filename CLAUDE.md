@@ -114,6 +114,16 @@ npm run create-admin        # Generate SQL for creating admin account
 - **Singleton Pattern**: Prisma client is exported from `lib/prisma.ts` to prevent multiple instances in development
 - **Models**:
   - `Post`: Blog posts with slug-based routing, markdown content, published status
+    - `PostType` enum: `LONG` (일반 포스트) / `SHORT` (짧은 글)
+    - `subSlug`: 검색 최적화를 위한 보조 slug (optional, unique)
+    - `thumbnail`: 썸네일 이미지 URL
+    - `tags`: 태그 배열
+    - `excerpt`: 발췌문
+    - Relations: `series`, `views`
+  - `Series`: 포스트 시리즈 그룹핑 (name, slug, description)
+  - `PostView`: 조회수 추적 (postId, viewedAt, ipAddress, userAgent)
+  - `Page`: 정적 페이지 (About 등) 관리
+  - `Draft`: 임시저장 글 (authorId 기반)
 
 ### Authentication System
 
@@ -139,24 +149,76 @@ The application uses **Stack Auth** (@stackframe/stack):
 **Pages & Routes**:
 
 - `/` - Homepage listing published posts
-- `/posts/[slug]` - Dynamic post pages
+- `/posts` - All posts listing page
+- `/posts/[slug]` - Dynamic post pages (LONG type)
+- `/short-posts` - Short posts listing page
+- `/short/[slug]` - Short post detail page (SHORT type)
+- `/series` - Series listing page
+- `/series/[slug]` - Series detail with posts
+- `/tags` - Tags listing page
+- `/about` - About page (editable via Page model)
+- `/products` - Products showcase page
 - `/admin/login` - Admin login page
-- `/admin/write` - Post creation/editing page
+- `/admin/write` - Post creation/editing page (TipTap editor)
+- `/admin/posts` - Admin post management
+- `/admin/drafts` - Admin draft management
+- `/unauthorized` - Unauthorized access page
+- `/handler/sign-in`, `/handler/sign-up` - Stack Auth handler pages
+- `/sitemap.ts` - Dynamic sitemap generation
+- `/robots.ts` - robots.txt configuration
+- `/feed.xml` - RSS feed
 
 **API Routes**:
 
-- `POST /api/posts` - Create new post (authenticated with Stack Auth)
-- `GET /api/posts` - List published posts
-- `POST /api/upload` - Image upload to Vercel Blob storage
+Posts:
+- `GET/POST /api/posts` - List/Create posts
+- `GET/PUT/DELETE /api/posts/[id]` - Individual post CRUD
+- `POST /api/posts/[id]/sub-slug` - Generate sub-slug for SEO
+
+Post Stats:
+- `POST /api/posts-by-slug/[slug]/views` - Increment view count
+- `GET /api/posts-by-slug/[slug]/stats` - Get post statistics
+
+Series:
+- `GET/POST /api/series` - List/Create series
+- `GET/PUT/DELETE /api/series/[id]` - Individual series CRUD
+
+Drafts:
+- `GET/POST /api/drafts` - List/Create drafts
+- `GET/PUT/DELETE /api/drafts/[id]` - Individual draft CRUD
+
+Others:
+- `GET /api/tags` - List all tags with counts
+- `GET /api/visitors` - Visitor count
+- `GET/PUT /api/pages/[slug]` - Page content (About etc.)
+- `POST /api/upload` - Image upload to Vercel Blob
+- `POST /api/upload/thumbnail` - Thumbnail upload
+- `GET /api/og` - Dynamic OG image generation
+- `DELETE /api/auth/delete-unauthorized` - Delete unauthorized users
 
 **Key Features**:
 
+- **Editor**: TipTap rich text editor with markdown support (replacing legacy markdown editor)
+- **Post Types**: LONG (일반 글) and SHORT (짧은 글) 지원
+- **Series**: 포스트를 시리즈로 그룹핑 가능
+- **View Tracking**: IP/User-Agent 기반 조회수 추적
+- **Draft System**: 임시저장 기능
+- **SEO**:
+  - Dynamic Open Graph image generation
+  - Structured data (JSON-LD)
+  - Sitemap & RSS feed
+  - Sub-slug for search optimization
 - Markdown rendering with syntax highlighting (react-markdown + react-syntax-highlighter)
 - Automatic heading IDs for ToC navigation (scroll offset: `scroll-mt-24`)
 - On-demand revalidation after post creation
 - Tailwind CSS with dark mode support
 - GitHub comments via Giscus (GitHub Discussions based)
-- Drag & drop image upload in admin write page (Vercel Blob storage)
+- Drag & drop image upload (Vercel Blob storage)
+- **Analytics**:
+  - Contribution graph (GitHub style)
+  - Reading time estimation
+  - Visitor counter
+- **AdSense**: Google AdSense integration
 
 ### Admin Account Management
 
@@ -177,26 +239,71 @@ Admin authentication is managed entirely through Stack Auth:
 ### UI Components
 
 - Uses shadcn/ui components in `components/ui/`
-- Custom components:
-  - `MarkdownRenderer`: Renders markdown with custom styling and syntax highlighting
-  - `ThemeProvider`: Dark mode support
-  - `ThemeToggle`: Theme switcher
-  - `TableOfContents`: Auto-generated from markdown headings
+- **State Management**: React Query (@tanstack/react-query) for server state
+- **Toast Notifications**: Sonner
+
+Custom components:
+- `MarkdownRenderer`: Renders markdown with custom styling and syntax highlighting
+- `ThemeProvider` / `ThemeToggle`: Dark mode support
+- `Toc` / `MobileToc` / `WriteToc`: Table of Contents variants
+- `Header` / `Footer`: Layout components
+- `PostDetail` / `PostListClient`: Post display components
+- `PostsPageClient` / `ShortPostsPageClient` / `TagsPageClient`: Page client components
+- `ContributionGraph`: GitHub-style contribution graph
+- `ReadingProgress`: Reading progress bar
+- `ViewTracker` / `VisitorCount`: Analytics components
+- `PublishModal` / `SubSlugModal` / `AboutEditModal`: Modal dialogs
+- `SeriesSelect`: Series dropdown selector
+- `ThumbnailUploader`: Thumbnail upload with preview
+- `LinkCard` / `ProductCard`: Card components
+- `FloatingActionButton`: Mobile floating action button
+- `StructuredData`: SEO structured data component
+
+TipTap Editor (`components/tiptap/`):
+- `embed-card-extension.tsx`: Custom embed card extension
+- `link-modal.tsx`: Link insertion modal
+
+Legacy (deprecated):
+- `components/legacy/`: Old markdown editor components
+
+### Lib Directory (`lib/`)
+
+Utility modules:
+- `prisma.ts`: Prisma client singleton
+- `auth.ts`: Authentication utilities
+- `post-data.ts`: Post data fetching functions
+- `excerpt.ts`: Excerpt generation from content
+- `reading-time.ts`: Reading time calculation
+- `image-optimizer.ts`: Image optimization utilities
+- `syntax-theme.ts`: Code syntax highlighting theme
+- `utils.ts`: General utilities (cn for classnames)
+- `types.ts` / `types/`: TypeScript type definitions
 
 ### Environment Setup
 
 Required environment variables:
 
+Database:
 - `DATABASE_URL` - Neon PostgreSQL connection string (pooled)
 - `DATABASE_URL_UNPOOLED` - Direct connection for migrations
+
+Stack Auth:
 - `NEXT_PUBLIC_STACK_PROJECT_ID` - Stack Auth project ID
 - `NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY` - Stack Auth publishable key
 - `STACK_SECRET_SERVER_KEY` - Stack Auth secret key (server-side only)
-- `NEXT_PUBLIC_GISCUS_REPO` - GitHub repository for Giscus comments (e.g., `lbo728/byungskerlog`)
-- `NEXT_PUBLIC_GISCUS_REPO_ID` - Giscus repository ID (from giscus.app)
-- `NEXT_PUBLIC_GISCUS_CATEGORY` - Giscus discussion category name
-- `NEXT_PUBLIC_GISCUS_CATEGORY_ID` - Giscus category ID (from giscus.app)
-- `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token for image uploads
+
+Giscus Comments:
+- `NEXT_PUBLIC_GISCUS_REPO` - GitHub repository (e.g., `lbo728/byungskerlog`)
+- `NEXT_PUBLIC_GISCUS_REPO_ID` - Repository ID (from giscus.app)
+- `NEXT_PUBLIC_GISCUS_CATEGORY` - Discussion category name
+- `NEXT_PUBLIC_GISCUS_CATEGORY_ID` - Category ID (from giscus.app)
+
+Storage:
+- `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
+
+SEO & Analytics:
+- `NEXT_PUBLIC_SITE_URL` - Site URL (default: https://byungskerlog.vercel.app)
+- `NEXT_PUBLIC_ADSENSE_CLIENT_ID` - Google AdSense client ID (optional)
 
 ### Database Provider
 
@@ -205,3 +312,41 @@ Uses **Neon PostgreSQL** (serverless Postgres):
 - Requires both pooled and direct connection URLs
 - Schema changes via `prisma db push` (development)
 - Consider migrations for production (`prisma migrate`)
+
+### Key Dependencies
+
+Core:
+- `next` (v16) - React framework
+- `react` (v19) - UI library
+- `prisma` / `@prisma/client` - Database ORM
+- `@stackframe/stack` - Authentication
+
+Editor:
+- `@tiptap/*` - Rich text editor
+- `tiptap-markdown` - Markdown support for TipTap
+- `lowlight` - Code syntax highlighting in editor
+
+State & Forms:
+- `@tanstack/react-query` - Server state management
+- `react-hook-form` / `@hookform/resolvers` - Form handling
+- `zod` - Schema validation
+
+UI:
+- `tailwindcss` - CSS framework
+- Radix UI primitives (`@radix-ui/*`) - Accessible components
+- `lucide-react` - Icons
+- `sonner` - Toast notifications
+- `next-themes` - Theme management
+
+Content:
+- `react-markdown` - Markdown rendering
+- `react-syntax-highlighter` - Code highlighting
+- `rehype-raw` / `rehype-sanitize` - HTML processing
+- `remark-gfm` - GitHub Flavored Markdown
+
+Analytics & Misc:
+- `@giscus/react` - GitHub Discussions comments
+- `@vercel/blob` - File storage
+- `recharts` - Charts
+- `gsap` - Animations
+- `date-fns` - Date utilities

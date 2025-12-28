@@ -6,11 +6,10 @@ import Script from "next/script";
 import "./globals.css";
 
 import { cn } from "@/lib/utils";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { ThemeProvider } from "@/components/common";
+import { Header, Footer } from "@/components/layout";
 import { Providers } from "./providers";
-import { StructuredData } from "@/components/structured-data";
+import { StructuredData } from "@/components/seo";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({

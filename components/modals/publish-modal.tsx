@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ThumbnailUploader } from "@/components/thumbnail-uploader";
-import { SeriesSelect } from "@/components/series-select";
+import { ThumbnailUploader, SeriesSelect } from "@/components/editor";
 import { generateExcerpt } from "@/lib/excerpt";
 
 interface PublishModalProps {
