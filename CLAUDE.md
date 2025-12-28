@@ -76,6 +76,7 @@ This is a Next.js 16-based personal blog application with admin capabilities. Th
 - git push는 요청한 **작업 덩어리**가 전부 완료된 경우에만 수행해야한다. (한 커밋이 완료되었다고 바로 푸시하지 말 것)
 - git push 후 CI 확인 워크플로우는 `~/.claude/skills/git-ci-workflow/SKILL.md` 참조
 - main 브랜치에서의 푸시는 반드시, dev나 feature 등 서브 브랜치를 병합하는 푸시만 있어야해. 어떤 작업을 요청하면 반드시 브랜치를 생성해서 작업하고 승인되어야만 main 브랜치에서 푸시된다는 의미지.
+  - 그리고 내가 Merge(머지, 병합)하라고 명령하는건 전부 PR에서 'Merge Pull Request' 하는 것을 의미하는거야. squash 같은 명령어로 머지하지마.
 
 ## Code Rules
 
@@ -171,23 +172,28 @@ The application uses **Stack Auth** (@stackframe/stack):
 **API Routes**:
 
 Posts:
+
 - `GET/POST /api/posts` - List/Create posts
 - `GET/PUT/DELETE /api/posts/[id]` - Individual post CRUD
 - `POST /api/posts/[id]/sub-slug` - Generate sub-slug for SEO
 
 Post Stats:
+
 - `POST /api/posts-by-slug/[slug]/views` - Increment view count
 - `GET /api/posts-by-slug/[slug]/stats` - Get post statistics
 
 Series:
+
 - `GET/POST /api/series` - List/Create series
 - `GET/PUT/DELETE /api/series/[id]` - Individual series CRUD
 
 Drafts:
+
 - `GET/POST /api/drafts` - List/Create drafts
 - `GET/PUT/DELETE /api/drafts/[id]` - Individual draft CRUD
 
 Others:
+
 - `GET /api/tags` - List all tags with counts
 - `GET /api/visitors` - Visitor count
 - `GET/PUT /api/pages/[slug]` - Page content (About etc.)
@@ -243,6 +249,7 @@ Admin authentication is managed entirely through Stack Auth:
 - **Toast Notifications**: Sonner
 
 Custom components:
+
 - `MarkdownRenderer`: Renders markdown with custom styling and syntax highlighting
 - `ThemeProvider` / `ThemeToggle`: Dark mode support
 - `Toc` / `MobileToc` / `WriteToc`: Table of Contents variants
@@ -260,15 +267,18 @@ Custom components:
 - `StructuredData`: SEO structured data component
 
 TipTap Editor (`components/tiptap/`):
+
 - `embed-card-extension.tsx`: Custom embed card extension
 - `link-modal.tsx`: Link insertion modal
 
 Legacy (deprecated):
+
 - `components/legacy/`: Old markdown editor components
 
 ### Lib Directory (`lib/`)
 
 Utility modules:
+
 - `prisma.ts`: Prisma client singleton
 - `auth.ts`: Authentication utilities
 - `post-data.ts`: Post data fetching functions
@@ -284,24 +294,29 @@ Utility modules:
 Required environment variables:
 
 Database:
+
 - `DATABASE_URL` - Neon PostgreSQL connection string (pooled)
 - `DATABASE_URL_UNPOOLED` - Direct connection for migrations
 
 Stack Auth:
+
 - `NEXT_PUBLIC_STACK_PROJECT_ID` - Stack Auth project ID
 - `NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY` - Stack Auth publishable key
 - `STACK_SECRET_SERVER_KEY` - Stack Auth secret key (server-side only)
 
 Giscus Comments:
+
 - `NEXT_PUBLIC_GISCUS_REPO` - GitHub repository (e.g., `lbo728/byungskerlog`)
 - `NEXT_PUBLIC_GISCUS_REPO_ID` - Repository ID (from giscus.app)
 - `NEXT_PUBLIC_GISCUS_CATEGORY` - Discussion category name
 - `NEXT_PUBLIC_GISCUS_CATEGORY_ID` - Category ID (from giscus.app)
 
 Storage:
+
 - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
 
 SEO & Analytics:
+
 - `NEXT_PUBLIC_SITE_URL` - Site URL (default: https://byungskerlog.vercel.app)
 - `NEXT_PUBLIC_ADSENSE_CLIENT_ID` - Google AdSense client ID (optional)
 
@@ -316,22 +331,26 @@ Uses **Neon PostgreSQL** (serverless Postgres):
 ### Key Dependencies
 
 Core:
+
 - `next` (v16) - React framework
 - `react` (v19) - UI library
 - `prisma` / `@prisma/client` - Database ORM
 - `@stackframe/stack` - Authentication
 
 Editor:
+
 - `@tiptap/*` - Rich text editor
 - `tiptap-markdown` - Markdown support for TipTap
 - `lowlight` - Code syntax highlighting in editor
 
 State & Forms:
+
 - `@tanstack/react-query` - Server state management
 - `react-hook-form` / `@hookform/resolvers` - Form handling
 - `zod` - Schema validation
 
 UI:
+
 - `tailwindcss` - CSS framework
 - Radix UI primitives (`@radix-ui/*`) - Accessible components
 - `lucide-react` - Icons
@@ -339,12 +358,14 @@ UI:
 - `next-themes` - Theme management
 
 Content:
+
 - `react-markdown` - Markdown rendering
 - `react-syntax-highlighter` - Code highlighting
 - `rehype-raw` / `rehype-sanitize` - HTML processing
 - `remark-gfm` - GitHub Flavored Markdown
 
 Analytics & Misc:
+
 - `@giscus/react` - GitHub Discussions comments
 - `@vercel/blob` - File storage
 - `recharts` - Charts
