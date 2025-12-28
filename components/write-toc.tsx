@@ -93,8 +93,8 @@ function useActiveHeading(toc: TocItem[], editorSelector: string = ".tiptap-edit
     window.addEventListener("scroll", updateActiveHeading, { passive: true });
     editorContainer?.addEventListener("scroll", updateActiveHeading, { passive: true });
 
-    // 초기 실행
-    updateActiveHeading();
+    // 초기 실행 (비동기로 실행하여 cascading render 방지)
+    const initialTimeout = setTimeout(updateActiveHeading, 0);
 
     // 콘텐츠 변경 시에도 업데이트
     const interval = setInterval(updateActiveHeading, 500);
@@ -102,6 +102,7 @@ function useActiveHeading(toc: TocItem[], editorSelector: string = ".tiptap-edit
     return () => {
       window.removeEventListener("scroll", updateActiveHeading);
       editorContainer?.removeEventListener("scroll", updateActiveHeading);
+      clearTimeout(initialTimeout);
       clearInterval(interval);
     };
   }, [updateActiveHeading, toc, editorSelector]);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Link as LinkIcon, Trash2 } from "lucide-react";
@@ -22,14 +22,21 @@ export function LinkModal({
   initialUrl = "",
   selectedText = "",
 }: LinkModalProps) {
-  const [url, setUrl] = useState(initialUrl);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [url, setUrl] = useState(initialUrl);
+  const prevIsOpenRef = useRef(false);
 
   useEffect(() => {
-    if (isOpen) {
-      setUrl(initialUrl);
-      setTimeout(() => inputRef.current?.focus(), 100);
+    if (isOpen && !prevIsOpenRef.current) {
+      // 비동기로 실행하여 cascading render 방지
+      const timeoutId = setTimeout(() => {
+        setUrl(initialUrl);
+        inputRef.current?.focus();
+      }, 0);
+      prevIsOpenRef.current = isOpen;
+      return () => clearTimeout(timeoutId);
     }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, initialUrl]);
 
   const handleSubmit = (e: React.FormEvent) => {
