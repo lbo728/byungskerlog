@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
+import { ApiError, handleApiError } from "@/lib/api";
 
 function generateSlug(name: string): string {
   return name
@@ -24,8 +25,7 @@ export async function GET() {
 
     return NextResponse.json(series);
   } catch (error) {
-    console.error("Error fetching series:", error);
-    return NextResponse.json({ error: "Failed to fetch series" }, { status: 500 });
+    return handleApiError(error, "Failed to fetch series");
   }
 }
 
@@ -33,14 +33,14 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getAuthUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw ApiError.unauthorized();
     }
 
     const body = await request.json();
     const { name, description } = body;
 
     if (!name) {
-      return NextResponse.json({ error: "Series name is required" }, { status: 400 });
+      throw ApiError.validationError("Series name is required");
     }
 
     const slug = generateSlug(name);
@@ -55,12 +55,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(series, { status: 201 });
   } catch (error) {
-    console.error("Error creating series:", error);
-
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-      return NextResponse.json({ error: "A series with this name already exists" }, { status: 409 });
+      return ApiError.duplicateEntry("series with this name").toResponse();
     }
-
-    return NextResponse.json({ error: "Failed to create series" }, { status: 500 });
+    return handleApiError(error, "Failed to create series");
   }
 }

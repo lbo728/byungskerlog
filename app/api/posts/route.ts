@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getAuthUser } from "@/lib/auth";
+import { ApiError, handleApiError } from "@/lib/api";
 
 async function generateUniqueSlug(baseSlug: string): Promise<string> {
   let slug = baseSlug;
@@ -25,24 +26,22 @@ async function generateUniqueSlug(baseSlug: string): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication with Stack Auth
     const user = await getAuthUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw ApiError.unauthorized();
     }
 
     const body = await request.json();
     const { title, slug: requestedSlug, excerpt, content, tags, published, thumbnail, seriesId, type } = body;
 
-    // Validate required fields
     if (!title || !requestedSlug || !content) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      throw ApiError.validationError("Missing required fields", {
+        required: ["title", "slug", "content"],
+      });
     }
 
-    // Generate unique slug (add suffix if duplicate)
     const slug = await generateUniqueSlug(requestedSlug);
 
-    // Create post
     const post = await prisma.post.create({
       data: {
         title,
@@ -57,7 +56,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // On-demand revalidation
     revalidatePath("/");
     revalidatePath("/posts");
     revalidatePath("/short-posts");
@@ -66,13 +64,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(post, { status: 201 });
   } catch (error) {
-    console.error("Error creating post:", error);
-
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-      return NextResponse.json({ error: "A post with this slug already exists" }, { status: 409 });
+      return ApiError.duplicateEntry("post with this slug").toResponse();
     }
-
-    return NextResponse.json({ error: "Failed to create post" }, { status: 500 });
+    return handleApiError(error, "Failed to create post");
   }
 }
 
@@ -83,10 +78,10 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const tag = searchParams.get("tag");
     const includeUnpublished = searchParams.get("includeUnpublished") === "true";
-    const sortBy = searchParams.get("sortBy") || "desc"; // "desc", "asc", or "popular"
+    const sortBy = searchParams.get("sortBy") || "desc";
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    const type = searchParams.get("type"); // "LONG", "SHORT", or null for all
+    const type = searchParams.get("type");
 
     const skip = (page - 1) * limit;
 
@@ -102,7 +97,6 @@ export async function GET(request: NextRequest) {
 
     const where: WhereClause = {};
 
-    // Only filter by published if not including unpublished (admin mode)
     if (!includeUnpublished) {
       where.published = true;
     }
@@ -111,29 +105,24 @@ export async function GET(request: NextRequest) {
       where.tags = { has: tag };
     }
 
-    // Filter by post type
     if (type && (type === "LONG" || type === "SHORT")) {
       where.type = type;
     }
 
-    // Add date range filter
     if (startDate || endDate) {
       where.createdAt = {};
       if (startDate) {
         where.createdAt.gte = new Date(startDate);
       }
       if (endDate) {
-        // Add one day to include the end date
         const end = new Date(endDate);
         end.setDate(end.getDate() + 1);
         where.createdAt.lt = end;
       }
     }
 
-    // Get total count for pagination
     const total = await prisma.post.count({ where });
 
-    // Get posts with pagination
     const posts = await prisma.post.findMany({
       where,
       orderBy: { createdAt: sortBy === "asc" ? "asc" : "desc" },
@@ -162,11 +151,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Calculate view stats for all posts efficiently (avoid N+1 queries)
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const postIds = posts.map((post) => post.id);
 
-    // Get all views for these posts in a single query
     const allViews =
       postIds.length > 0
         ? await prisma.postView.findMany({
@@ -178,7 +165,6 @@ export async function GET(request: NextRequest) {
           })
         : [];
 
-    // Group views by postId and calculate total/daily counts
     const viewStats = allViews.reduce(
       (acc, view) => {
         if (!acc[view.postId]) {
@@ -193,14 +179,12 @@ export async function GET(request: NextRequest) {
       {} as Record<string, { totalViews: number; dailyViews: number }>
     );
 
-    // Attach view stats to posts
     const postsWithViews = posts.map((post) => ({
       ...post,
       totalViews: viewStats[post.id]?.totalViews || 0,
       dailyViews: viewStats[post.id]?.dailyViews || 0,
     }));
 
-    // Sort by popularity if requested
     const sortedPosts =
       sortBy === "popular"
         ? postsWithViews.sort((a, b) => b.totalViews - a.totalViews)
@@ -216,7 +200,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error fetching posts:", error);
-    return NextResponse.json({ error: "Failed to fetch posts" }, { status: 500 });
+    return handleApiError(error, "Failed to fetch posts");
   }
 }
