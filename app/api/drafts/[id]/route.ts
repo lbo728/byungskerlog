@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
+import { ApiError, handleApiError } from "@/lib/api";
 
-// GET /api/drafts/[id] - 특정 임시저장 조회
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getAuthUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw ApiError.unauthorized();
     }
 
     const { id } = await params;
@@ -17,26 +17,24 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     });
 
     if (!draft) {
-      return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+      throw ApiError.notFound("Draft");
     }
 
     if (draft.authorId !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw ApiError.forbidden();
     }
 
     return NextResponse.json(draft);
   } catch (error) {
-    console.error("Error fetching draft:", error);
-    return NextResponse.json({ error: "Failed to fetch draft" }, { status: 500 });
+    return handleApiError(error, "Failed to fetch draft");
   }
 }
 
-// PATCH /api/drafts/[id] - 임시저장 수정
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getAuthUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw ApiError.unauthorized();
     }
 
     const { id } = await params;
@@ -48,11 +46,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
 
     if (!existingDraft) {
-      return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+      throw ApiError.notFound("Draft");
     }
 
     if (existingDraft.authorId !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw ApiError.forbidden();
     }
 
     const draft = await prisma.draft.update({
@@ -66,17 +64,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     return NextResponse.json(draft);
   } catch (error) {
-    console.error("Error updating draft:", error);
-    return NextResponse.json({ error: "Failed to update draft" }, { status: 500 });
+    return handleApiError(error, "Failed to update draft");
   }
 }
 
-// DELETE /api/drafts/[id] - 임시저장 삭제
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getAuthUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw ApiError.unauthorized();
     }
 
     const { id } = await params;
@@ -86,11 +82,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     });
 
     if (!existingDraft) {
-      return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+      throw ApiError.notFound("Draft");
     }
 
     if (existingDraft.authorId !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw ApiError.forbidden();
     }
 
     await prisma.draft.delete({
@@ -99,7 +95,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting draft:", error);
-    return NextResponse.json({ error: "Failed to delete draft" }, { status: 500 });
+    return handleApiError(error, "Failed to delete draft");
   }
 }

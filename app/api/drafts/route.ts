@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
+import { ApiError, handleApiError } from "@/lib/api";
 
-// GET /api/drafts - 임시저장 목록 조회
 export async function GET() {
   try {
     const user = await getAuthUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw ApiError.unauthorized();
     }
 
     const drafts = await prisma.draft.findMany({
@@ -17,17 +17,15 @@ export async function GET() {
 
     return NextResponse.json(drafts);
   } catch (error) {
-    console.error("Error fetching drafts:", error);
-    return NextResponse.json({ error: "Failed to fetch drafts" }, { status: 500 });
+    return handleApiError(error, "Failed to fetch drafts");
   }
 }
 
-// POST /api/drafts - 새 임시저장 생성
 export async function POST(request: Request) {
   try {
     const user = await getAuthUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw ApiError.unauthorized();
     }
 
     const body = await request.json();
@@ -44,7 +42,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(draft, { status: 201 });
   } catch (error) {
-    console.error("Error creating draft:", error);
-    return NextResponse.json({ error: "Failed to create draft" }, { status: 500 });
+    return handleApiError(error, "Failed to create draft");
   }
 }
