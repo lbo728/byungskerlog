@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { ShortPost, Pagination } from "@/lib/types";
+import { queryKeys } from "@/lib/queryKeys";
 
 export type { ShortPost };
 
@@ -26,7 +27,7 @@ export function useShortPosts(options: UseShortPostsOptions = {}) {
   const { page = 1, limit = 20, initialData } = options;
 
   return useQuery({
-    queryKey: ["short-posts", "list", page],
+    queryKey: queryKeys.shortPosts.list(page),
     queryFn: () => fetchShortPosts(page, limit),
     initialData,
     staleTime: 5 * 60 * 1000,
