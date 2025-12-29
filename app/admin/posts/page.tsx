@@ -20,29 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface Post {
-  id: string;
-  slug: string;
-  subSlug: string | null;
-  title: string;
-  excerpt: string | null;
-  tags: string[];
-  type: "LONG" | "SHORT";
-  published: boolean;
-  createdAt: string;
-  updatedAt: string;
-  totalViews?: number;
-  dailyViews?: number;
-}
-
-interface Series {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  _count: { posts: number };
-}
+import type { Post, Series } from "@/lib/types";
 
 export default function AdminPostsPage() {
   useUser({ or: "redirect" });
@@ -166,8 +144,8 @@ export default function AdminPostsPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ko-KR", {
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleDateString("ko-KR", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -550,7 +528,7 @@ export default function AdminPostsPage() {
                         <BookOpen className="h-5 w-5 text-emerald-500" />
                         <div>
                           <h3 className="font-medium">{series.name}</h3>
-                          <p className="text-sm text-muted-foreground">{series._count.posts}개의 포스트</p>
+                          <p className="text-sm text-muted-foreground">{series._count?.posts ?? 0}개의 포스트</p>
                         </div>
                       </div>
                       <div className="series-actions flex items-center gap-2">
