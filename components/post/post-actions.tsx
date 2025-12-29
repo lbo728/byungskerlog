@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Share2 } from "lucide-react";
 import { SubSlugModal } from "@/components/modals";
+import { useDeletePost } from "@/hooks/useDeletePost";
+import { useClipboard } from "@/hooks/useClipboard";
 
 interface PostActionsProps {
   postId: string;
@@ -21,23 +22,23 @@ export function PostActions({ postId, postTitle, postSlug, postSubSlug }: PostAc
   const [showSubSlugModal, setShowSubSlugModal] = useState(false);
   const [currentSubSlug, setCurrentSubSlug] = useState(postSubSlug || null);
 
+  const { deletePost } = useDeletePost({ redirectTo: "/posts" });
+  const { copy } = useClipboard({
+    successMessage: "링크가 복사되었습니다",
+    onSuccess: () => {
+      if (user) {
+        setShowSubSlugModal(true);
+      }
+    },
+  });
+
   const handleShare = async () => {
     const siteUrl = window.location.origin;
     const shareUrl = currentSubSlug
       ? `${siteUrl}/posts/${currentSubSlug}`
       : `${siteUrl}/posts/${postSlug}`;
 
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-
-      if (user) {
-        setShowSubSlugModal(true);
-      } else {
-        toast.success("링크가 복사되었습니다");
-      }
-    } catch {
-      toast.error("링크 복사에 실패했습니다");
-    }
+    await copy(shareUrl);
   };
 
   const handleSubSlugSuccess = (newSubSlug: string) => {
@@ -49,28 +50,7 @@ export function PostActions({ postId, postTitle, postSlug, postSubSlug }: PostAc
     router.push(`/admin/write?id=${postId}`);
   };
 
-  const handleDelete = async () => {
-    if (!confirm(`"${postTitle}" 포스트를 삭제하시겠습니까?`)) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/posts/${postId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete post");
-      }
-
-      toast.success("포스트가 삭제되었습니다.");
-      router.push("/posts");
-      router.refresh();
-    } catch (error) {
-      console.error("Error deleting post:", error);
-      toast.error("포스트 삭제 중 오류가 발생했습니다.");
-    }
-  };
+  const handleDelete = () => deletePost(postId, postTitle);
 
   return (
     <>

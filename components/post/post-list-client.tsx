@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
-import { toast } from "sonner";
 import { BookOpen, Clock, Flame, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,30 +12,11 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { useUser } from "@stackframe/stack";
 import { useRouter } from "next/navigation";
-
-interface Series {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-interface Post {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  content: string;
-  thumbnail: string | null;
-  tags: string[];
-  type: "LONG" | "SHORT";
-  createdAt: Date;
-  updatedAt: Date;
-  series: Series | null;
-  totalViews?: number;
-}
+import { useHomePosts, usePopularPosts, type HomePost } from "@/hooks/usePosts";
+import { useDeletePost } from "@/hooks/useDeletePost";
 
 interface PostListClientProps {
-  initialData: Post[];
+  initialData: HomePost[];
 }
 
 type SortType = "latest" | "popular";
@@ -47,56 +26,18 @@ export function PostListClient({ initialData }: PostListClientProps) {
   const router = useRouter();
   const [sortType, setSortType] = useState<SortType>("latest");
 
-  const { data: latestPosts, isPending: isLatestPending } = useQuery({
-    queryKey: ["posts", "home", "latest"],
-    queryFn: async () => {
-      const response = await fetch("/api/posts");
-      if (!response.ok) throw new Error("Failed to fetch posts");
-      const data = await response.json();
-      return data.posts;
-    },
-    initialData,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: popularPosts, isPending: isPopularPending } = useQuery({
-    queryKey: ["posts", "home", "popular"],
-    queryFn: async () => {
-      const response = await fetch("/api/posts?sortBy=popular");
-      if (!response.ok) throw new Error("Failed to fetch posts");
-      const data = await response.json();
-      return data.posts;
-    },
-    staleTime: 5 * 60 * 1000,
-    enabled: sortType === "popular",
-  });
+  const { data: latestPosts, isPending: isLatestPending } = useHomePosts({ initialData });
+  const { data: popularPosts, isPending: isPopularPending } = usePopularPosts(sortType === "popular");
 
   const posts = sortType === "popular" ? popularPosts : latestPosts;
   const isPending = sortType === "popular" ? isPopularPending : isLatestPending;
 
+  const { deletePost } = useDeletePost();
+
   const handleDelete = async (postId: string, postTitle: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    if (!confirm(`"${postTitle}" 포스트를 삭제하시겠습니까?`)) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/posts/${postId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete post");
-      }
-
-      toast.success("포스트가 삭제되었습니다.");
-      router.refresh();
-    } catch (error) {
-      console.error("Error deleting post:", error);
-      toast.error("포스트 삭제 중 오류가 발생했습니다.");
-    }
+    await deletePost(postId, postTitle);
   };
 
   const handleEdit = (postId: string, e: React.MouseEvent) => {
@@ -139,7 +80,7 @@ export function PostListClient({ initialData }: PostListClientProps) {
       </nav>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
-        {posts.map((post: Post) => (
+        {posts.map((post: HomePost) => (
           <div key={post.id} className={`relative ${post.type !== "SHORT" ? "h-full" : ""}`}>
             <Link href={`/posts/${post.slug}`} className={`block group ${post.type !== "SHORT" ? "h-full" : ""}`}>
               <Card
