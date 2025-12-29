@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { Post, HomePost, Pagination, PostsResponse } from "@/lib/types";
+import type { Post, HomePost, Pagination } from "@/lib/types";
+import { queryKeys } from "@/lib/queryKeys";
 
 export type { Post, HomePost };
 
@@ -34,10 +35,10 @@ async function fetchPosts(page: number, limit: number, sortBy?: string): Promise
 }
 
 export function usePosts(options: UsePostsOptions = {}) {
-  const { page = 1, limit = 20, sortBy, initialData, enabled = true } = options;
+  const { page = 1, limit = 20, sortBy = "latest", initialData, enabled = true } = options;
 
   return useQuery({
-    queryKey: ["posts", "list", page, limit, sortBy],
+    queryKey: queryKeys.posts.list({ page, limit, sortBy }),
     queryFn: () => fetchPosts(page, limit, sortBy),
     initialData,
     staleTime: 5 * 60 * 1000,
@@ -53,7 +54,7 @@ export function useHomePosts(options: UseHomePostsOptions = {}) {
   const { initialData } = options;
 
   return useQuery({
-    queryKey: ["posts", "home", "latest"],
+    queryKey: queryKeys.posts.homeLatest(),
     queryFn: async () => {
       const response = await fetch("/api/posts");
       if (!response.ok) throw new Error("Failed to fetch posts");
@@ -67,7 +68,7 @@ export function useHomePosts(options: UseHomePostsOptions = {}) {
 
 export function usePopularPosts(enabled: boolean = true) {
   return useQuery({
-    queryKey: ["posts", "home", "popular"],
+    queryKey: queryKeys.posts.homePopular(),
     queryFn: async () => {
       const response = await fetch("/api/posts?sortBy=popular");
       if (!response.ok) throw new Error("Failed to fetch posts");

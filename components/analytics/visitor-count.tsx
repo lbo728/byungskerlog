@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@stackframe/stack";
 import { Users } from "lucide-react";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface VisitorStats {
   today: number;
@@ -19,7 +20,7 @@ export function VisitorCount() {
   const user = useUser();
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ["visitor-stats"],
+    queryKey: queryKeys.visitors.all,
     queryFn: fetchVisitorStats,
     enabled: !!user, // 로그인한 경우에만 쿼리 실행
     staleTime: 30 * 1000, // 30초간 fresh 상태 유지

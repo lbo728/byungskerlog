@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { PostPreview } from "@/lib/types";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface TagData {
   tag: string;
@@ -23,7 +24,7 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
 
   // Query for all tags
   const { data: allTags, isPending } = useQuery({
-    queryKey: ["tags"],
+    queryKey: queryKeys.tags.all,
     queryFn: async () => {
       const response = await fetch("/api/tags");
       if (!response.ok) throw new Error("Failed to fetch tags");
@@ -35,7 +36,7 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
 
   // Query for posts by tag (only when tag is selected)
   const { data: filteredPosts, isLoading: isLoadingPosts } = useQuery({
-    queryKey: ["posts", "by-tag", selectedTag],
+    queryKey: queryKeys.posts.byTag(selectedTag),
     queryFn: async () => {
       if (!selectedTag) return [];
       const response = await fetch(`/api/posts?tag=${encodeURIComponent(selectedTag)}&limit=100`);
