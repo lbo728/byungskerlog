@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@stackframe/stack";
 import { Users } from "lucide-react";
 import { queryKeys } from "@/lib/queryKeys";
+import { apiClient } from "@/lib/api";
 
 interface VisitorStats {
   today: number;
@@ -11,9 +12,7 @@ interface VisitorStats {
 }
 
 async function fetchVisitorStats(): Promise<VisitorStats> {
-  const response = await fetch("/api/visitors");
-  if (!response.ok) throw new Error("Failed to fetch visitor stats");
-  return response.json();
+  return apiClient.get<VisitorStats>("/api/visitors");
 }
 
 export function VisitorCount() {

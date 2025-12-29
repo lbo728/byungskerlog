@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ShortPost, Pagination } from "@/lib/types";
 import { queryKeys } from "@/lib/queryKeys";
+import { apiClient } from "@/lib/api";
 
 export type { ShortPost };
 
@@ -18,9 +19,7 @@ interface UseShortPostsOptions {
 }
 
 async function fetchShortPosts(page: number, limit: number): Promise<ShortPostsData> {
-  const response = await fetch(`/api/posts?page=${page}&limit=${limit}&type=SHORT`);
-  if (!response.ok) throw new Error("Failed to fetch short posts");
-  return response.json();
+  return apiClient.get<ShortPostsData>(`/api/posts?page=${page}&limit=${limit}&type=SHORT`);
 }
 
 export function useShortPosts(options: UseShortPostsOptions = {}) {

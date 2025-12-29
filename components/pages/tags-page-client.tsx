@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import type { PostPreview } from "@/lib/types";
 import { queryKeys } from "@/lib/queryKeys";
+import { apiClient } from "@/lib/api";
 
 interface TagData {
   tag: string;
@@ -25,11 +26,7 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
   // Query for all tags
   const { data: allTags, isPending } = useQuery({
     queryKey: queryKeys.tags.all,
-    queryFn: async () => {
-      const response = await fetch("/api/tags");
-      if (!response.ok) throw new Error("Failed to fetch tags");
-      return response.json() as Promise<TagData[]>;
-    },
+    queryFn: () => apiClient.get<TagData[]>("/api/tags"),
     initialData: initialTags,
     staleTime: 5 * 60 * 1000,
   });
@@ -39,12 +36,12 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
     queryKey: queryKeys.posts.byTag(selectedTag),
     queryFn: async () => {
       if (!selectedTag) return [];
-      const response = await fetch(`/api/posts?tag=${encodeURIComponent(selectedTag)}&limit=100`);
-      if (!response.ok) throw new Error("Failed to fetch posts");
-      const data = await response.json();
+      const data = await apiClient.get<{ posts: PostPreview[] }>(
+        `/api/posts?tag=${encodeURIComponent(selectedTag)}&limit=100`
+      );
       return data.posts || [];
     },
-    enabled: !!selectedTag, // Only run when selectedTag is not null
+    enabled: !!selectedTag,
     staleTime: 5 * 60 * 1000,
   });
 

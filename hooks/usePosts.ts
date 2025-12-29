@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Post, HomePost, Pagination } from "@/lib/types";
 import { queryKeys } from "@/lib/queryKeys";
+import { apiClient } from "@/lib/api";
 
 export type { Post, HomePost };
 
@@ -29,9 +30,7 @@ async function fetchPosts(page: number, limit: number, sortBy?: string): Promise
     params.set("sortBy", sortBy);
   }
 
-  const response = await fetch(`/api/posts?${params}`);
-  if (!response.ok) throw new Error("Failed to fetch posts");
-  return response.json();
+  return apiClient.get<PostsData>(`/api/posts?${params}`);
 }
 
 export function usePosts(options: UsePostsOptions = {}) {
@@ -56,10 +55,8 @@ export function useHomePosts(options: UseHomePostsOptions = {}) {
   return useQuery({
     queryKey: queryKeys.posts.homeLatest(),
     queryFn: async () => {
-      const response = await fetch("/api/posts");
-      if (!response.ok) throw new Error("Failed to fetch posts");
-      const data = await response.json();
-      return data.posts as Post[];
+      const data = await apiClient.get<PostsData>("/api/posts");
+      return data.posts;
     },
     initialData,
     staleTime: 5 * 60 * 1000,
@@ -70,10 +67,8 @@ export function usePopularPosts(enabled: boolean = true) {
   return useQuery({
     queryKey: queryKeys.posts.homePopular(),
     queryFn: async () => {
-      const response = await fetch("/api/posts?sortBy=popular");
-      if (!response.ok) throw new Error("Failed to fetch posts");
-      const data = await response.json();
-      return data.posts as Post[];
+      const data = await apiClient.get<PostsData>("/api/posts?sortBy=popular");
+      return data.posts;
     },
     staleTime: 5 * 60 * 1000,
     enabled,
