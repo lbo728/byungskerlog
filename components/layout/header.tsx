@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ThemeToggle } from "@/components/common";
-import { VisitorCount } from "@/components/analytics";
+import { ThemeToggle } from "@/components/common/theme-toggle";
+import { VisitorCount } from "@/components/analytics/visitor-count";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUser, useStackApp } from "@stackframe/stack";

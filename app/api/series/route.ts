@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
-import { ApiError, handleApiError } from "@/lib/api";
+import { ApiError, handleApiError } from "@/lib/api/errors";
 
 function generateSlug(name: string): string {
   return name

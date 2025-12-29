@@ -7,9 +7,9 @@ import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { PostPreview } from "@/lib/types";
+import type { PostPreview } from "@/lib/types/post";
 import { queryKeys } from "@/lib/queryKeys";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api/client";
 
 interface TagData {
   tag: string;
