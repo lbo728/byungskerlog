@@ -35,33 +35,33 @@ export interface ShortPostsResponse {
 }
 
 /**
- * Create post request body
+ * Create post request/mutation data
  */
-export interface CreatePostRequest {
+export interface CreatePostData {
   title: string;
   slug: string;
   content: string;
-  excerpt?: string;
-  thumbnail?: string;
+  excerpt?: string | null;
+  thumbnail?: string | null;
   tags?: string[];
   type?: "LONG" | "SHORT";
   published?: boolean;
-  seriesId?: string;
+  seriesId?: string | null;
 }
 
 /**
- * Update post request body
+ * Update post request/mutation data
  */
-export interface UpdatePostRequest {
+export interface UpdatePostData {
   title?: string;
   slug?: string;
   content?: string;
-  excerpt?: string;
-  thumbnail?: string;
+  excerpt?: string | null;
+  thumbnail?: string | null;
   tags?: string[];
   type?: "LONG" | "SHORT";
   published?: boolean;
-  seriesId?: string;
+  seriesId?: string | null;
 }
 
 /**

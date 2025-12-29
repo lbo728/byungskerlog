@@ -18,7 +18,7 @@ export type {
   ListResponse,
   PostsResponse,
   ShortPostsResponse,
-  CreatePostRequest,
-  UpdatePostRequest,
+  CreatePostData,
+  UpdatePostData,
   ApiErrorResponse,
 } from "./api";
