@@ -1,36 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import type { Post, HomePost, Pagination, PostsResponse } from "@/lib/types";
 
-interface Series {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-export interface Post {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  content: string;
-  thumbnail: string | null;
-  tags: string[];
-  type?: "LONG" | "SHORT";
-  createdAt: Date;
-  updatedAt?: Date;
-  series: Series | null;
-  totalViews?: number;
-}
-
-export type HomePost = Post;
-
-interface Pagination {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
+export type { Post, HomePost };
 
 export interface PostsData {
   posts: Post[];

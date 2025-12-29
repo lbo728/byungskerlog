@@ -1,30 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import type { ShortPost, Pagination } from "@/lib/types";
 
-interface Series {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-export interface ShortPost {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  content: string;
-  tags: string[];
-  createdAt: Date;
-  series: Series | null;
-}
-
-interface Pagination {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
+export type { ShortPost };
 
 export interface ShortPostsData {
   posts: ShortPost[];

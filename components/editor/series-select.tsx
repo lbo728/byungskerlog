@@ -5,16 +5,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface Series {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  _count?: {
-    posts: number;
-  };
-}
+import type { Series } from "@/lib/types";
 
 interface SeriesSelectProps {
   value: string | null;

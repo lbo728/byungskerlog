@@ -7,19 +7,11 @@ import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import type { PostPreview } from "@/lib/types";
 
 interface TagData {
   tag: string;
   count: number;
-}
-
-interface Post {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  tags: string[];
-  createdAt: string;
 }
 
 interface TagsPageClientProps {
@@ -98,12 +90,12 @@ export function TagsPageClient({ initialTags }: TagsPageClientProps) {
             </div>
           ) : (
             <div className="grid gap-6">
-              {filteredPosts?.map((post: Post) => (
+              {filteredPosts?.map((post: PostPreview) => (
                 <Link key={post.id} href={`/posts/${post.slug}`} className="group">
                   <Card className="transition-colors hover:border-primary">
                     <CardHeader>
                       <div className="flex items-center justify-between mb-2">
-                        <time className="text-sm text-muted-foreground" dateTime={post.createdAt}>
+                        <time className="text-sm text-muted-foreground" dateTime={new Date(post.createdAt).toISOString()}>
                           {format(new Date(post.createdAt), "MMMM d, yyyy")}
                         </time>
                       </div>
