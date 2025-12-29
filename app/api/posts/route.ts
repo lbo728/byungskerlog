@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getAuthUser } from "@/lib/auth";
-import { ApiError, handleApiError } from "@/lib/api";
+import { ApiError, handleApiError } from "@/lib/api/errors";
 
 async function generateUniqueSlug(baseSlug: string): Promise<string> {
   let slug = baseSlug;

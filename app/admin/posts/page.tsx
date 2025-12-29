@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Post, Series } from "@/lib/types";
+import type { Post, Series } from "@/lib/types/post";
 
 export default function AdminPostsPage() {
   useUser({ or: "redirect" });

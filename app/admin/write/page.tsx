@@ -5,23 +5,23 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Input } from "@/components/ui/input";
-import { PublishModal } from "@/components/modals";
-import {
-  EmbedCard,
-  LinkModal,
-  WriteTocDesktop,
-  WriteTocMobile,
-  WriteHeader,
-  WriteTagInput,
-  WriteEditorArea,
-} from "@/components/editor";
+import { PublishModal } from "@/components/modals/publish-modal";
+import { EmbedCard } from "@/components/editor/tiptap/embed-card-extension";
+import { LinkModal } from "@/components/editor/tiptap/link-modal";
+import { WriteTocDesktop, WriteTocMobile } from "@/components/editor/write-toc";
+import { WriteHeader } from "@/components/editor/write-header";
+import { WriteTagInput } from "@/components/editor/write-tag-input";
+import { WriteEditorArea } from "@/components/editor/write-editor-area";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import TiptapLink from "@tiptap/extension-link";
 import { common, createLowlight } from "lowlight";
-import { useImageUpload, useTagInput, useDraftSave, useLinkModal } from "@/hooks";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { useTagInput } from "@/hooks/useTagInput";
+import { useDraftSave } from "@/hooks/useDraftSave";
+import { useLinkModal } from "@/hooks/useLinkModal";
 
 const lowlight = createLowlight(common);
 

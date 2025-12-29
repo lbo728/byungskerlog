@@ -1,9 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { ShortPost, Pagination } from "@/lib/types";
+import type { ShortPost } from "@/lib/types/post";
+import type { Pagination } from "@/lib/types/api";
 import { queryKeys } from "@/lib/queryKeys";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api/client";
 
 export type { ShortPost };
 

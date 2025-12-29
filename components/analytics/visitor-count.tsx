@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@stackframe/stack";
 import { Users } from "lucide-react";
 import { queryKeys } from "@/lib/queryKeys";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api/client";
 
 interface VisitorStats {
   today: number;

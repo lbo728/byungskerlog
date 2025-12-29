@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
-import { ApiError, handleApiError } from "@/lib/api";
+import { ApiError, handleApiError } from "@/lib/api/errors";
 
 export async function GET() {
   try {

@@ -3,9 +3,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { Post } from "@/lib/types";
+import type { Post } from "@/lib/types/post";
 import { queryKeys } from "@/lib/queryKeys";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api/client";
 
 export interface CreatePostData {
   title: string;

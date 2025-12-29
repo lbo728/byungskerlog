@@ -5,8 +5,8 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/common";
-import { VisitorCount } from "@/components/analytics";
+import { ThemeToggle } from "@/components/common/theme-toggle";
+import { VisitorCount } from "@/components/analytics/visitor-count";
 import { cn } from "@/lib/utils";
 
 const navItems = [

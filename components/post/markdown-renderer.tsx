@@ -4,7 +4,7 @@ import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDarkCustom } from "@/lib/syntax-theme";
 import { cn } from "@/lib/utils";
-import { LinkCard } from "@/components/common";
+import { LinkCard } from "@/components/common/link-card";
 import type { Components } from "react-markdown";
 import type { ReactElement, ReactNode } from "react";
 

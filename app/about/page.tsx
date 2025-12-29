@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { MarkdownRenderer } from "@/components/post";
-import { AboutPageActions } from "@/components/pages";
-import { ContributionGraph } from "@/components/analytics";
+import { MarkdownRenderer } from "@/components/post/markdown-renderer";
+import { AboutPageActions } from "@/components/pages/about-page-actions";
+import { ContributionGraph } from "@/components/analytics/contribution-graph";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Metadata } from "next";
 

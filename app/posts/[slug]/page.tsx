@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { PostDetail } from "@/components/post";
+import { PostDetail } from "@/components/post/post-detail";
 import {
   getPost,
   getSeriesPosts,

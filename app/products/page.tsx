@@ -1,4 +1,4 @@
-import { ProductCard } from "@/components/common";
+import { ProductCard } from "@/components/common/product-card";
 import { Globe, Package, Zap, Smartphone } from "lucide-react";
 import type { Metadata } from "next";
 
