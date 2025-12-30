@@ -14,6 +14,7 @@ import TiptapLink from "@tiptap/extension-link";
 import { common, createLowlight } from "lowlight";
 import { EmbedCard } from "@/components/editor/tiptap/embed-card-extension";
 import { LinkModal } from "@/components/editor/tiptap/link-modal";
+import { KeyboardCollapseButton } from "@/components/editor/keyboard-collapse-button";
 import { useLinkModal } from "@/hooks/useLinkModal";
 import { useImageUpload } from "@/hooks/useImageUpload";
 
@@ -257,6 +258,8 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
           initialUrl={currentLinkUrl}
           selectedText={selectedText}
         />
+
+        <KeyboardCollapseButton />
       </DialogContent>
     </Dialog>
   );

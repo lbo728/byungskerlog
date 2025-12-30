@@ -12,6 +12,7 @@ import { WriteTocDesktop, WriteTocMobile } from "@/components/editor/write-toc";
 import { WriteHeader } from "@/components/editor/write-header";
 import { WriteTagInput } from "@/components/editor/write-tag-input";
 import { WriteEditorArea } from "@/components/editor/write-editor-area";
+import { KeyboardCollapseButton } from "@/components/editor/keyboard-collapse-button";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
@@ -301,6 +302,8 @@ export default function WritePage() {
       />
 
       <WriteTocMobile content={content} editorSelector=".tiptap-editor" />
+
+      <KeyboardCollapseButton />
     </div>
   );
 }
