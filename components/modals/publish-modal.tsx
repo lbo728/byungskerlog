@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ThumbnailUploader } from "@/components/editor/thumbnail-uploader";
 import { SeriesSelect } from "@/components/editor/series-select";
-import { generateExcerpt } from "@/lib/excerpt";
 
 interface PublishModalProps {
   open: boolean;
@@ -20,10 +19,14 @@ interface PublishModalProps {
   postId?: string;
   draftId?: string | null;
   onPublishSuccess: (slug: string) => void;
-  initialThumbnail?: string | null;
-  initialSeriesId?: string | null;
-  initialExcerpt?: string | null;
-  initialType?: "LONG" | "SHORT";
+  postType: "LONG" | "SHORT";
+  onPostTypeChange: (type: "LONG" | "SHORT") => void;
+  thumbnail: string | null;
+  onThumbnailChange: (thumbnail: string | null) => void;
+  seriesId: string | null;
+  onSeriesIdChange: (seriesId: string | null) => void;
+  excerpt: string;
+  onExcerptChange: (excerpt: string) => void;
 }
 
 function generateSlug(title: string): string {
@@ -46,34 +49,24 @@ export function PublishModal({
   postId,
   draftId,
   onPublishSuccess,
-  initialThumbnail,
-  initialSeriesId,
-  initialExcerpt,
-  initialType,
+  postType,
+  onPostTypeChange,
+  thumbnail,
+  onThumbnailChange,
+  seriesId,
+  onSeriesIdChange,
+  excerpt,
+  onExcerptChange,
 }: PublishModalProps) {
-  const [postType, setPostType] = useState<"LONG" | "SHORT">(initialType || "LONG");
-  const [thumbnail, setThumbnail] = useState<string | null>(initialThumbnail || null);
-  const [seriesId, setSeriesId] = useState<string | null>(initialSeriesId || null);
-  const [excerpt, setExcerpt] = useState<string>("");
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open) {
-      setPostType(initialType || "LONG");
-      setThumbnail(initialThumbnail || null);
-      setSeriesId(initialSeriesId || null);
-      setExcerpt(initialExcerpt || generateExcerpt(content, 150));
-      setError(null);
+  const handlePostTypeChange = (type: "LONG" | "SHORT") => {
+    onPostTypeChange(type);
+    if (type === "SHORT") {
+      onThumbnailChange(null);
     }
-  }, [open, initialType, initialThumbnail, initialSeriesId, initialExcerpt, content]);
-
-  // SHORT 선택 시 썸네일 초기화
-  useEffect(() => {
-    if (postType === "SHORT") {
-      setThumbnail(null);
-    }
-  }, [postType]);
+  };
 
   const handlePublish = useCallback(async () => {
     if (!title.trim()) {
@@ -154,7 +147,7 @@ export function PublishModal({
             <Label className="text-sm font-medium">글 유형</Label>
             <RadioGroup
               value={postType}
-              onValueChange={(value) => setPostType(value as "LONG" | "SHORT")}
+              onValueChange={(value) => handlePostTypeChange(value as "LONG" | "SHORT")}
               className="flex gap-4"
               disabled={isPublishing}
             >
@@ -172,7 +165,7 @@ export function PublishModal({
           <div className="grid gap-6 sm:grid-cols-2">
             {postType === "LONG" && (
               <div className="thumbnail-section">
-                <ThumbnailUploader value={thumbnail} onChange={setThumbnail} disabled={isPublishing} />
+                <ThumbnailUploader value={thumbnail} onChange={onThumbnailChange} disabled={isPublishing} />
                 <p className="mt-2 text-xs text-muted-foreground">
                   썸네일을 업로드하면 포스트 목록에서 카드 형태로 표시됩니다.
                 </p>
@@ -185,7 +178,7 @@ export function PublishModal({
                 <Textarea
                   placeholder="포스트 설명을 입력하세요..."
                   value={excerpt}
-                  onChange={(e) => setExcerpt(e.target.value)}
+                  onChange={(e) => onExcerptChange(e.target.value)}
                   disabled={isPublishing}
                   rows={4}
                   maxLength={200}
@@ -193,7 +186,7 @@ export function PublishModal({
                 <p className="text-xs text-muted-foreground text-right">{excerpt.length}/200</p>
               </div>
 
-              <SeriesSelect value={seriesId} onChange={setSeriesId} disabled={isPublishing} />
+              <SeriesSelect value={seriesId} onChange={onSeriesIdChange} disabled={isPublishing} />
             </div>
           </div>
         </div>

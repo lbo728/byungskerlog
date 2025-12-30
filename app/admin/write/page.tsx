@@ -22,6 +22,7 @@ import { useImageUpload } from "@/hooks/useImageUpload";
 import { useTagInput } from "@/hooks/useTagInput";
 import { useDraftSave } from "@/hooks/useDraftSave";
 import { useLinkModal } from "@/hooks/useLinkModal";
+import { generateExcerpt } from "@/lib/excerpt";
 
 const lowlight = createLowlight(common);
 
@@ -40,10 +41,11 @@ export default function WritePage() {
   const [isLoading] = useState(false);
   const [isFetchingPost, setIsFetchingPost] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
-  const [existingThumbnail, setExistingThumbnail] = useState<string | null>(null);
-  const [existingSeriesId, setExistingSeriesId] = useState<string | null>(null);
-  const [existingExcerpt, setExistingExcerpt] = useState<string | null>(null);
-  const [existingType, setExistingType] = useState<"LONG" | "SHORT">("LONG");
+  const [modalPostType, setModalPostType] = useState<"LONG" | "SHORT">("LONG");
+  const [modalThumbnail, setModalThumbnail] = useState<string | null>(null);
+  const [modalSeriesId, setModalSeriesId] = useState<string | null>(null);
+  const [modalExcerpt, setModalExcerpt] = useState<string>("");
+  const [isExcerptInitialized, setIsExcerptInitialized] = useState(false);
 
   const {
     tags,
@@ -157,10 +159,11 @@ export default function WritePage() {
           setTitle(post.title);
           setTags(post.tags || []);
           setContent(post.content);
-          setExistingType(post.type || "LONG");
-          setExistingThumbnail(post.thumbnail || null);
-          setExistingSeriesId(post.seriesId || null);
-          setExistingExcerpt(post.excerpt || null);
+          setModalPostType(post.type || "LONG");
+          setModalThumbnail(post.thumbnail || null);
+          setModalSeriesId(post.seriesId || null);
+          setModalExcerpt(post.excerpt || "");
+          setIsExcerptInitialized(true);
         } catch (error) {
           console.error("Error fetching post:", error);
           toast.error("글을 불러오는데 실패했습니다.");
@@ -202,6 +205,10 @@ export default function WritePage() {
     if (!content.trim()) {
       toast.warning("내용을 입력해주세요.");
       return;
+    }
+    if (!isExcerptInitialized) {
+      setModalExcerpt(generateExcerpt(content, 150));
+      setIsExcerptInitialized(true);
     }
     setIsPublishModalOpen(true);
   };
@@ -285,10 +292,14 @@ export default function WritePage() {
         postId={postId || undefined}
         draftId={draftId}
         onPublishSuccess={handlePublishSuccess}
-        initialThumbnail={existingThumbnail}
-        initialSeriesId={existingSeriesId}
-        initialExcerpt={existingExcerpt}
-        initialType={existingType}
+        postType={modalPostType}
+        onPostTypeChange={setModalPostType}
+        thumbnail={modalThumbnail}
+        onThumbnailChange={setModalThumbnail}
+        seriesId={modalSeriesId}
+        onSeriesIdChange={setModalSeriesId}
+        excerpt={modalExcerpt}
+        onExcerptChange={setModalExcerpt}
       />
 
       <LinkModal
