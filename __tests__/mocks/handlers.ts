@@ -17,7 +17,7 @@ export const mockPosts: Post[] = [
     createdAt: new Date("2024-01-01"),
     updatedAt: new Date("2024-01-01"),
     series: null,
-    viewCount: 10,
+    totalViews: 10,
   },
   {
     id: "2",
@@ -33,7 +33,7 @@ export const mockPosts: Post[] = [
     createdAt: new Date("2024-01-02"),
     updatedAt: new Date("2024-01-02"),
     series: null,
-    viewCount: 5,
+    totalViews: 5,
   },
 ];
 
@@ -46,7 +46,6 @@ export const mockShortPosts: ShortPost[] = [
     excerpt: "짧은 발췌문",
     tags: ["short"],
     createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01"),
   },
 ];
 
