@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ThumbnailUploader } from "@/components/editor/thumbnail-uploader";
 import { SeriesSelect } from "@/components/editor/series-select";
+import { optimizeImage } from "@/lib/image-optimizer";
+
+const MAX_THUMBNAIL_SIZE = 500 * 1024;
 
 interface PublishModalProps {
   open: boolean;
@@ -21,8 +24,10 @@ interface PublishModalProps {
   onPublishSuccess: (slug: string) => void;
   postType: "LONG" | "SHORT";
   onPostTypeChange: (type: "LONG" | "SHORT") => void;
-  thumbnail: string | null;
-  onThumbnailChange: (thumbnail: string | null) => void;
+  thumbnailUrl: string | null;
+  onThumbnailUrlChange: (url: string | null) => void;
+  thumbnailFile: File | null;
+  onThumbnailFileChange: (file: File | null) => void;
   seriesId: string | null;
   onSeriesIdChange: (seriesId: string | null) => void;
   excerpt: string;
@@ -51,8 +56,10 @@ export function PublishModal({
   onPublishSuccess,
   postType,
   onPostTypeChange,
-  thumbnail,
-  onThumbnailChange,
+  thumbnailUrl,
+  onThumbnailUrlChange,
+  thumbnailFile,
+  onThumbnailFileChange,
   seriesId,
   onSeriesIdChange,
   excerpt,
@@ -64,8 +71,33 @@ export function PublishModal({
   const handlePostTypeChange = (type: "LONG" | "SHORT") => {
     onPostTypeChange(type);
     if (type === "SHORT") {
-      onThumbnailChange(null);
+      onThumbnailUrlChange(null);
+      onThumbnailFileChange(null);
     }
+  };
+
+  const uploadThumbnail = async (file: File): Promise<string> => {
+    let optimizedFile = file;
+
+    if (file.size > MAX_THUMBNAIL_SIZE) {
+      optimizedFile = await optimizeImage(file, MAX_THUMBNAIL_SIZE);
+    }
+
+    const response = await fetch(`/api/upload/thumbnail?filename=${encodeURIComponent(optimizedFile.name)}`, {
+      method: "POST",
+      body: optimizedFile,
+      headers: {
+        "Content-Length": optimizedFile.size.toString(),
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "썸네일 업로드에 실패했습니다.");
+    }
+
+    const blob = await response.json();
+    return blob.url;
   };
 
   const handlePublish = useCallback(async () => {
@@ -83,6 +115,12 @@ export function PublishModal({
     setError(null);
 
     try {
+      let finalThumbnailUrl = thumbnailUrl;
+
+      if (thumbnailFile) {
+        finalThumbnailUrl = await uploadThumbnail(thumbnailFile);
+      }
+
       const postData = {
         title: title.trim(),
         excerpt: excerpt.trim() || null,
@@ -90,7 +128,7 @@ export function PublishModal({
         tags,
         type: postType,
         published: true,
-        thumbnail,
+        thumbnail: finalThumbnailUrl,
         seriesId,
       };
 
@@ -133,7 +171,7 @@ export function PublishModal({
     } finally {
       setIsPublishing(false);
     }
-  }, [title, content, tags, postType, excerpt, thumbnail, seriesId, isEditMode, postId, draftId, onOpenChange, onPublishSuccess]);
+  }, [title, content, tags, postType, excerpt, thumbnailUrl, thumbnailFile, seriesId, isEditMode, postId, draftId, onOpenChange, onPublishSuccess]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -165,7 +203,12 @@ export function PublishModal({
           <div className="publish-modal-grid grid gap-6 sm:grid-cols-2 min-h-[280px]">
             {postType === "LONG" && (
               <div className="thumbnail-section">
-                <ThumbnailUploader value={thumbnail} onChange={onThumbnailChange} disabled={isPublishing} />
+                <ThumbnailUploader
+                  previewUrl={thumbnailUrl}
+                  onFileChange={onThumbnailFileChange}
+                  onRemove={() => onThumbnailUrlChange(null)}
+                  disabled={isPublishing}
+                />
                 <p className="mt-2 text-xs text-muted-foreground">
                   썸네일을 업로드하면 포스트 목록에서 카드 형태로 표시됩니다.
                 </p>
@@ -193,7 +236,7 @@ export function PublishModal({
 
         {error && <p className="text-sm text-destructive text-center">{error}</p>}
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-1">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPublishing}>
             취소
           </Button>

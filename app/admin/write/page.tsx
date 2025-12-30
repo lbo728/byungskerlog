@@ -42,7 +42,8 @@ export default function WritePage() {
   const [isFetchingPost, setIsFetchingPost] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [modalPostType, setModalPostType] = useState<"LONG" | "SHORT">("LONG");
-  const [modalThumbnail, setModalThumbnail] = useState<string | null>(null);
+  const [modalThumbnailUrl, setModalThumbnailUrl] = useState<string | null>(null);
+  const [modalThumbnailFile, setModalThumbnailFile] = useState<File | null>(null);
   const [modalSeriesId, setModalSeriesId] = useState<string | null>(null);
   const [modalExcerpt, setModalExcerpt] = useState<string>("");
   const [isExcerptInitialized, setIsExcerptInitialized] = useState(false);
@@ -160,7 +161,8 @@ export default function WritePage() {
           setTags(post.tags || []);
           setContent(post.content);
           setModalPostType(post.type || "LONG");
-          setModalThumbnail(post.thumbnail || null);
+          setModalThumbnailUrl(post.thumbnail || null);
+          setModalThumbnailFile(null);
           setModalSeriesId(post.seriesId || null);
           setModalExcerpt(post.excerpt || "");
           setIsExcerptInitialized(true);
@@ -294,8 +296,10 @@ export default function WritePage() {
         onPublishSuccess={handlePublishSuccess}
         postType={modalPostType}
         onPostTypeChange={setModalPostType}
-        thumbnail={modalThumbnail}
-        onThumbnailChange={setModalThumbnail}
+        thumbnailUrl={modalThumbnailUrl}
+        onThumbnailUrlChange={setModalThumbnailUrl}
+        thumbnailFile={modalThumbnailFile}
+        onThumbnailFileChange={setModalThumbnailFile}
         seriesId={modalSeriesId}
         onSeriesIdChange={setModalSeriesId}
         excerpt={modalExcerpt}

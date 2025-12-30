@@ -1,28 +1,34 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { ImageIcon, X, Upload } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { ImageIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { optimizeImage } from "@/lib/image-optimizer";
 
 interface ThumbnailUploaderProps {
-  value: string | null;
-  onChange: (url: string | null) => void;
+  previewUrl: string | null;
+  onFileChange: (file: File | null) => void;
+  onRemove: () => void;
   disabled?: boolean;
 }
 
-const MAX_SIZE = 500 * 1024;
 const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
 
-export function ThumbnailUploader({ value, onChange, disabled }: ThumbnailUploaderProps) {
-  const [isUploading, setIsUploading] = useState(false);
-  const [isOptimizing, setIsOptimizing] = useState(false);
+export function ThumbnailUploader({ previewUrl, onFileChange, onRemove, disabled }: ThumbnailUploaderProps) {
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
 
-  const handleUpload = useCallback(
-    async (file: File) => {
+  useEffect(() => {
+    return () => {
+      if (localPreview) {
+        URL.revokeObjectURL(localPreview);
+      }
+    };
+  }, [localPreview]);
+
+  const handleFileSelect = useCallback(
+    (file: File) => {
       setError(null);
 
       if (!file.type.startsWith("image/")) {
@@ -35,50 +41,25 @@ export function ThumbnailUploader({ value, onChange, disabled }: ThumbnailUpload
         return;
       }
 
-      setIsUploading(true);
-
-      try {
-        let optimizedFile = file;
-
-        if (file.size > MAX_SIZE) {
-          setIsOptimizing(true);
-          optimizedFile = await optimizeImage(file, MAX_SIZE);
-          setIsOptimizing(false);
-        }
-
-        const response = await fetch(`/api/upload/thumbnail?filename=${encodeURIComponent(optimizedFile.name)}`, {
-          method: "POST",
-          body: optimizedFile,
-          headers: {
-            "Content-Length": optimizedFile.size.toString(),
-          },
-        });
-
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || "업로드에 실패했습니다.");
-        }
-
-        const blob = await response.json();
-        onChange(blob.url);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "업로드에 실패했습니다.");
-      } finally {
-        setIsUploading(false);
-        setIsOptimizing(false);
+      if (localPreview) {
+        URL.revokeObjectURL(localPreview);
       }
+
+      const objectUrl = URL.createObjectURL(file);
+      setLocalPreview(objectUrl);
+      onFileChange(file);
     },
-    [onChange]
+    [onFileChange, localPreview]
   );
 
-  const handleFileSelect = useCallback(
+  const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        handleUpload(file);
+        handleFileSelect(file);
       }
     },
-    [handleUpload]
+    [handleFileSelect]
   );
 
   const handleDrop = useCallback(
@@ -88,10 +69,10 @@ export function ThumbnailUploader({ value, onChange, disabled }: ThumbnailUpload
 
       const file = e.dataTransfer.files?.[0];
       if (file) {
-        handleUpload(file);
+        handleFileSelect(file);
       }
     },
-    [handleUpload]
+    [handleFileSelect]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -105,17 +86,24 @@ export function ThumbnailUploader({ value, onChange, disabled }: ThumbnailUpload
   }, []);
 
   const handleRemove = useCallback(() => {
-    onChange(null);
+    if (localPreview) {
+      URL.revokeObjectURL(localPreview);
+      setLocalPreview(null);
+    }
+    onFileChange(null);
+    onRemove();
     setError(null);
-  }, [onChange]);
+  }, [onFileChange, onRemove, localPreview]);
+
+  const displayUrl = localPreview || previewUrl;
 
   return (
     <div className="thumbnail-uploader space-y-2">
       <label className="text-sm font-medium">썸네일 이미지</label>
 
-      {value ? (
+      {displayUrl ? (
         <div className="thumbnail-preview relative aspect-video w-full overflow-hidden rounded-lg border bg-muted">
-          <Image src={value} alt="썸네일 미리보기" fill className="object-cover" />
+          <Image src={displayUrl} alt="썸네일 미리보기" fill className="object-cover" unoptimized={!!localPreview} />
           <Button
             type="button"
             variant="destructive"
@@ -142,21 +130,14 @@ export function ThumbnailUploader({ value, onChange, disabled }: ThumbnailUpload
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={handleFileSelect}
-            disabled={disabled || isUploading}
+            onChange={handleInputChange}
+            disabled={disabled}
           />
-          {isUploading ? (
-            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-              <Upload className="h-8 w-8 animate-pulse" />
-              <span className="text-sm">{isOptimizing ? "이미지 최적화 중..." : "업로드 중..."}</span>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-              <ImageIcon className="h-8 w-8" />
-              <span className="text-sm">이미지를 드래그하거나 클릭하여 업로드</span>
-              <span className="text-xs">자동 최적화 (500KB 이하로 압축)</span>
-            </div>
-          )}
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <ImageIcon className="h-8 w-8" />
+            <span className="text-sm">이미지를 드래그하거나 클릭하여 업로드</span>
+            <span className="text-xs">자동 최적화 (500KB 이하로 압축)</span>
+          </div>
         </label>
       )}
 
