@@ -248,16 +248,16 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
             </div>
           </div>
         )}
-      </DialogContent>
 
-      <LinkModal
-        isOpen={isLinkModalOpen}
-        onClose={() => setIsLinkModalOpen(false)}
-        onSubmit={handleLinkSubmit}
-        onRemove={currentLinkUrl ? handleLinkRemove : undefined}
-        initialUrl={currentLinkUrl}
-        selectedText={selectedText}
-      />
+        <LinkModal
+          isOpen={isLinkModalOpen}
+          onClose={() => setIsLinkModalOpen(false)}
+          onSubmit={handleLinkSubmit}
+          onRemove={currentLinkUrl ? handleLinkRemove : undefined}
+          initialUrl={currentLinkUrl}
+          selectedText={selectedText}
+        />
+      </DialogContent>
     </Dialog>
   );
 }
