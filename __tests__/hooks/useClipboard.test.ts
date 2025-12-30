@@ -27,7 +27,7 @@ describe("useClipboard", () => {
     vi.restoreAllMocks();
   });
 
-  describe("successful copy", () => {
+  describe("복사 성공", () => {
     beforeEach(() => {
       mockWriteText.mockResolvedValue(undefined);
     });
@@ -79,7 +79,7 @@ describe("useClipboard", () => {
     });
   });
 
-  describe("failed copy", () => {
+  describe("복사 실패", () => {
     beforeEach(() => {
       mockWriteText.mockRejectedValue(new Error("Copy failed"));
     });
