@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { calculateReadingTime } from "@/lib/reading-time";
 
 describe("calculateReadingTime", () => {
-  describe("empty content handling", () => {
+  describe("빈 콘텐츠 처리", () => {
     it("should return 1 min read for empty content", () => {
       expect(calculateReadingTime("")).toBe("1 min read");
     });
@@ -13,7 +13,7 @@ describe("calculateReadingTime", () => {
     });
   });
 
-  describe("English content", () => {
+  describe("영문 콘텐츠", () => {
     it("should calculate reading time for short English text", () => {
       // 200 words per minute, so 100 words = ~1 min
       const words = "word ".repeat(100);
@@ -36,7 +36,7 @@ describe("calculateReadingTime", () => {
     });
   });
 
-  describe("Korean content", () => {
+  describe("한글 콘텐츠", () => {
     it("should calculate reading time for Korean text", () => {
       // 400 chars per minute, so 200 chars = ~1 min
       const koreanText = "가".repeat(200);
@@ -52,7 +52,7 @@ describe("calculateReadingTime", () => {
     });
   });
 
-  describe("mixed content", () => {
+  describe("혼합 콘텐츠", () => {
     it("should handle mixed Korean and English content", () => {
       // 200 English words (1 min) + 400 Korean chars (1 min) = 2 min
       const englishWords = "word ".repeat(200);
@@ -62,7 +62,7 @@ describe("calculateReadingTime", () => {
     });
   });
 
-  describe("markdown removal", () => {
+  describe("마크다운 제거", () => {
     it("should exclude code blocks from calculation", () => {
       const content = "Short text\n```javascript\nconst x = 1;\nconst y = 2;\n```";
       const result = calculateReadingTime(content);
@@ -94,7 +94,7 @@ describe("calculateReadingTime", () => {
     });
   });
 
-  describe("minimum reading time", () => {
+  describe("최소 읽기 시간", () => {
     it("should always return at least 1 minute", () => {
       const result = calculateReadingTime("Hi");
       expect(result).toBe("1min read");

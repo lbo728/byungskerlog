@@ -14,7 +14,7 @@ describe("ErrorCode", () => {
 });
 
 describe("ApiError", () => {
-  describe("constructor", () => {
+  describe("생성자", () => {
     it("에러 객체를 생성한다", () => {
       const error = new ApiError("NOT_FOUND", 404, "Resource not found", {
         id: "123",
@@ -52,7 +52,7 @@ describe("ApiError", () => {
     });
   });
 
-  describe("static factory methods", () => {
+  describe("정적 팩토리 메서드", () => {
     it("unauthorized 에러를 생성한다", () => {
       const error = ApiError.unauthorized();
 

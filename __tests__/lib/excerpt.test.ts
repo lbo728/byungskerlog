@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { generateExcerpt } from "@/lib/excerpt";
 
 describe("generateExcerpt", () => {
-  describe("empty content handling", () => {
+  describe("빈 콘텐츠 처리", () => {
     it("should return empty string for empty content", () => {
       expect(generateExcerpt("")).toBe("");
     });
@@ -13,7 +13,7 @@ describe("generateExcerpt", () => {
     });
   });
 
-  describe("markdown syntax removal", () => {
+  describe("마크다운 문법 제거", () => {
     it("should remove code blocks", () => {
       const content = "Before ```javascript\nconst x = 1;\n``` After";
       const result = generateExcerpt(content);
@@ -69,7 +69,7 @@ describe("generateExcerpt", () => {
     });
   });
 
-  describe("length truncation", () => {
+  describe("길이 잘라내기", () => {
     it("should not truncate content shorter than maxLength", () => {
       const content = "Short content";
       const result = generateExcerpt(content, 100);
@@ -97,7 +97,7 @@ describe("generateExcerpt", () => {
     });
   });
 
-  describe("whitespace normalization", () => {
+  describe("공백 정규화", () => {
     it("should normalize multiple newlines to single space", () => {
       const content = "First\n\n\nSecond";
       const result = generateExcerpt(content);

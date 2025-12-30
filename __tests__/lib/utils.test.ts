@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { cn } from "@/lib/utils";
 
-describe("cn (classname utility)", () => {
+describe("cn (클래스명 유틸리티)", () => {
   it("should merge class names", () => {
     const result = cn("px-4", "py-2");
     expect(result).toBe("px-4 py-2");
