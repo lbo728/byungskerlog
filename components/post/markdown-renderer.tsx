@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -5,6 +8,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDarkCustom } from "@/lib/syntax-theme";
 import { cn } from "@/lib/utils";
 import { LinkCard } from "@/components/common/link-card";
+import { Copy, Check } from "lucide-react";
 import type { Components } from "react-markdown";
 import type { ReactElement, ReactNode } from "react";
 
@@ -19,6 +23,44 @@ interface CodeComponentProps {
 }
 
 const URL_LINE_REGEX = /^(https?:\/\/[^\s]+)$/;
+
+function CodeBlock({ code, language }: { code: string; language: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy code:", err);
+    }
+  };
+
+  return (
+    <div className="code-block-wrapper relative my-6 group">
+      <button
+        onClick={handleCopy}
+        className="copy-button absolute top-2 right-2 z-10 p-2 rounded-md bg-[oklch(0.15_0_0)] dark:bg-[oklch(0.3_0_0)] hover:bg-[oklch(0.2_0_0)] dark:hover:bg-[oklch(0.4_0_0)] transition-colors"
+        aria-label="Copy code"
+      >
+        {copied ? (
+          <Check className="w-3 h-3 md:w-4 md:h-4 text-green-500" />
+        ) : (
+          <Copy className="w-3 h-3 md:w-4 md:h-4" />
+        )}
+      </button>
+      <SyntaxHighlighter
+        style={oneDarkCustom}
+        language={language}
+        PreTag="div"
+        className="syntax-highlighter rounded-lg"
+      >
+        {code}
+      </SyntaxHighlighter>
+    </div>
+  );
+}
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   const lines = content.split("\n");
@@ -83,16 +125,11 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     },
     code: ({ inline, className, children, ...props }: CodeComponentProps): ReactElement => {
       const match = /language-(\w+)/.exec(className || "");
-      return !inline && match ? (
-        <SyntaxHighlighter
-          style={oneDarkCustom}
-          language={match[1]}
-          PreTag="div"
-          className="syntax-highlighter rounded-lg !my-6"
-        >
-          {String(children).replace(/\n$/, "")}
-        </SyntaxHighlighter>
-      ) : (
+      if (!inline && match) {
+        const codeContent = String(children).replace(/\n$/, "");
+        return <CodeBlock code={codeContent} language={match[1]} />;
+      }
+      return (
         <code
           className={cn(
             "inline-code relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm",
@@ -122,15 +159,20 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     img: ({ src, alt, ...props }) => <img src={src} alt={alt || ""} className="rounded-lg shadow-md my-6" {...props} />,
     blockquote: ({ children, ...props }) => (
       <blockquote
-        className="blockquote border-l-4 border-[oklch(0.8_0_0)] dark:border-[oklch(0.4_0_0)] pl-4 italic my-4 text-muted-foreground [&>p]:my-0"
+        className="blockquote border-l-4 border-[oklch(0.8_0_0)] dark:border-[oklch(0.4_0_0)] pl-4 italic my-4 text-muted-foreground text-base md:text-lg leading-7 md:leading-9 [&>p]:my-0"
         {...props}
       >
         {children}
       </blockquote>
     ),
     br: () => <br className="my-2" />,
+    pre: ({ children, ...props }) => (
+      <pre className="p-0" {...props}>
+        {children}
+      </pre>
+    ),
     p: ({ children, ...props }) => (
-      <p className="mt-3 mb-3" {...props}>
+      <p className="text-base md:text-lg leading-7 md:leading-9 mt-3 mb-3" {...props}>
         {children}
       </p>
     ),
@@ -145,7 +187,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       </ol>
     ),
     li: ({ children, ...props }) => (
-      <li className="my-0.5 [&>p]:my-0" {...props}>
+      <li className="text-base md:text-lg leading-7 md:leading-9 my-0.5 [&>p]:my-0" {...props}>
         {children}
       </li>
     ),
@@ -157,12 +199,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         segment.type === "url" ? (
           <LinkCard key={index} url={segment.content} />
         ) : (
-          <ReactMarkdown
-            key={index}
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw]}
-            components={components}
-          >
+          <ReactMarkdown key={index} remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={components}>
             {segment.content}
           </ReactMarkdown>
         )
