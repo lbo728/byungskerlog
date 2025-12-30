@@ -60,7 +60,7 @@ export function LinkModal({
   if (!isOpen) return null;
 
   return (
-    <div className="link-modal-overlay fixed inset-0 z-[200] flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="link-modal-overlay fixed inset-0 z-[9999] flex items-center justify-center bg-black/50" onClick={onClose}>
       <div
         className="link-modal-content bg-background border border-border rounded-lg shadow-xl w-[400px] max-w-[90vw] p-4"
         onClick={(e) => e.stopPropagation()}

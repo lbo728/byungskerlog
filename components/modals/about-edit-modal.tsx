@@ -6,9 +6,18 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { MarkdownToolbar } from "@/components/editor/markdown-toolbar";
-import { MarkdownRenderer } from "@/components/post/markdown-renderer";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { Markdown } from "tiptap-markdown";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import TiptapLink from "@tiptap/extension-link";
+import { common, createLowlight } from "lowlight";
+import { EmbedCard } from "@/components/editor/tiptap/embed-card-extension";
+import { LinkModal } from "@/components/editor/tiptap/link-modal";
+import { useLinkModal } from "@/hooks/useLinkModal";
+import { useImageUpload } from "@/hooks/useImageUpload";
+
+const lowlight = createLowlight(common);
 
 interface AboutEditModalProps {
   open: boolean;
@@ -17,12 +26,80 @@ interface AboutEditModalProps {
 
 export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
   const router = useRouter();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState("About");
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [isEditorReady, setIsEditorReady] = useState(false);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        codeBlock: false,
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
+        defaultLanguage: "javascript",
+      }),
+      TiptapLink.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: false,
+        HTMLAttributes: {
+          class:
+            "text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer",
+        },
+      }),
+      EmbedCard,
+      Markdown.configure({
+        html: true,
+        transformPastedText: true,
+        transformCopiedText: true,
+        linkify: true,
+      }),
+    ],
+    content: "",
+    immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      interface EditorStorageWithMarkdown extends Record<string, unknown> {
+        markdown?: {
+          getMarkdown: () => string;
+        };
+      }
+      const storage = editor.storage as unknown as EditorStorageWithMarkdown;
+      const markdown = storage.markdown?.getMarkdown() || editor.getText();
+      setContent(markdown);
+    },
+    editorProps: {
+      attributes: {
+        class:
+          "prose prose-lg dark:prose-invert max-w-none focus:outline-none p-6 min-h-full",
+      },
+    },
+    onCreate: () => {
+      setIsEditorReady(true);
+    },
+  });
+
+  const {
+    isDragging,
+    isUploading,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleFileSelect,
+  } = useImageUpload({ editor, imageInputRef });
+
+  const {
+    isLinkModalOpen,
+    setIsLinkModalOpen,
+    selectedText,
+    currentLinkUrl,
+    handleLinkSubmit,
+    handleLinkRemove,
+  } = useLinkModal({ editor });
 
   useEffect(() => {
     if (open) {
@@ -45,32 +122,20 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
     }
   }, [open]);
 
-  const insertMarkdown = (text: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = content.substring(start, end);
-
-    let newText = text;
-
-    if (selectedText && text.includes("텍스트")) {
-      newText = text.replace("텍스트", selectedText);
+  useEffect(() => {
+    if (editor && isEditorReady && content && !isFetching) {
+      interface EditorStorageWithMarkdown extends Record<string, unknown> {
+        markdown?: {
+          getMarkdown: () => string;
+        };
+      }
+      const storage = editor.storage as unknown as EditorStorageWithMarkdown;
+      const currentMarkdown = storage.markdown?.getMarkdown() || editor.getText();
+      if (content !== currentMarkdown) {
+        editor.commands.setContent(content);
+      }
     }
-
-    const before = content.substring(0, start);
-    const after = content.substring(end);
-    const newContent = before + newText + after;
-
-    setContent(newContent);
-
-    setTimeout(() => {
-      textarea.focus();
-      const newCursorPos = start + newText.length;
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
-  };
+  }, [content, editor, isEditorReady, isFetching]);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -134,49 +199,64 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
             <p className="text-muted-foreground">페이지를 불러오는 중...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 h-[calc(95vh-5rem)] overflow-hidden">
-            {/* 왼쪽: 편집기 */}
-            <div className="border-r border-border flex flex-col overflow-hidden">
-              <div className="px-6 pt-4">
-                <Input
-                  type="text"
-                  placeholder="제목을 입력하세요"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="text-4xl font-bold border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className="px-6 pt-4">
-                <MarkdownToolbar onInsert={insertMarkdown} />
-              </div>
-
-              <Textarea
-                ref={textareaRef}
-                placeholder="내용을 입력하세요..."
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="flex-1 border-none rounded-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0 px-6 py-4 font-mono text-base overflow-y-auto"
+          <div className="about-editor-container flex flex-col h-[calc(95vh-5rem)] overflow-hidden">
+            <div className="px-6 pt-4">
+              <Input
+                type="text"
+                placeholder="제목을 입력하세요"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="text-4xl font-bold border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
                 disabled={isLoading}
               />
             </div>
 
-            {/* 오른쪽: 미리보기 */}
-            <div className="bg-muted/20 overflow-y-auto">
-              <div className="p-6">
-                <h1 className="text-4xl font-bold mb-8">{title || "제목 없음"}</h1>
-                <div className="prose prose-lg dark:prose-invert max-w-none">
-                  {content ? (
-                    <MarkdownRenderer content={content} />
-                  ) : (
-                    <p className="text-muted-foreground italic">여기에 미리보기가 표시됩니다...</p>
-                  )}
+            <div
+              className={`about-editor-area relative flex-1 overflow-y-auto ${
+                isDragging ? "ring-2 ring-primary ring-inset bg-primary/5" : ""
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <EditorContent
+                editor={editor}
+                className="tiptap-editor h-full"
+              />
+              {isDragging && (
+                <div className="absolute inset-0 flex items-center justify-center bg-primary/10 pointer-events-none z-10">
+                  <div className="text-primary font-medium text-lg">
+                    이미지를 여기에 놓으세요
+                  </div>
                 </div>
-              </div>
+              )}
+              {isUploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+                  <div className="text-muted-foreground font-medium">
+                    이미지 업로드 중...
+                  </div>
+                </div>
+              )}
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+              />
             </div>
           </div>
         )}
+
+        <LinkModal
+          isOpen={isLinkModalOpen}
+          onClose={() => setIsLinkModalOpen(false)}
+          onSubmit={handleLinkSubmit}
+          onRemove={currentLinkUrl ? handleLinkRemove : undefined}
+          initialUrl={currentLinkUrl}
+          selectedText={selectedText}
+        />
       </DialogContent>
     </Dialog>
   );
