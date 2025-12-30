@@ -82,6 +82,37 @@ This is a Next.js 16-based personal blog application with admin capabilities. Th
 
 나에게 리뷰할 때만 주석을 포함해서 알려주고, 커밋 및 푸시 시점에는 주석은 삭제해야해.
 
+## Testing Rules
+
+새로운 기능을 개발할 때는 반드시 핵심 기능에 대한 테스트 코드를 함께 작성하고 검증해야해.
+
+### 테스트 작성 원칙
+
+- **훅(Hooks)**: 데이터 페칭, 뮤테이션 훅은 로딩/성공/에러 상태를 테스트
+- **API 클라이언트**: 각 HTTP 메서드(GET, POST, PATCH, PUT, DELETE)의 성공/실패 케이스 테스트
+- **유틸리티 함수**: 다양한 입력값에 대한 출력 검증
+
+### 테스트 파일 위치
+
+- `__tests__/hooks/` - 커스텀 훅 테스트
+- `__tests__/lib/` - 유틸리티 함수 테스트
+- `__tests__/lib/api/` - API 관련 테스트
+- `__tests__/mocks/` - MSW 핸들러 및 서버 설정
+
+### 테스트 작성 규칙
+
+- describe 블록은 한글로 작성 (함수/클래스명은 영문 유지)
+- MSW(Mock Service Worker)를 사용해 API 모킹
+- React Query 훅은 `@testing-library/react`의 `renderHook` 사용
+
+### 테스트 실행
+
+```bash
+npm run test          # Watch 모드로 테스트 실행
+npm run test:run      # 단일 실행
+npm run test:coverage # 커버리지 리포트 생성
+```
+
 ## Development Commands
 
 ```bash
