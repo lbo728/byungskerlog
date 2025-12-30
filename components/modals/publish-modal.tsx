@@ -162,7 +162,7 @@ export function PublishModal({
             </RadioGroup>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2">
+          <div className="publish-modal-grid grid gap-6 sm:grid-cols-2 min-h-[280px]">
             {postType === "LONG" && (
               <div className="thumbnail-section">
                 <ThumbnailUploader value={thumbnail} onChange={onThumbnailChange} disabled={isPublishing} />
@@ -180,7 +180,7 @@ export function PublishModal({
                   value={excerpt}
                   onChange={(e) => onExcerptChange(e.target.value)}
                   disabled={isPublishing}
-                  rows={4}
+                  className="h-[120px] resize-none"
                   maxLength={200}
                 />
                 <p className="text-xs text-muted-foreground text-right">{excerpt.length}/200</p>
