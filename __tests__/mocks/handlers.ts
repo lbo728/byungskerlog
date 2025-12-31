@@ -37,6 +37,25 @@ export const mockPosts: Post[] = [
   },
 ];
 
+export const mockUnpublishedPosts: Post[] = [
+  {
+    id: "3",
+    slug: "unpublished-post-1",
+    subSlug: null,
+    title: "비공개 포스트 1",
+    content: "비공개 내용입니다.",
+    excerpt: "비공개 발췌문",
+    thumbnail: null,
+    tags: ["draft"],
+    type: "LONG",
+    published: false,
+    createdAt: new Date("2024-01-03"),
+    updatedAt: new Date("2024-01-03"),
+    series: null,
+    totalViews: 0,
+  },
+];
+
 export const mockShortPosts: ShortPost[] = [
   {
     id: "3",
@@ -60,6 +79,7 @@ export const handlers = [
   http.get("/api/posts", ({ request }) => {
     const url = new URL(request.url);
     const type = url.searchParams.get("type");
+    const includeUnpublished = url.searchParams.get("includeUnpublished");
 
     if (type === "SHORT") {
       return HttpResponse.json({
@@ -68,13 +88,18 @@ export const handlers = [
       });
     }
 
+    const posts =
+      includeUnpublished === "true"
+        ? [...mockPosts, ...mockUnpublishedPosts]
+        : mockPosts;
+
     return HttpResponse.json({
-      posts: mockPosts,
-      pagination: mockPagination,
+      posts,
+      pagination: { ...mockPagination, total: posts.length },
     });
   }),
 
-  http.get("/api/posts/:id", ({ params }) => {
+  http.get<{ id: string }>("/api/posts/:id", ({ params }) => {
     const post = mockPosts.find((p) => p.id === params.id || p.slug === params.id);
     if (!post) {
       return new HttpResponse(null, { status: 404 });
@@ -82,7 +107,7 @@ export const handlers = [
     return HttpResponse.json(post);
   }),
 
-  http.delete("/api/posts/:id", ({ params }) => {
+  http.delete<{ id: string }>("/api/posts/:id", ({ params }) => {
     const postIndex = mockPosts.findIndex((p) => p.id === params.id);
     if (postIndex === -1) {
       return new HttpResponse(null, { status: 404 });
