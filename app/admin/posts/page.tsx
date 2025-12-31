@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
@@ -21,89 +21,64 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Post, Series } from "@/lib/types/post";
+import { useAdminPosts } from "@/hooks/useAdminPosts";
+import { useSeries } from "@/hooks/useSeries";
+import { useDeletePost } from "@/hooks/usePostMutations";
+import { useCreateSeries, useUpdateSeries, useDeleteSeries } from "@/hooks/useSeriesMutations";
+import type { AdminPostsFilters } from "@/lib/queryKeys";
 
 export default function AdminPostsPage() {
   useUser({ or: "redirect" });
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("posts");
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Series states
-  const [seriesList, setSeriesList] = useState<Series[]>([]);
-  const [isLoadingSeries, setIsLoadingSeries] = useState(false);
   const [editingSeriesId, setEditingSeriesId] = useState<string | null>(null);
   const [editingSeriesName, setEditingSeriesName] = useState("");
   const [newSeriesName, setNewSeriesName] = useState("");
-  const [isAddingSeries, setIsAddingSeries] = useState(false);
   const [deleteSeriesDialogOpen, setDeleteSeriesDialogOpen] = useState(false);
   const [seriesToDelete, setSeriesToDelete] = useState<Series | null>(null);
-  const [isDeletingSeries, setIsDeletingSeries] = useState(false);
 
-  // Filter states
   const [selectedTag, setSelectedTag] = useState<string>("all");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("desc");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
 
-  // Analytics states
   const [chartPeriod, setChartPeriod] = useState<"daily" | "weekly" | "monthly">("daily");
-  const [analyticsData, setAnalyticsData] = useState<{ date: string; views: number }[]>([]);
+  const [analyticsData] = useState<{ date: string; views: number }[]>([]);
 
-  const fetchPosts = useCallback(async () => {
-    try {
-      setIsLoading(true);
+  const filters: AdminPostsFilters = useMemo(
+    () => ({
+      tag: selectedTag !== "all" ? selectedTag : undefined,
+      type: selectedType !== "all" ? selectedType : undefined,
+      sortBy,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+    }),
+    [selectedTag, selectedType, sortBy, startDate, endDate]
+  );
 
-      // Build query params
-      const params = new URLSearchParams({
-        limit: "100",
-        includeUnpublished: "true",
-        sortBy,
-      });
+  const { data: postsData, isLoading: isLoadingPosts } = useAdminPosts({ filters });
+  const { data: seriesList = [], isLoading: isLoadingSeries } = useSeries({
+    enabled: activeTab === "series",
+  });
 
-      if (selectedTag && selectedTag !== "all") {
-        params.append("tag", selectedTag);
-      }
+  const deletePostMutation = useDeletePost();
+  const createSeriesMutation = useCreateSeries();
+  const updateSeriesMutation = useUpdateSeries();
+  const deleteSeriesMutation = useDeleteSeries();
 
-      if (selectedType && selectedType !== "all") {
-        params.append("type", selectedType);
-      }
+  const posts = postsData?.posts ?? [];
 
-      if (startDate) {
-        params.append("startDate", startDate);
-      }
-
-      if (endDate) {
-        params.append("endDate", endDate);
-      }
-
-      const response = await fetch(`/api/posts?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch posts");
-      const data = await response.json();
-      setPosts(data.posts);
-
-      // Extract unique tags
-      const tags = new Set<string>();
-      data.posts.forEach((post: Post) => {
-        post.tags.forEach((tag: string) => tags.add(tag));
-      });
-      setAvailableTags(Array.from(tags).sort());
-    } catch (error) {
-      console.error("Error fetching posts:", error);
-      toast.error("글 목록을 불러오는데 실패했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedTag, selectedType, sortBy, startDate, endDate]);
-
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+  const availableTags = useMemo(() => {
+    const tags = new Set<string>();
+    posts.forEach((post) => {
+      post.tags.forEach((tag: string) => tags.add(tag));
+    });
+    return Array.from(tags).sort();
+  }, [posts]);
 
   const handleDeleteClick = (post: Post) => {
     setPostToDelete(post);
@@ -122,25 +97,13 @@ export default function AdminPostsPage() {
     if (!postToDelete) return;
 
     try {
-      setIsDeleting(true);
-      const response = await fetch(`/api/posts/${postToDelete.id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete post");
-      }
-
+      await deletePostMutation.mutateAsync(postToDelete.id);
       toast.success("글이 삭제되었습니다.");
       setDeleteDialogOpen(false);
       setPostToDelete(null);
-      fetchPosts();
       router.refresh();
-    } catch (error) {
-      console.error("Error deleting post:", error);
+    } catch {
       toast.error("글 삭제 중 오류가 발생했습니다.");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -152,54 +115,20 @@ export default function AdminPostsPage() {
     });
   };
 
-  // Series functions
-  const fetchSeries = useCallback(async () => {
-    try {
-      setIsLoadingSeries(true);
-      const response = await fetch("/api/series");
-      if (!response.ok) throw new Error("Failed to fetch series");
-      const data = await response.json();
-      setSeriesList(data);
-    } catch (error) {
-      console.error("Error fetching series:", error);
-      toast.error("시리즈 목록을 불러오는데 실패했습니다.");
-    } finally {
-      setIsLoadingSeries(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === "series") {
-      fetchSeries();
-    }
-  }, [activeTab, fetchSeries]);
-
   const handleAddSeries = async () => {
     if (!newSeriesName.trim()) return;
 
     try {
-      setIsAddingSeries(true);
       const slug = newSeriesName
         .toLowerCase()
         .replace(/[^a-z0-9가-힣]+/g, "-")
         .replace(/^-|-$/g, "");
 
-      const response = await fetch("/api/series", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newSeriesName, slug }),
-      });
-
-      if (!response.ok) throw new Error("Failed to create series");
-
+      await createSeriesMutation.mutateAsync({ name: newSeriesName, slug });
       toast.success("시리즈가 생성되었습니다.");
       setNewSeriesName("");
-      fetchSeries();
-    } catch (error) {
-      console.error("Error creating series:", error);
+    } catch {
       toast.error("시리즈 생성에 실패했습니다.");
-    } finally {
-      setIsAddingSeries(false);
     }
   };
 
@@ -212,20 +141,11 @@ export default function AdminPostsPage() {
         .replace(/[^a-z0-9가-힣]+/g, "-")
         .replace(/^-|-$/g, "");
 
-      const response = await fetch(`/api/series/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editingSeriesName, slug }),
-      });
-
-      if (!response.ok) throw new Error("Failed to update series");
-
+      await updateSeriesMutation.mutateAsync({ id, name: editingSeriesName, slug });
       toast.success("시리즈가 수정되었습니다.");
       setEditingSeriesId(null);
       setEditingSeriesName("");
-      fetchSeries();
-    } catch (error) {
-      console.error("Error updating series:", error);
+    } catch {
       toast.error("시리즈 수정에 실패했습니다.");
     }
   };
@@ -239,29 +159,18 @@ export default function AdminPostsPage() {
     if (!seriesToDelete) return;
 
     try {
-      setIsDeletingSeries(true);
-      const response = await fetch(`/api/series/${seriesToDelete.id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) throw new Error("Failed to delete series");
-
+      await deleteSeriesMutation.mutateAsync(seriesToDelete.id);
       toast.success("시리즈가 삭제되었습니다.");
       setDeleteSeriesDialogOpen(false);
       setSeriesToDelete(null);
-      fetchSeries();
-    } catch (error) {
-      console.error("Error deleting series:", error);
+    } catch {
       toast.error("시리즈 삭제에 실패했습니다.");
-    } finally {
-      setIsDeletingSeries(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
+    <div className="admin-posts-page min-h-screen bg-background">
+      <header className="admin-header sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => router.push("/")} className="gap-2">
@@ -276,8 +185,7 @@ export default function AdminPostsPage() {
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="border-b border-border">
+      <div className="admin-tabs border-b border-border">
         <div className="container mx-auto px-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="h-12 bg-transparent border-0 p-0">
@@ -306,11 +214,9 @@ export default function AdminPostsPage() {
         </div>
       </div>
 
-      {/* Posts Tab Content */}
       {activeTab === "posts" && (
         <>
-          {/* Filters */}
-          <div className="border-b border-border bg-muted/30">
+          <div className="posts-filters border-b border-border bg-muted/30">
             <div className="container mx-auto px-4 py-4">
               <div className="flex flex-wrap gap-4 items-end">
                 <div className="flex-1 min-w-[200px]">
@@ -377,9 +283,8 @@ export default function AdminPostsPage() {
             </div>
           </div>
 
-          {/* Posts Content */}
-          <div className="container mx-auto px-4 py-8">
-            {isLoading ? (
+          <div className="posts-content container mx-auto px-4 py-8">
+            {isLoadingPosts ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">로딩 중...</p>
               </div>
@@ -465,10 +370,8 @@ export default function AdminPostsPage() {
         </>
       )}
 
-      {/* Series Tab Content */}
       {activeTab === "series" && (
-        <div className="container mx-auto px-4 py-8">
-          {/* Add New Series */}
+        <div className="series-content container mx-auto px-4 py-8">
           <div className="add-series-form flex gap-2 mb-8">
             <Input
               placeholder="새 시리즈 이름"
@@ -477,13 +380,15 @@ export default function AdminPostsPage() {
               onKeyDown={(e) => e.key === "Enter" && handleAddSeries()}
               className="max-w-sm"
             />
-            <Button onClick={handleAddSeries} disabled={isAddingSeries || !newSeriesName.trim()}>
+            <Button
+              onClick={handleAddSeries}
+              disabled={createSeriesMutation.isPending || !newSeriesName.trim()}
+            >
               <Plus className="h-4 w-4 mr-2" />
               추가
             </Button>
           </div>
 
-          {/* Series List */}
           {isLoadingSeries ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">로딩 중...</p>
@@ -508,7 +413,11 @@ export default function AdminPostsPage() {
                         className="max-w-sm"
                         autoFocus
                       />
-                      <Button size="sm" onClick={() => handleUpdateSeries(series.id)}>
+                      <Button
+                        size="sm"
+                        onClick={() => handleUpdateSeries(series.id)}
+                        disabled={updateSeriesMutation.isPending}
+                      >
                         <Check className="h-4 w-4" />
                       </Button>
                       <Button
@@ -560,11 +469,9 @@ export default function AdminPostsPage() {
         </div>
       )}
 
-      {/* Analytics Tab Content */}
       {activeTab === "analytics" && (
-        <div className="container mx-auto px-4 py-8">
+        <div className="analytics-content container mx-auto px-4 py-8">
           <div className="analytics-grid grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Top 5 by Views */}
             <section className="analytics-top-views">
               <div className="flex items-center gap-2 mb-4">
                 <Eye className="h-5 w-5 text-primary" />
@@ -578,7 +485,7 @@ export default function AdminPostsPage() {
                   .map((post, index) => (
                     <div
                       key={post.id}
-                      className="flex items-center gap-3 p-3 border border-border rounded-lg hover:border-primary/50 cursor-pointer transition-colors"
+                      className="analytics-item flex items-center gap-3 p-3 border border-border rounded-lg hover:border-primary/50 cursor-pointer transition-colors"
                       onClick={() => router.push(`/posts/${post.slug}`)}
                     >
                       <span className="text-2xl font-bold text-muted-foreground w-8">{index + 1}</span>
@@ -598,7 +505,6 @@ export default function AdminPostsPage() {
               </div>
             </section>
 
-            {/* Daily Views Chart */}
             <section className="analytics-chart">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -646,7 +552,6 @@ export default function AdminPostsPage() {
               </div>
             </section>
 
-            {/* Summary Stats */}
             <section className="analytics-summary lg:col-span-2">
               <h2 className="text-lg font-semibold mb-4">전체 통계</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -680,7 +585,6 @@ export default function AdminPostsPage() {
         </div>
       )}
 
-      {/* Delete Post Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -690,19 +594,18 @@ export default function AdminPostsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+            <AlertDialogCancel disabled={deletePostMutation.isPending}>취소</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              disabled={isDeleting}
+              disabled={deletePostMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "삭제 중..." : "삭제"}
+              {deletePostMutation.isPending ? "삭제 중..." : "삭제"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete Series Confirmation Dialog */}
       <AlertDialog open={deleteSeriesDialogOpen} onOpenChange={setDeleteSeriesDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -713,13 +616,13 @@ export default function AdminPostsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletingSeries}>취소</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteSeriesMutation.isPending}>취소</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteSeriesConfirm}
-              disabled={isDeletingSeries}
+              disabled={deleteSeriesMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeletingSeries ? "삭제 중..." : "삭제"}
+              {deleteSeriesMutation.isPending ? "삭제 중..." : "삭제"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

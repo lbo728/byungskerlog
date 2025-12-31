@@ -7,12 +7,14 @@ import { apiClient } from "@/lib/api/client";
 
 interface CreateSeriesInput {
   name: string;
+  slug?: string;
   description?: string;
 }
 
 interface UpdateSeriesInput {
   id: string;
   name?: string;
+  slug?: string;
   description?: string;
 }
 
