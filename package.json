@@ -10,7 +10,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "tunnel": "ngrok http 3002 --domain=frederica-interlunar-faster.ngrok-free.dev"
   },
   "dependencies": {
     "@giscus/react": "^3.1.0",
