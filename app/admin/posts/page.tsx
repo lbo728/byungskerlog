@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pencil, Trash2, Plus, X, BookOpen, Check, BarChart3, TrendingUp, Eye } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Plus, X, BookOpen, Check, BarChart3, TrendingUp, Eye, Link2 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import {
   AlertDialog,
@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Post, Series } from "@/lib/types/post";
+import { SlugEditModal } from "@/components/modals/slug-edit-modal";
 import { useAdminPosts } from "@/hooks/useAdminPosts";
 import { useSeries } from "@/hooks/useSeries";
 import { useDeletePost } from "@/hooks/usePostMutations";
@@ -33,6 +34,8 @@ export default function AdminPostsPage() {
   const [activeTab, setActiveTab] = useState("posts");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
+  const [slugEditModalOpen, setSlugEditModalOpen] = useState(false);
+  const [postToEditSlug, setPostToEditSlug] = useState<Post | null>(null);
 
   const [editingSeriesId, setEditingSeriesId] = useState<string | null>(null);
   const [editingSeriesName, setEditingSeriesName] = useState("");
@@ -83,6 +86,11 @@ export default function AdminPostsPage() {
   const handleDeleteClick = (post: Post) => {
     setPostToDelete(post);
     setDeleteDialogOpen(true);
+  };
+
+  const handleSlugEditClick = (post: Post) => {
+    setPostToEditSlug(post);
+    setSlugEditModalOpen(true);
   };
 
   const handleResetFilters = () => {
@@ -329,6 +337,17 @@ export default function AdminPostsPage() {
                               /{post.subSlug}
                             </span>
                           )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSlugEditClick(post);
+                            }}
+                          >
+                            <Link2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                          </Button>
                         </div>
                         {post.tags.length > 0 && (
                           <div className="post-card-tags flex flex-wrap gap-1.5 mt-2">
@@ -627,6 +646,19 @@ export default function AdminPostsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {postToEditSlug && (
+        <SlugEditModal
+          open={slugEditModalOpen}
+          onOpenChange={setSlugEditModalOpen}
+          postId={postToEditSlug.id}
+          currentSlug={postToEditSlug.slug}
+          currentSubSlug={postToEditSlug.subSlug || null}
+          onSuccess={() => {
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
