@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
@@ -215,6 +215,29 @@ export default function WritePage() {
     setIsPublishModalOpen(true);
   };
 
+  const handleThumbnailFileChange = useCallback((file: File | null) => {
+    if (modalThumbnailUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(modalThumbnailUrl);
+    }
+
+    if (file) {
+      const blobUrl = URL.createObjectURL(file);
+      setModalThumbnailUrl(blobUrl);
+      setModalThumbnailFile(file);
+    } else {
+      setModalThumbnailUrl(null);
+      setModalThumbnailFile(null);
+    }
+  }, [modalThumbnailUrl]);
+
+  const handleThumbnailRemove = useCallback(() => {
+    if (modalThumbnailUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(modalThumbnailUrl);
+    }
+    setModalThumbnailUrl(null);
+    setModalThumbnailFile(null);
+  }, [modalThumbnailUrl]);
+
   const handlePublishSuccess = (slug: string) => {
     toast.success(isEditMode ? "글이 수정되었습니다." : "글이 발행되었습니다.");
     router.push(`/posts/${slug}`);
@@ -299,7 +322,8 @@ export default function WritePage() {
         thumbnailUrl={modalThumbnailUrl}
         onThumbnailUrlChange={setModalThumbnailUrl}
         thumbnailFile={modalThumbnailFile}
-        onThumbnailFileChange={setModalThumbnailFile}
+        onThumbnailFileChange={handleThumbnailFileChange}
+        onThumbnailRemove={handleThumbnailRemove}
         seriesId={modalSeriesId}
         onSeriesIdChange={setModalSeriesId}
         excerpt={modalExcerpt}

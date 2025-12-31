@@ -455,6 +455,29 @@ export default function LegacyWritePage() {
     setIsPublishModalOpen(true);
   };
 
+  const handleThumbnailFileChange = useCallback((file: File | null) => {
+    if (modalThumbnailUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(modalThumbnailUrl);
+    }
+
+    if (file) {
+      const blobUrl = URL.createObjectURL(file);
+      setModalThumbnailUrl(blobUrl);
+      setModalThumbnailFile(file);
+    } else {
+      setModalThumbnailUrl(null);
+      setModalThumbnailFile(null);
+    }
+  }, [modalThumbnailUrl]);
+
+  const handleThumbnailRemove = useCallback(() => {
+    if (modalThumbnailUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(modalThumbnailUrl);
+    }
+    setModalThumbnailUrl(null);
+    setModalThumbnailFile(null);
+  }, [modalThumbnailUrl]);
+
   const handlePublishSuccess = (slug: string) => {
     toast.success(isEditMode ? "글이 수정되었습니다." : "글이 발행되었습니다.");
     router.push(`/posts/${slug}`);
@@ -680,7 +703,8 @@ export default function LegacyWritePage() {
         thumbnailUrl={modalThumbnailUrl}
         onThumbnailUrlChange={setModalThumbnailUrl}
         thumbnailFile={modalThumbnailFile}
-        onThumbnailFileChange={setModalThumbnailFile}
+        onThumbnailFileChange={handleThumbnailFileChange}
+        onThumbnailRemove={handleThumbnailRemove}
         seriesId={modalSeriesId}
         onSeriesIdChange={setModalSeriesId}
         excerpt={modalExcerpt}

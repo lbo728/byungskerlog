@@ -28,6 +28,7 @@ interface PublishModalProps {
   onThumbnailUrlChange: (url: string | null) => void;
   thumbnailFile: File | null;
   onThumbnailFileChange: (file: File | null) => void;
+  onThumbnailRemove: () => void;
   seriesId: string | null;
   onSeriesIdChange: (seriesId: string | null) => void;
   excerpt: string;
@@ -60,6 +61,7 @@ export function PublishModal({
   onThumbnailUrlChange,
   thumbnailFile,
   onThumbnailFileChange,
+  onThumbnailRemove,
   seriesId,
   onSeriesIdChange,
   excerpt,
@@ -71,8 +73,7 @@ export function PublishModal({
   const handlePostTypeChange = (type: "LONG" | "SHORT") => {
     onPostTypeChange(type);
     if (type === "SHORT") {
-      onThumbnailUrlChange(null);
-      onThumbnailFileChange(null);
+      onThumbnailRemove();
     }
   };
 
@@ -206,7 +207,7 @@ export function PublishModal({
                 <ThumbnailUploader
                   previewUrl={thumbnailUrl}
                   onFileChange={onThumbnailFileChange}
-                  onRemove={() => onThumbnailUrlChange(null)}
+                  onRemove={onThumbnailRemove}
                   disabled={isPublishing}
                 />
                 <p className="mt-2 text-xs text-muted-foreground">

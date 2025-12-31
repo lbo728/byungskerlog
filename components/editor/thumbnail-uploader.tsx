@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { ImageIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -17,15 +17,6 @@ const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
 export function ThumbnailUploader({ previewUrl, onFileChange, onRemove, disabled }: ThumbnailUploaderProps) {
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [localPreview, setLocalPreview] = useState<string | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (localPreview) {
-        URL.revokeObjectURL(localPreview);
-      }
-    };
-  }, [localPreview]);
 
   const handleFileSelect = useCallback(
     (file: File) => {
@@ -41,15 +32,9 @@ export function ThumbnailUploader({ previewUrl, onFileChange, onRemove, disabled
         return;
       }
 
-      if (localPreview) {
-        URL.revokeObjectURL(localPreview);
-      }
-
-      const objectUrl = URL.createObjectURL(file);
-      setLocalPreview(objectUrl);
       onFileChange(file);
     },
-    [onFileChange, localPreview]
+    [onFileChange]
   );
 
   const handleInputChange = useCallback(
@@ -86,24 +71,20 @@ export function ThumbnailUploader({ previewUrl, onFileChange, onRemove, disabled
   }, []);
 
   const handleRemove = useCallback(() => {
-    if (localPreview) {
-      URL.revokeObjectURL(localPreview);
-      setLocalPreview(null);
-    }
     onFileChange(null);
     onRemove();
     setError(null);
-  }, [onFileChange, onRemove, localPreview]);
+  }, [onFileChange, onRemove]);
 
-  const displayUrl = localPreview || previewUrl;
+  const isBlobUrl = previewUrl?.startsWith("blob:");
 
   return (
     <div className="thumbnail-uploader space-y-2">
       <label className="text-sm font-medium">썸네일 이미지</label>
 
-      {displayUrl ? (
+      {previewUrl ? (
         <div className="thumbnail-preview relative aspect-video w-full overflow-hidden rounded-lg border bg-muted">
-          <Image src={displayUrl} alt="썸네일 미리보기" fill className="object-cover" unoptimized={!!localPreview} />
+          <Image src={previewUrl} alt="썸네일 미리보기" fill className="object-cover" unoptimized={isBlobUrl} />
           <Button
             type="button"
             variant="destructive"
