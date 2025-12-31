@@ -11,6 +11,7 @@ import { server } from "../mocks/server";
 import { mockSeries } from "../mocks/handlers";
 import { createTestQueryClient } from "../test-utils";
 import { QueryClientProvider } from "@tanstack/react-query";
+import type { Series } from "@/lib/types/post";
 import React from "react";
 
 function createWrapper() {
@@ -89,7 +90,7 @@ describe("useCreateSeries", () => {
     const wrapper = createWrapper();
     const { result } = renderHook(() => useCreateSeries(), { wrapper });
 
-    let createdSeries;
+    let createdSeries: Series | undefined;
     await act(async () => {
       createdSeries = await result.current.mutateAsync({
         name: "새 시리즈",
@@ -114,7 +115,7 @@ describe("useUpdateSeries", () => {
     const wrapper = createWrapper();
     const { result } = renderHook(() => useUpdateSeries(), { wrapper });
 
-    let updatedSeries;
+    let updatedSeries: Series | undefined;
     await act(async () => {
       updatedSeries = await result.current.mutateAsync({
         id: "series-1",

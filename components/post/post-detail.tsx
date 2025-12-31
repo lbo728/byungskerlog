@@ -15,6 +15,7 @@ import { ShortPostsNav } from "@/components/short-post/short-posts-nav";
 import Image from "next/image";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { StructuredData } from "@/components/seo/structured-data";
+import { PostCacheHydrator } from "./post-cache-hydrator";
 import type { Post, SeriesPost, RelatedPost, PrevNextPost } from "@/lib/post-data";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel.app";
@@ -49,6 +50,7 @@ export function PostDetail({
 
   return (
     <div className="bg-background">
+      <PostCacheHydrator post={post} />
       <ReadingProgress />
       {post.type !== "SHORT" && <MobileToc content={post.content} />}
       <StructuredData
