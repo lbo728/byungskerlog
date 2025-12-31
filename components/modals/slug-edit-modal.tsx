@@ -184,15 +184,26 @@ export function SlugEditModal({
 
           {showSubSlugInput ? (
             <div className="sub-slug-section space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="sub-slug" className="text-sm font-medium">
-                  Sub Slug <span className="text-muted-foreground font-normal">(선택)</span>
-                </Label>
+              <Label htmlFor="sub-slug" className="text-sm font-medium">
+                Sub Slug <span className="text-muted-foreground font-normal">(선택)</span>
+              </Label>
+              <div className="slug-preview text-xs text-muted-foreground mb-1">
+                /posts/<span className="text-foreground font-medium">{subSlug || "sub-slug"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="sub-slug"
+                  placeholder="sub-slug (영문, 숫자, 하이픈만)"
+                  value={subSlug}
+                  onChange={(e) => handleSubSlugChange(e.target.value)}
+                  disabled={updatePostMutation.isPending}
+                  className="font-mono flex-1"
+                />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="text-xs text-muted-foreground h-6 px-2"
+                  className="text-xs text-destructive hover:text-destructive h-9 px-3"
                   onClick={() => {
                     setShowSubSlugInput(false);
                     setSubSlug("");
@@ -200,20 +211,9 @@ export function SlugEditModal({
                   }}
                   disabled={updatePostMutation.isPending}
                 >
-                  제거
+                  삭제
                 </Button>
               </div>
-              <div className="slug-preview text-xs text-muted-foreground mb-1">
-                /posts/<span className="text-foreground font-medium">{subSlug || "sub-slug"}</span>
-              </div>
-              <Input
-                id="sub-slug"
-                placeholder="sub-slug (영문, 숫자, 하이픈만)"
-                value={subSlug}
-                onChange={(e) => handleSubSlugChange(e.target.value)}
-                disabled={updatePostMutation.isPending}
-                className="font-mono"
-              />
               {subSlugError && (
                 <p className="text-sm text-destructive">{subSlugError}</p>
               )}

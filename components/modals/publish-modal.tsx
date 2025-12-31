@@ -303,34 +303,34 @@ export function PublishModal({
 
           {showSubSlugInput ? (
             <div className="sub-slug-field space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">
-                  Sub Slug <span className="text-muted-foreground font-normal">(선택)</span>
-                </Label>
+              <Label className="text-sm font-medium">
+                Sub Slug <span className="text-muted-foreground font-normal">(선택)</span>
+              </Label>
+              <div className="text-xs text-muted-foreground mb-1">
+                /posts/<span className="text-foreground font-medium">{subSlug || "sub-slug"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="sub-slug (영문, 숫자, 하이픈만)"
+                  value={subSlug}
+                  onChange={(e) => handleSubSlugInputChange(e.target.value)}
+                  disabled={isPublishing}
+                  className="font-mono flex-1"
+                />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="text-xs text-muted-foreground h-6 px-2"
+                  className="text-xs text-destructive hover:text-destructive h-9 px-3"
                   onClick={() => {
                     setShowSubSlugInput(false);
                     onSubSlugChange?.("");
                   }}
                   disabled={isPublishing}
                 >
-                  제거
+                  삭제
                 </Button>
               </div>
-              <div className="text-xs text-muted-foreground mb-1">
-                /posts/<span className="text-foreground font-medium">{subSlug || "sub-slug"}</span>
-              </div>
-              <Input
-                placeholder="sub-slug (영문, 숫자, 하이픈만)"
-                value={subSlug}
-                onChange={(e) => handleSubSlugInputChange(e.target.value)}
-                disabled={isPublishing}
-                className="font-mono"
-              />
               <p className="text-xs text-muted-foreground">
                 검색 최적화를 위한 보조 URL입니다. 영문 소문자, 숫자, 하이픈만 사용 가능합니다.
               </p>
