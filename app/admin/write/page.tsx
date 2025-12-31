@@ -23,6 +23,8 @@ import { useTagInput } from "@/hooks/useTagInput";
 import { useDraftSave } from "@/hooks/useDraftSave";
 import { useLinkModal } from "@/hooks/useLinkModal";
 import { generateExcerpt } from "@/lib/excerpt";
+import { usePost } from "@/hooks/usePost";
+import { useDraft } from "@/hooks/useDrafts";
 
 const lowlight = createLowlight(common);
 
@@ -39,7 +41,6 @@ export default function WritePage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isLoading] = useState(false);
-  const [isFetchingPost, setIsFetchingPost] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [modalPostType, setModalPostType] = useState<"LONG" | "SHORT">("LONG");
   const [modalThumbnailUrl, setModalThumbnailUrl] = useState<string | null>(null);
@@ -47,6 +48,17 @@ export default function WritePage() {
   const [modalSeriesId, setModalSeriesId] = useState<string | null>(null);
   const [modalExcerpt, setModalExcerpt] = useState<string>("");
   const [isExcerptInitialized, setIsExcerptInitialized] = useState(false);
+  const [isFormInitialized, setIsFormInitialized] = useState(false);
+
+  const { data: postData, isLoading: isLoadingPost } = usePost(postId || "", {
+    enabled: isEditMode && !!postId,
+  });
+
+  const { data: draftData, isLoading: isLoadingDraft } = useDraft(draftIdParam || "", {
+    enabled: !isEditMode && !!draftIdParam,
+  });
+
+  const isFetchingPost = isLoadingPost || isLoadingDraft;
 
   const {
     tags,
@@ -149,55 +161,55 @@ export default function WritePage() {
   }, [content, editor]);
 
   useEffect(() => {
-    if (isEditMode && postId) {
-      const fetchPost = async () => {
-        setIsFetchingPost(true);
-        try {
-          const response = await fetch(`/api/posts/${postId}`);
-          if (!response.ok) throw new Error("Failed to fetch post");
-          const post = await response.json();
-
-          setTitle(post.title);
-          setTags(post.tags || []);
-          setContent(post.content);
-          setModalPostType(post.type || "LONG");
-          setModalThumbnailUrl(post.thumbnail || null);
-          setModalThumbnailFile(null);
-          setModalSeriesId(post.seriesId || null);
-          setModalExcerpt(post.excerpt || "");
-          setIsExcerptInitialized(true);
-        } catch (error) {
-          console.error("Error fetching post:", error);
-          toast.error("글을 불러오는데 실패했습니다.");
-          router.push("/admin/posts");
-        } finally {
-          setIsFetchingPost(false);
-        }
-      };
-      fetchPost();
-    } else if (draftIdParam) {
-      const fetchDraft = async () => {
-        setIsFetchingPost(true);
-        try {
-          const response = await fetch(`/api/drafts/${draftIdParam}`);
-          if (!response.ok) throw new Error("Failed to fetch draft");
-          const draft = await response.json();
-
-          setTitle(draft.title || "");
-          setTags(draft.tags || []);
-          setContent(draft.content || "");
-          setDraftId(draft.id);
-        } catch (error) {
-          console.error("Error fetching draft:", error);
-          toast.error("임시저장을 불러오는데 실패했습니다.");
-          router.push("/admin/drafts");
-        } finally {
-          setIsFetchingPost(false);
-        }
-      };
-      fetchDraft();
+    if (isEditMode && postData && !isFormInitialized) {
+      queueMicrotask(() => {
+        setTitle(postData.title);
+        setTags(postData.tags || []);
+        setContent(postData.content);
+        setModalPostType(postData.type || "LONG");
+        setModalThumbnailUrl(postData.thumbnail || null);
+        setModalThumbnailFile(null);
+        setModalSeriesId(postData.series?.id || null);
+        setModalExcerpt(postData.excerpt || "");
+        setIsExcerptInitialized(true);
+        setIsFormInitialized(true);
+      });
     }
-  }, [isEditMode, postId, draftIdParam, router, setTags, setDraftId]);
+  }, [isEditMode, postData, isFormInitialized, setTags]);
+
+  useEffect(() => {
+    if (!isEditMode && draftData && !isFormInitialized) {
+      queueMicrotask(() => {
+        setTitle(draftData.title || "");
+        setTags(draftData.tags || []);
+        setContent(draftData.content || "");
+        setDraftId(draftData.id);
+        setIsFormInitialized(true);
+      });
+    }
+  }, [isEditMode, draftData, isFormInitialized, setTags, setDraftId]);
+
+  useEffect(() => {
+    if (!postId && !draftIdParam) {
+      queueMicrotask(() => {
+        setIsFormInitialized(true);
+      });
+    }
+  }, [postId, draftIdParam]);
+
+  useEffect(() => {
+    if (isLoadingPost === false && isEditMode && !postData) {
+      toast.error("글을 불러오는데 실패했습니다.");
+      router.push("/admin/posts");
+    }
+  }, [isLoadingPost, isEditMode, postData, router]);
+
+  useEffect(() => {
+    if (isLoadingDraft === false && !isEditMode && draftIdParam && !draftData) {
+      toast.error("임시저장을 불러오는데 실패했습니다.");
+      router.push("/admin/drafts");
+    }
+  }, [isLoadingDraft, isEditMode, draftIdParam, draftData, router]);
 
   const handleOpenPublishModal = () => {
     if (!title.trim()) {
@@ -245,7 +257,7 @@ export default function WritePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="write-page min-h-screen bg-background overflow-x-hidden">
       <WriteHeader
         isEditMode={isEditMode}
         isLoading={isLoading}
@@ -320,7 +332,6 @@ export default function WritePage() {
         postType={modalPostType}
         onPostTypeChange={setModalPostType}
         thumbnailUrl={modalThumbnailUrl}
-        onThumbnailUrlChange={setModalThumbnailUrl}
         thumbnailFile={modalThumbnailFile}
         onThumbnailFileChange={handleThumbnailFileChange}
         onThumbnailRemove={handleThumbnailRemove}

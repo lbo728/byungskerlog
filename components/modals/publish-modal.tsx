@@ -28,7 +28,6 @@ interface PublishModalProps {
   postType: "LONG" | "SHORT";
   onPostTypeChange: (type: "LONG" | "SHORT") => void;
   thumbnailUrl: string | null;
-  onThumbnailUrlChange: (url: string | null) => void;
   thumbnailFile: File | null;
   onThumbnailFileChange: (file: File | null) => void;
   onThumbnailRemove: () => void;
@@ -77,7 +76,6 @@ export function PublishModal({
   postType,
   onPostTypeChange,
   thumbnailUrl,
-  onThumbnailUrlChange,
   thumbnailFile,
   onThumbnailFileChange,
   onThumbnailRemove,

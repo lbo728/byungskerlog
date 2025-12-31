@@ -68,3 +68,16 @@ export interface ShortPost {
   createdAt: Date | string;
   series?: Series | null;
 }
+
+/**
+ * Draft type definition
+ */
+export interface Draft {
+  id: string;
+  title: string;
+  content: string;
+  tags: string[];
+  authorId: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}

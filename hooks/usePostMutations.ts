@@ -44,7 +44,7 @@ export function useCreatePost(options: MutationOptions = {}) {
 
   return useMutation({
     mutationFn: (data: CreatePostData) => apiClient.post<Post>("/api/posts", data),
-    onSuccess: (newPost) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.shortPosts.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tags.all });

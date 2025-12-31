@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 interface UseTagInputOptions {
   initialTags?: string[];
@@ -46,13 +46,17 @@ export function useTagInput({
     fetchAllTags();
   }, []);
 
-  const filteredSuggestions = tagInput.trim()
-    ? allTags.filter(
-        (tag) =>
-          tag.toLowerCase().includes(tagInput.toLowerCase()) &&
-          !tags.includes(tag)
-      )
-    : [];
+  const filteredSuggestions = useMemo(
+    () =>
+      tagInput.trim()
+        ? allTags.filter(
+            (tag) =>
+              tag.toLowerCase().includes(tagInput.toLowerCase()) &&
+              !tags.includes(tag)
+          )
+        : [],
+    [tagInput, allTags, tags]
+  );
 
   const addTag = useCallback(
     (tag: string) => {

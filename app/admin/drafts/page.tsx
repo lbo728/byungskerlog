@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
@@ -16,43 +16,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface Draft {
-  id: string;
-  title: string;
-  content: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-}
+import { useDrafts } from "@/hooks/useDrafts";
+import { useDeleteDraft } from "@/hooks/useDraftMutations";
+import type { Draft } from "@/lib/types/post";
 
 export default function AdminDraftsPage() {
   useUser({ or: "redirect" });
   const router = useRouter();
-  const [drafts, setDrafts] = useState<Draft[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [draftToDelete, setDraftToDelete] = useState<Draft | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchDrafts();
-  }, []);
-
-  const fetchDrafts = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch("/api/drafts");
-      if (!response.ok) throw new Error("Failed to fetch drafts");
-      const data = await response.json();
-      setDrafts(data);
-    } catch (error) {
-      console.error("Error fetching drafts:", error);
-      toast.error("임시저장 목록을 불러오는데 실패했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: drafts = [], isLoading } = useDrafts();
+  const deleteDraftMutation = useDeleteDraft();
 
   const handleDeleteClick = (draft: Draft) => {
     setDraftToDelete(draft);
@@ -63,28 +38,16 @@ export default function AdminDraftsPage() {
     if (!draftToDelete) return;
 
     try {
-      setIsDeleting(true);
-      const response = await fetch(`/api/drafts/${draftToDelete.id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete draft");
-      }
-
+      await deleteDraftMutation.mutateAsync(draftToDelete.id);
       toast.success("임시저장이 삭제되었습니다.");
       setDeleteDialogOpen(false);
       setDraftToDelete(null);
-      fetchDrafts();
-    } catch (error) {
-      console.error("Error deleting draft:", error);
+    } catch {
       toast.error("삭제 중 오류가 발생했습니다.");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | Date) => {
     return new Date(dateString).toLocaleDateString("ko-KR", {
       year: "numeric",
       month: "long",
@@ -100,9 +63,8 @@ export default function AdminDraftsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
+    <div className="admin-drafts-page min-h-screen bg-background">
+      <header className="admin-header sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => router.push("/admin/posts")} className="gap-2">
@@ -116,8 +78,7 @@ export default function AdminDraftsPage() {
         </div>
       </header>
 
-      {/* Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="drafts-content container mx-auto px-4 py-8">
         {isLoading ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">로딩 중...</p>
@@ -132,15 +93,15 @@ export default function AdminDraftsPage() {
             {drafts.map((draft) => (
               <div
                 key={draft.id}
-                className="border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
+                className="draft-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
+                  <div className="draft-card-content flex-1 min-w-0">
                     <h2 className="text-xl font-semibold truncate mb-2">{draft.title || "제목 없음"}</h2>
                     <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                       {getPreviewText(draft.content) || "내용 없음"}
                     </p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="draft-card-meta flex items-center gap-4 text-xs text-muted-foreground">
                       <span>마지막 수정: {formatDate(draft.updatedAt)}</span>
                       {draft.tags.length > 0 && (
                         <div className="flex gap-2">
@@ -153,7 +114,7 @@ export default function AdminDraftsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="draft-card-actions flex items-center gap-2 flex-shrink-0">
                     <Button
                       variant="default"
                       size="sm"
@@ -179,7 +140,6 @@ export default function AdminDraftsPage() {
         )}
       </div>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -189,13 +149,13 @@ export default function AdminDraftsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteDraftMutation.isPending}>취소</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              disabled={isDeleting}
+              disabled={deleteDraftMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "삭제 중..." : "삭제"}
+              {deleteDraftMutation.isPending ? "삭제 중..." : "삭제"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
