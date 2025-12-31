@@ -65,13 +65,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { id } = await params;
     const body = await request.json();
-    const { title, slug, excerpt, content, tags, published, thumbnail, seriesId, type } = body;
+    const { title, slug, subSlug, excerpt, content, tags, published, thumbnail, seriesId, type } = body;
 
     const post = await prisma.post.update({
       where: { id },
       data: {
         ...(title !== undefined && { title }),
         ...(slug !== undefined && { slug }),
+        ...(subSlug !== undefined && { subSlug: subSlug || null }),
         ...(excerpt !== undefined && { excerpt }),
         ...(content !== undefined && { content }),
         ...(tags !== undefined && { tags }),

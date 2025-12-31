@@ -22,6 +22,7 @@ export interface CreatePostData {
 export interface UpdatePostData {
   title?: string;
   slug?: string;
+  subSlug?: string | null;
   content?: string;
   excerpt?: string | null;
   tags?: string[];

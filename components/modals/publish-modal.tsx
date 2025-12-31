@@ -10,7 +10,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ThumbnailUploader } from "@/components/editor/thumbnail-uploader";
 import { SeriesSelect } from "@/components/editor/series-select";
 import { optimizeImage } from "@/lib/image-optimizer";
-import { X } from "lucide-react";
+import { X, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const MAX_THUMBNAIL_SIZE = 500 * 1024;
 const DRAG_CLOSE_THRESHOLD = 100;
@@ -35,6 +36,10 @@ interface PublishModalProps {
   onSeriesIdChange: (seriesId: string | null) => void;
   excerpt: string;
   onExcerptChange: (excerpt: string) => void;
+  slug?: string;
+  onSlugChange?: (slug: string) => void;
+  subSlug?: string;
+  onSubSlugChange?: (subSlug: string) => void;
 }
 
 function generateSlug(title: string): string {
@@ -83,11 +88,26 @@ export function PublishModal({
   onSeriesIdChange,
   excerpt,
   onExcerptChange,
+  slug = "",
+  onSlugChange,
+  subSlug = "",
+  onSubSlugChange,
 }: PublishModalProps) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragY, setDragY] = useState(0);
+  const [showSubSlugInput, setShowSubSlugInput] = useState(!!subSlug);
   const isMobile = useIsMobile();
+
+  const handleSlugInputChange = (value: string) => {
+    const normalized = value.toLowerCase().replace(/\s+/g, "-");
+    onSlugChange?.(normalized);
+  };
+
+  const handleSubSlugInputChange = (value: string) => {
+    const normalized = value.toLowerCase().replace(/\s+/g, "-");
+    onSubSlugChange?.(normalized);
+  };
 
   const handlePostTypeChange = (type: "LONG" | "SHORT") => {
     onPostTypeChange(type);
@@ -155,17 +175,22 @@ export function PublishModal({
       let response: Response;
 
       if (isEditMode && postId) {
+        const editData = {
+          ...postData,
+          ...(slug && { slug: slug.trim() }),
+          ...(subSlug !== undefined && { subSlug: subSlug.trim() || null }),
+        };
         response = await fetch(`/api/posts/${postId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(postData),
+          body: JSON.stringify(editData),
         });
       } else {
-        const slug = generateSlug(title);
+        const newSlug = generateSlug(title);
         response = await fetch("/api/posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...postData, slug }),
+          body: JSON.stringify({ ...postData, slug: newSlug }),
         });
       }
 
@@ -191,7 +216,7 @@ export function PublishModal({
     } finally {
       setIsPublishing(false);
     }
-  }, [title, content, tags, postType, excerpt, thumbnailUrl, thumbnailFile, seriesId, isEditMode, postId, draftId, onOpenChange, onPublishSuccess]);
+  }, [title, content, tags, postType, excerpt, thumbnailUrl, thumbnailFile, seriesId, isEditMode, postId, draftId, onOpenChange, onPublishSuccess, slug, subSlug]);
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (info.offset.y > DRAG_CLOSE_THRESHOLD) {
@@ -259,6 +284,72 @@ export function PublishModal({
           <SeriesSelect value={seriesId} onChange={onSeriesIdChange} disabled={isPublishing} />
         </div>
       </div>
+
+      {isEditMode && (
+        <div className="slug-edit-section space-y-4 border-t pt-4">
+          <div className="main-slug-field space-y-2">
+            <Label className="text-sm font-medium">Main Slug</Label>
+            <div className="text-xs text-muted-foreground mb-1">
+              /posts/<span className="text-foreground font-medium">{slug || "your-slug"}</span>
+            </div>
+            <Input
+              placeholder="main-slug"
+              value={slug}
+              onChange={(e) => handleSlugInputChange(e.target.value)}
+              disabled={isPublishing}
+              className="font-mono"
+            />
+          </div>
+
+          {showSubSlugInput ? (
+            <div className="sub-slug-field space-y-2">
+              <Label className="text-sm font-medium">
+                Sub Slug <span className="text-muted-foreground font-normal">(선택)</span>
+              </Label>
+              <div className="text-xs text-muted-foreground mb-1">
+                /posts/<span className="text-foreground font-medium">{subSlug || "sub-slug"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="sub-slug (영문, 숫자, 하이픈만)"
+                  value={subSlug}
+                  onChange={(e) => handleSubSlugInputChange(e.target.value)}
+                  disabled={isPublishing}
+                  className="font-mono flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-destructive hover:text-destructive h-9 px-3"
+                  onClick={() => {
+                    setShowSubSlugInput(false);
+                    onSubSlugChange?.("");
+                  }}
+                  disabled={isPublishing}
+                >
+                  삭제
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                검색 최적화를 위한 보조 URL입니다. 영문 소문자, 숫자, 하이픈만 사용 가능합니다.
+              </p>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => setShowSubSlugInput(true)}
+              disabled={isPublishing}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Sub Slug 추가
+            </Button>
+          )}
+        </div>
+      )}
 
       {error && <p className="text-sm text-destructive text-center">{error}</p>}
     </>
