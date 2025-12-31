@@ -9,6 +9,7 @@ import { useUser } from "@stackframe/stack";
 import { useRouter } from "next/navigation";
 import { useShortPosts, type ShortPostsData } from "@/hooks/useShortPosts";
 import { useDeletePost } from "@/hooks/useDeletePost";
+import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 
 interface ShortPostsPageClientProps {
   initialData: ShortPostsData;
@@ -18,6 +19,7 @@ interface ShortPostsPageClientProps {
 export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPageClientProps) {
   const user = useUser();
   const router = useRouter();
+  const { handleLinkClick } = useScrollRestoration("short-posts", currentPage);
 
   const { data, isPending } = useShortPosts({
     page: currentPage,
@@ -65,6 +67,7 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
             <Link
               href={`/short/${post.slug}`}
               className="short-post-link block py-4 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
+              onClick={handleLinkClick}
             >
               <div className="short-post-row flex items-center gap-4">
                 <time
