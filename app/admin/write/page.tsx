@@ -47,6 +47,8 @@ export default function WritePage() {
   const [modalThumbnailFile, setModalThumbnailFile] = useState<File | null>(null);
   const [modalSeriesId, setModalSeriesId] = useState<string | null>(null);
   const [modalExcerpt, setModalExcerpt] = useState<string>("");
+  const [modalSlug, setModalSlug] = useState<string>("");
+  const [modalSubSlug, setModalSubSlug] = useState<string>("");
   const [isExcerptInitialized, setIsExcerptInitialized] = useState(false);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
 
@@ -171,6 +173,8 @@ export default function WritePage() {
         setModalThumbnailFile(null);
         setModalSeriesId(postData.series?.id || null);
         setModalExcerpt(postData.excerpt || "");
+        setModalSlug(postData.slug || "");
+        setModalSubSlug(postData.subSlug || "");
         setIsExcerptInitialized(true);
         setIsFormInitialized(true);
       });
@@ -339,6 +343,10 @@ export default function WritePage() {
         onSeriesIdChange={setModalSeriesId}
         excerpt={modalExcerpt}
         onExcerptChange={setModalExcerpt}
+        slug={modalSlug}
+        onSlugChange={setModalSlug}
+        subSlug={modalSubSlug}
+        onSubSlugChange={setModalSubSlug}
       />
 
       <LinkModal
