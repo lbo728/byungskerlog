@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useSyncExternalStore, useState, useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface TocItem {
@@ -9,10 +9,39 @@ interface TocItem {
   level: number;
 }
 
+const CONTENT_MAX_WIDTH = 768;
+const TOC_WIDTH = 280;
+const GAP = 48;
+
+function getSnapshot() {
+  return window.innerWidth;
+}
+
+function getServerSnapshot() {
+  return 0;
+}
+
+function subscribe(callback: () => void) {
+  window.addEventListener("resize", callback);
+  return () => window.removeEventListener("resize", callback);
+}
+
 export function TableOfContents({ content }: { content: string }) {
   const [activeId, setActiveId] = useState<string>("");
   const tocContainerRef = useRef<HTMLDivElement>(null);
   const activeItemRef = useRef<HTMLAnchorElement>(null);
+
+  const viewportWidth = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const { tocLeft, isVisible } = useMemo(() => {
+    if (viewportWidth === 0) {
+      return { tocLeft: null, isVisible: false };
+    }
+    const contentRight = (viewportWidth + CONTENT_MAX_WIDTH) / 2;
+    const newTocLeft = contentRight + GAP;
+    const visible = newTocLeft + TOC_WIDTH <= viewportWidth - 24;
+    return { tocLeft: visible ? newTocLeft : null, isVisible: visible };
+  }, [viewportWidth]);
 
   const toc = useMemo(() => {
     const headingRegex = /^(#{1,3})\s+(.+)$/gm;
@@ -76,10 +105,13 @@ export function TableOfContents({ content }: { content: string }) {
     }
   }, [activeId]);
 
-  if (toc.length === 0) return null;
+  if (toc.length === 0 || !isVisible || tocLeft === null) return null;
 
   return (
-    <nav className="sticky top-24 hidden xl:block">
+    <nav
+      className="toc-nav fixed top-24 hidden xl:block"
+      style={{ left: tocLeft, width: TOC_WIDTH }}
+    >
       <div
         ref={tocContainerRef}
         className="toc-container p-6 max-h-[calc(100vh-8rem)] overflow-y-auto bg-transparent"

@@ -64,9 +64,9 @@ export function PostDetail({
         }}
       />
       <ViewTracker slug={slug} />
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className={post.type === "SHORT" ? "flex justify-center" : "grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-12"}>
-          <div className="max-w-3xl w-full">
+      <div className="post-detail-layout relative py-12">
+        <div className="post-content-center flex justify-center px-4 sm:px-6 lg:px-8">
+          <div className="post-main-content max-w-3xl w-full">
             <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_TOP || ""} className="mb-8" />
 
             <Link
@@ -259,13 +259,9 @@ export function PostDetail({
 
             <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_BOTTOM || ""} className="mt-12" />
           </div>
-
-          {post.type !== "SHORT" && (
-            <aside className="hidden xl:block">
-              <TableOfContents content={post.content} />
-            </aside>
-          )}
         </div>
+
+        {post.type !== "SHORT" && <TableOfContents content={post.content} />}
       </div>
     </div>
   );
