@@ -4,7 +4,7 @@ import { http, HttpResponse } from "msw";
 import { usePosts, useHomePosts, usePopularPosts } from "@/hooks/usePosts";
 import { server } from "../mocks/server";
 import { mockPosts, mockPagination } from "../mocks/handlers";
-import { render, createTestQueryClient } from "../test-utils";
+import { createTestQueryClient } from "../test-utils";
 import { QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 

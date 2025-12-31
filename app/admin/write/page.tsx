@@ -162,32 +162,38 @@ export default function WritePage() {
 
   useEffect(() => {
     if (isEditMode && postData && !isFormInitialized) {
-      setTitle(postData.title);
-      setTags(postData.tags || []);
-      setContent(postData.content);
-      setModalPostType(postData.type || "LONG");
-      setModalThumbnailUrl(postData.thumbnail || null);
-      setModalThumbnailFile(null);
-      setModalSeriesId(postData.series?.id || null);
-      setModalExcerpt(postData.excerpt || "");
-      setIsExcerptInitialized(true);
-      setIsFormInitialized(true);
+      queueMicrotask(() => {
+        setTitle(postData.title);
+        setTags(postData.tags || []);
+        setContent(postData.content);
+        setModalPostType(postData.type || "LONG");
+        setModalThumbnailUrl(postData.thumbnail || null);
+        setModalThumbnailFile(null);
+        setModalSeriesId(postData.series?.id || null);
+        setModalExcerpt(postData.excerpt || "");
+        setIsExcerptInitialized(true);
+        setIsFormInitialized(true);
+      });
     }
   }, [isEditMode, postData, isFormInitialized, setTags]);
 
   useEffect(() => {
     if (!isEditMode && draftData && !isFormInitialized) {
-      setTitle(draftData.title || "");
-      setTags(draftData.tags || []);
-      setContent(draftData.content || "");
-      setDraftId(draftData.id);
-      setIsFormInitialized(true);
+      queueMicrotask(() => {
+        setTitle(draftData.title || "");
+        setTags(draftData.tags || []);
+        setContent(draftData.content || "");
+        setDraftId(draftData.id);
+        setIsFormInitialized(true);
+      });
     }
   }, [isEditMode, draftData, isFormInitialized, setTags, setDraftId]);
 
   useEffect(() => {
     if (!postId && !draftIdParam) {
-      setIsFormInitialized(true);
+      queueMicrotask(() => {
+        setIsFormInitialized(true);
+      });
     }
   }, [postId, draftIdParam]);
 
@@ -326,7 +332,6 @@ export default function WritePage() {
         postType={modalPostType}
         onPostTypeChange={setModalPostType}
         thumbnailUrl={modalThumbnailUrl}
-        onThumbnailUrlChange={setModalThumbnailUrl}
         thumbnailFile={modalThumbnailFile}
         onThumbnailFileChange={handleThumbnailFileChange}
         onThumbnailRemove={handleThumbnailRemove}

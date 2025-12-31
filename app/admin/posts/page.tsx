@@ -70,7 +70,7 @@ export default function AdminPostsPage() {
   const updateSeriesMutation = useUpdateSeries();
   const deleteSeriesMutation = useDeleteSeries();
 
-  const posts = postsData?.posts ?? [];
+  const posts = useMemo(() => postsData?.posts ?? [], [postsData?.posts]);
 
   const availableTags = useMemo(() => {
     const tags = new Set<string>();

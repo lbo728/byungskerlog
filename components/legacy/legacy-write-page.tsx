@@ -701,7 +701,6 @@ export default function LegacyWritePage() {
         postType={modalPostType}
         onPostTypeChange={setModalPostType}
         thumbnailUrl={modalThumbnailUrl}
-        onThumbnailUrlChange={setModalThumbnailUrl}
         thumbnailFile={modalThumbnailFile}
         onThumbnailFileChange={handleThumbnailFileChange}
         onThumbnailRemove={handleThumbnailRemove}
