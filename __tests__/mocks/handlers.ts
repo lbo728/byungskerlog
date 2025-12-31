@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import type { Post, ShortPost, Series } from "@/lib/types/post";
+import type { Post, ShortPost, Series, Draft } from "@/lib/types/post";
 import type { Pagination } from "@/lib/types/api";
 
 export const mockPosts: Post[] = [
@@ -92,6 +92,27 @@ export const mockSeries: Series[] = [
   },
 ];
 
+export const mockDrafts: Draft[] = [
+  {
+    id: "draft-1",
+    title: "임시저장 글 1",
+    content: "작성 중인 내용입니다.",
+    tags: ["draft", "wip"],
+    authorId: "user-1",
+    createdAt: new Date("2024-01-01"),
+    updatedAt: new Date("2024-01-02"),
+  },
+  {
+    id: "draft-2",
+    title: "임시저장 글 2",
+    content: "두 번째 작성 중인 내용입니다.",
+    tags: ["draft"],
+    authorId: "user-1",
+    createdAt: new Date("2024-01-03"),
+    updatedAt: new Date("2024-01-04"),
+  },
+];
+
 export const handlers = [
   http.get("/api/posts", ({ request }) => {
     const url = new URL(request.url);
@@ -179,6 +200,26 @@ export const handlers = [
   http.delete<{ id: string }>("/api/series/:id", ({ params }) => {
     const seriesIndex = mockSeries.findIndex((s) => s.id === params.id);
     if (seriesIndex === -1) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.get("/api/drafts", () => {
+    return HttpResponse.json(mockDrafts);
+  }),
+
+  http.get<{ id: string }>("/api/drafts/:id", ({ params }) => {
+    const draft = mockDrafts.find((d) => d.id === params.id);
+    if (!draft) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    return HttpResponse.json(draft);
+  }),
+
+  http.delete<{ id: string }>("/api/drafts/:id", ({ params }) => {
+    const draftIndex = mockDrafts.findIndex((d) => d.id === params.id);
+    if (draftIndex === -1) {
       return new HttpResponse(null, { status: 404 });
     }
     return HttpResponse.json({ success: true });
