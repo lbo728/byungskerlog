@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import type { Post, ShortPost } from "@/lib/types/post";
+import type { Post, ShortPost, Series } from "@/lib/types/post";
 import type { Pagination } from "@/lib/types/api";
 
 export const mockPosts: Post[] = [
@@ -75,6 +75,23 @@ export const mockPagination: Pagination = {
   totalPages: 1,
 };
 
+export const mockSeries: Series[] = [
+  {
+    id: "series-1",
+    name: "React 시리즈",
+    slug: "react-series",
+    description: "React 관련 글 모음",
+    _count: { posts: 3 },
+  },
+  {
+    id: "series-2",
+    name: "TypeScript 시리즈",
+    slug: "typescript-series",
+    description: null,
+    _count: { posts: 2 },
+  },
+];
+
 export const handlers = [
   http.get("/api/posts", ({ request }) => {
     const url = new URL(request.url);
@@ -129,5 +146,41 @@ export const handlers = [
     return HttpResponse.json(
       Object.entries(tagCounts).map(([name, count]) => ({ name, count }))
     );
+  }),
+
+  http.get("/api/series", () => {
+    return HttpResponse.json(mockSeries);
+  }),
+
+  http.post("/api/series", async ({ request }) => {
+    const body = (await request.json()) as { name: string; description?: string };
+    const newSeries: Series = {
+      id: `series-${Date.now()}`,
+      name: body.name,
+      slug: body.name.toLowerCase().replace(/\s+/g, "-"),
+      description: body.description || null,
+      _count: { posts: 0 },
+    };
+    return HttpResponse.json(newSeries, { status: 201 });
+  }),
+
+  http.patch<{ id: string }>("/api/series/:id", async ({ params, request }) => {
+    const body = (await request.json()) as { name?: string; description?: string };
+    const series = mockSeries.find((s) => s.id === params.id);
+    if (!series) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    return HttpResponse.json({
+      ...series,
+      ...body,
+    });
+  }),
+
+  http.delete<{ id: string }>("/api/series/:id", ({ params }) => {
+    const seriesIndex = mockSeries.findIndex((s) => s.id === params.id);
+    if (seriesIndex === -1) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    return HttpResponse.json({ success: true });
   }),
 ];
