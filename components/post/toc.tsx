@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
 interface TocItem {
@@ -9,10 +9,35 @@ interface TocItem {
   level: number;
 }
 
+const CONTENT_MAX_WIDTH = 768;
+const TOC_WIDTH = 280;
+const GAP = 48;
+
 export function TableOfContents({ content }: { content: string }) {
   const [activeId, setActiveId] = useState<string>("");
+  const [tocLeft, setTocLeft] = useState<number | null>(null);
+  const [isVisible, setIsVisible] = useState(true);
   const tocContainerRef = useRef<HTMLDivElement>(null);
   const activeItemRef = useRef<HTMLAnchorElement>(null);
+
+  const calculatePosition = useCallback(() => {
+    const viewportWidth = window.innerWidth;
+    const contentRight = (viewportWidth + CONTENT_MAX_WIDTH) / 2;
+    const newTocLeft = contentRight + GAP;
+
+    if (newTocLeft + TOC_WIDTH > viewportWidth - 24) {
+      setIsVisible(false);
+    } else {
+      setIsVisible(true);
+      setTocLeft(newTocLeft);
+    }
+  }, []);
+
+  useEffect(() => {
+    calculatePosition();
+    window.addEventListener("resize", calculatePosition);
+    return () => window.removeEventListener("resize", calculatePosition);
+  }, [calculatePosition]);
 
   const toc = useMemo(() => {
     const headingRegex = /^(#{1,3})\s+(.+)$/gm;
@@ -76,10 +101,13 @@ export function TableOfContents({ content }: { content: string }) {
     }
   }, [activeId]);
 
-  if (toc.length === 0) return null;
+  if (toc.length === 0 || !isVisible || tocLeft === null) return null;
 
   return (
-    <nav className="sticky top-24 hidden xl:block">
+    <nav
+      className="toc-nav fixed top-24 hidden xl:block"
+      style={{ left: tocLeft, width: TOC_WIDTH }}
+    >
       <div
         ref={tocContainerRef}
         className="toc-container p-6 max-h-[calc(100vh-8rem)] overflow-y-auto bg-transparent"
