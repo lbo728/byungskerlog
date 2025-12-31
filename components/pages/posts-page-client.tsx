@@ -11,6 +11,7 @@ import { useUser } from "@stackframe/stack";
 import { useRouter } from "next/navigation";
 import { usePosts, type PostsData } from "@/hooks/usePosts";
 import { useDeletePost } from "@/hooks/useDeletePost";
+import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 
 interface PostsPageClientProps {
   initialData: PostsData;
@@ -20,6 +21,7 @@ interface PostsPageClientProps {
 export function PostsPageClient({ initialData, currentPage }: PostsPageClientProps) {
   const user = useUser();
   const router = useRouter();
+  const { handleLinkClick } = useScrollRestoration("posts", currentPage);
 
   const { data, isPending } = usePosts({
     page: currentPage,
@@ -59,7 +61,7 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
 
           return (
             <article key={post.id} className="post-item relative">
-              <Link href={`/posts/${post.slug}`} className="group block py-6">
+              <Link href={`/posts/${post.slug}`} className="group block py-6" onClick={handleLinkClick}>
                 <div className="post-item-inner flex gap-4 sm:gap-6">
                   {/* Content */}
                   <div className="post-item-content flex-1 min-w-0 flex flex-col">
