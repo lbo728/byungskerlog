@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pencil, Trash2, Plus, X, BookOpen, Check, BarChart3, TrendingUp, Eye, Link2 } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Plus, X, BookOpen, Check, BarChart3, TrendingUp, Eye } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import {
   AlertDialog,
@@ -340,13 +340,14 @@ export default function AdminPostsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-6 w-6 p-0"
+                            className="h-6 px-2 gap-1"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleSlugEditClick(post);
                             }}
                           >
-                            <Link2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                            <Pencil className="h-3 w-3" />
+                            <span className="text-xs">변경</span>
                           </Button>
                         </div>
                         {post.tags.length > 0 && (

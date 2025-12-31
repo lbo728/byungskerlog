@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Link2, Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { useUpdatePost } from "@/hooks/usePostMutations";
 
 interface SlugEditModalProps {
@@ -153,7 +153,7 @@ export function SlugEditModal({
       <DialogContent className="slug-edit-modal sm:max-w-[500px]">
         <DialogHeader>
           <div className="slug-edit-modal-icon flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 mb-2">
-            <Link2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <Pencil className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           </div>
           <DialogTitle>Slug 수정</DialogTitle>
           <DialogDescription>
