@@ -48,6 +48,7 @@ export function Header() {
               width={180}
               height={84}
               className="logo-image rounded select-none"
+              style={{ width: "auto", height: "auto" }}
               priority
               draggable={false}
               onContextMenu={(e) => e.preventDefault()}
