@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { useEffect, useSyncExternalStore, useState, useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface TocItem {
@@ -13,31 +13,35 @@ const CONTENT_MAX_WIDTH = 768;
 const TOC_WIDTH = 280;
 const GAP = 48;
 
+function getSnapshot() {
+  return window.innerWidth;
+}
+
+function getServerSnapshot() {
+  return 0;
+}
+
+function subscribe(callback: () => void) {
+  window.addEventListener("resize", callback);
+  return () => window.removeEventListener("resize", callback);
+}
+
 export function TableOfContents({ content }: { content: string }) {
   const [activeId, setActiveId] = useState<string>("");
-  const [tocLeft, setTocLeft] = useState<number | null>(null);
-  const [isVisible, setIsVisible] = useState(true);
   const tocContainerRef = useRef<HTMLDivElement>(null);
   const activeItemRef = useRef<HTMLAnchorElement>(null);
 
-  const calculatePosition = useCallback(() => {
-    const viewportWidth = window.innerWidth;
+  const viewportWidth = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const { tocLeft, isVisible } = useMemo(() => {
+    if (viewportWidth === 0) {
+      return { tocLeft: null, isVisible: false };
+    }
     const contentRight = (viewportWidth + CONTENT_MAX_WIDTH) / 2;
     const newTocLeft = contentRight + GAP;
-
-    if (newTocLeft + TOC_WIDTH > viewportWidth - 24) {
-      setIsVisible(false);
-    } else {
-      setIsVisible(true);
-      setTocLeft(newTocLeft);
-    }
-  }, []);
-
-  useEffect(() => {
-    calculatePosition();
-    window.addEventListener("resize", calculatePosition);
-    return () => window.removeEventListener("resize", calculatePosition);
-  }, [calculatePosition]);
+    const visible = newTocLeft + TOC_WIDTH <= viewportWidth - 24;
+    return { tocLeft: visible ? newTocLeft : null, isVisible: visible };
+  }, [viewportWidth]);
 
   const toc = useMemo(() => {
     const headingRegex = /^(#{1,3})\s+(.+)$/gm;
