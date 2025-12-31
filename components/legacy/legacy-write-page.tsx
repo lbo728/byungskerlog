@@ -36,6 +36,7 @@ import { ArrowLeft, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { optimizeImage } from "@/lib/image-optimizer";
+import { generateExcerpt } from "@/lib/excerpt";
 
 export default function LegacyWritePage() {
   useUser({ or: "redirect" });
@@ -62,10 +63,12 @@ export default function LegacyWritePage() {
   const [draftId, setDraftId] = useState<string | null>(draftIdParam);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
-  const [existingThumbnail, setExistingThumbnail] = useState<string | null>(null);
-  const [existingSeriesId, setExistingSeriesId] = useState<string | null>(null);
-  const [existingExcerpt, setExistingExcerpt] = useState<string | null>(null);
-  const [existingType, setExistingType] = useState<"LONG" | "SHORT">("LONG");
+  const [modalPostType, setModalPostType] = useState<"LONG" | "SHORT">("LONG");
+  const [modalThumbnailUrl, setModalThumbnailUrl] = useState<string | null>(null);
+  const [modalThumbnailFile, setModalThumbnailFile] = useState<File | null>(null);
+  const [modalSeriesId, setModalSeriesId] = useState<string | null>(null);
+  const [modalExcerpt, setModalExcerpt] = useState<string>("");
+  const [isExcerptInitialized, setIsExcerptInitialized] = useState(false);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
@@ -397,10 +400,12 @@ export default function LegacyWritePage() {
           setTitle(post.title);
           setTags(post.tags || []);
           setContent(post.content);
-          setExistingType(post.type || "LONG");
-          setExistingThumbnail(post.thumbnail || null);
-          setExistingSeriesId(post.seriesId || null);
-          setExistingExcerpt(post.excerpt || null);
+          setModalPostType(post.type || "LONG");
+          setModalThumbnailUrl(post.thumbnail || null);
+          setModalThumbnailFile(null);
+          setModalSeriesId(post.seriesId || null);
+          setModalExcerpt(post.excerpt || "");
+          setIsExcerptInitialized(true);
         } catch (error) {
           console.error("Error fetching post:", error);
           toast.error("글을 불러오는데 실패했습니다.");
@@ -443,8 +448,35 @@ export default function LegacyWritePage() {
       toast.warning("내용을 입력해주세요.");
       return;
     }
+    if (!isExcerptInitialized) {
+      setModalExcerpt(generateExcerpt(content, 150));
+      setIsExcerptInitialized(true);
+    }
     setIsPublishModalOpen(true);
   };
+
+  const handleThumbnailFileChange = useCallback((file: File | null) => {
+    if (modalThumbnailUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(modalThumbnailUrl);
+    }
+
+    if (file) {
+      const blobUrl = URL.createObjectURL(file);
+      setModalThumbnailUrl(blobUrl);
+      setModalThumbnailFile(file);
+    } else {
+      setModalThumbnailUrl(null);
+      setModalThumbnailFile(null);
+    }
+  }, [modalThumbnailUrl]);
+
+  const handleThumbnailRemove = useCallback(() => {
+    if (modalThumbnailUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(modalThumbnailUrl);
+    }
+    setModalThumbnailUrl(null);
+    setModalThumbnailFile(null);
+  }, [modalThumbnailUrl]);
 
   const handlePublishSuccess = (slug: string) => {
     toast.success(isEditMode ? "글이 수정되었습니다." : "글이 발행되었습니다.");
@@ -666,10 +698,17 @@ export default function LegacyWritePage() {
         postId={postId || undefined}
         draftId={draftId}
         onPublishSuccess={handlePublishSuccess}
-        initialThumbnail={existingThumbnail}
-        initialSeriesId={existingSeriesId}
-        initialExcerpt={existingExcerpt}
-        initialType={existingType}
+        postType={modalPostType}
+        onPostTypeChange={setModalPostType}
+        thumbnailUrl={modalThumbnailUrl}
+        onThumbnailUrlChange={setModalThumbnailUrl}
+        thumbnailFile={modalThumbnailFile}
+        onThumbnailFileChange={handleThumbnailFileChange}
+        onThumbnailRemove={handleThumbnailRemove}
+        seriesId={modalSeriesId}
+        onSeriesIdChange={setModalSeriesId}
+        excerpt={modalExcerpt}
+        onExcerptChange={setModalExcerpt}
       />
     </div>
   );

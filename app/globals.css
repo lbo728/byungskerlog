@@ -485,3 +485,21 @@
 .toc-container::-webkit-scrollbar-thumb:hover {
   background: oklch(0.5 0 0 / 50%);
 }
+
+/* Safe Area Insets for Mobile Modals */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Publish Modal Mobile Footer */
+.publish-modal-mobile-footer {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+.publish-modal-mobile-footer > button {
+  flex: 1;
+}
