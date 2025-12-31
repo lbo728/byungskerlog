@@ -99,10 +99,6 @@ export function PublishModal({
   const [showSubSlugInput, setShowSubSlugInput] = useState(!!subSlug);
   const isMobile = useIsMobile();
 
-  useEffect(() => {
-    setShowSubSlugInput(!!subSlug);
-  }, [subSlug]);
-
   const handleSlugInputChange = (value: string) => {
     const normalized = value.toLowerCase().replace(/\s+/g, "-");
     onSlugChange?.(normalized);
