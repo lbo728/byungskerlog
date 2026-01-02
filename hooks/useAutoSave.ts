@@ -39,11 +39,21 @@ export function useAutoSave({
 
   const localSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const serverSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastContentRef = useRef({ title, content, tags });
+  const lastLocalContentRef = useRef({ title, content, tags });
+  const lastServerContentRef = useRef({ title, content, tags });
   const isServerSavingRef = useRef(false);
 
-  const hasContentChanged = useCallback(() => {
-    const last = lastContentRef.current;
+  const hasContentChangedFromLocal = useCallback(() => {
+    const last = lastLocalContentRef.current;
+    return (
+      last.title !== title ||
+      last.content !== content ||
+      JSON.stringify(last.tags) !== JSON.stringify(tags)
+    );
+  }, [title, content, tags]);
+
+  const hasContentChangedFromServer = useCallback(() => {
+    const last = lastServerContentRef.current;
     return (
       last.title !== title ||
       last.content !== content ||
@@ -60,21 +70,25 @@ export function useAutoSave({
       tags,
       draftId: draftId || undefined,
     });
-    lastContentRef.current = { title, content, tags };
+    lastLocalContentRef.current = { title, content, tags };
     setLastSavedAt(new Date());
     setSaveStatus("saved");
   }, [title, content, tags, draftId, postId]);
 
   const saveToServer = useCallback(async () => {
     if (isServerSavingRef.current) return;
-    if (!hasContentChanged() && draftId) return;
+    if (!hasContentChangedFromServer() && draftId) return;
+
+    const hasContent = title.trim() || content.trim();
+    if (!hasContent) return;
 
     isServerSavingRef.current = true;
     setSaveStatus("saving");
 
     try {
       await onServerSave();
-      lastContentRef.current = { title, content, tags };
+      lastServerContentRef.current = { title, content, tags };
+      lastLocalContentRef.current = { title, content, tags };
       setLastSavedAt(new Date());
       setSaveStatus("saved");
 
@@ -86,7 +100,7 @@ export function useAutoSave({
     } finally {
       isServerSavingRef.current = false;
     }
-  }, [onServerSave, hasContentChanged, draftId, title, content, tags, postId]);
+  }, [onServerSave, hasContentChangedFromServer, draftId, title, content, tags, postId]);
 
   const forceSave = useCallback(async () => {
     if (localSaveTimerRef.current) {
@@ -120,7 +134,7 @@ export function useAutoSave({
     const hasContent = title.trim() || content.trim();
     if (!hasContent) return;
 
-    if (hasContentChanged()) {
+    if (hasContentChangedFromLocal()) {
       setSaveStatus("unsaved");
     }
 
@@ -142,7 +156,7 @@ export function useAutoSave({
         clearTimeout(serverSaveTimerRef.current);
       }
     };
-  }, [title, content, tags, enabled, postId, saveToLocal, saveToServer, hasContentChanged]);
+  }, [title, content, tags, enabled, postId, saveToLocal, saveToServer, hasContentChangedFromLocal]);
 
   useEffect(() => {
     return () => {
