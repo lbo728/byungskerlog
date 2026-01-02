@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -63,6 +63,34 @@ function CodeBlock({ code, language }: { code: string; language: string }) {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
+  // 전체 content에서 헤딩 ID를 미리 계산 (중복 처리 포함)
+  const headingIds = useMemo(() => {
+    const headingRegex = /^(#{1,3})\s+(.+)$/gm;
+    const ids: string[] = [];
+    const idCounts: Record<string, number> = {};
+    let match;
+
+    while ((match = headingRegex.exec(content)) !== null) {
+      const text = match[2].trim();
+      const baseId = text
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w가-힣-]/g, "");
+
+      const count = idCounts[baseId] || 0;
+      const id = count === 0 ? baseId : `${baseId}-${count}`;
+      idCounts[baseId] = count + 1;
+      ids.push(id);
+    }
+
+    return ids;
+  }, [content]);
+
+  // 렌더링 시 헤딩 인덱스 추적용 ref
+  const headingIndexRef = useRef(0);
+  // 렌더링 시작할 때 인덱스 초기화
+  headingIndexRef.current = 0;
+
   const lines = content.split("\n");
   const segments: { type: "markdown" | "url"; content: string }[] = [];
 
@@ -88,11 +116,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
   const components: Components = {
     h1: ({ children, ...props }) => {
-      const text = String(children);
-      const id = text
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w가-힣-]/g, "");
+      const id = headingIds[headingIndexRef.current] || "";
+      headingIndexRef.current++;
       return (
         <h1 id={id} className="scroll-mt-24" {...props}>
           {children}
@@ -100,11 +125,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       );
     },
     h2: ({ children, ...props }) => {
-      const text = String(children);
-      const id = text
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w가-힣-]/g, "");
+      const id = headingIds[headingIndexRef.current] || "";
+      headingIndexRef.current++;
       return (
         <h2 id={id} className="scroll-mt-24" {...props}>
           {children}
@@ -112,11 +134,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       );
     },
     h3: ({ children, ...props }) => {
-      const text = String(children);
-      const id = text
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w가-힣-]/g, "");
+      const id = headingIds[headingIndexRef.current] || "";
+      headingIndexRef.current++;
       return (
         <h3 id={id} className="scroll-mt-24" {...props}>
           {children}
