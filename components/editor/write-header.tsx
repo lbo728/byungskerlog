@@ -3,11 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/common/theme-toggle";
 import { VisitorCount } from "@/components/analytics/visitor-count";
 import { cn } from "@/lib/utils";
+import type { SaveStatus } from "@/hooks/useAutoSave";
 
 const navItems = [
   { label: "Post", href: "/posts" },
@@ -22,8 +23,39 @@ interface WriteHeaderProps {
   isLoading: boolean;
   isSavingDraft: boolean;
   isFetchingPost: boolean;
+  saveStatus?: SaveStatus;
   onTempSave: () => void;
   onPublish: () => void;
+}
+
+function SaveStatusIndicator({ status }: { status: SaveStatus }) {
+  const statusConfig = {
+    saved: {
+      icon: Check,
+      text: "저장됨",
+      className: "text-green-600 dark:text-green-400",
+    },
+    saving: {
+      icon: Loader2,
+      text: "저장 중...",
+      className: "text-muted-foreground animate-spin",
+    },
+    unsaved: {
+      icon: Circle,
+      text: "저장되지 않음",
+      className: "text-amber-500 dark:text-amber-400",
+    },
+  };
+
+  const config = statusConfig[status];
+  const Icon = config.icon;
+
+  return (
+    <div className="save-status-indicator flex items-center gap-1.5 text-xs">
+      <Icon className={cn("h-3.5 w-3.5", config.className)} />
+      <span className="text-muted-foreground hidden sm:inline">{config.text}</span>
+    </div>
+  );
 }
 
 export function WriteHeader({
@@ -31,6 +63,7 @@ export function WriteHeader({
   isLoading,
   isSavingDraft,
   isFetchingPost,
+  saveStatus,
   onTempSave,
   onPublish,
 }: WriteHeaderProps) {
@@ -102,6 +135,9 @@ export function WriteHeader({
               </h1>
             </div>
             <div className="write-header-right flex items-center gap-2">
+              {!isEditMode && saveStatus && (
+                <SaveStatusIndicator status={saveStatus} />
+              )}
               {!isEditMode && (
                 <Button
                   variant="ghost"
