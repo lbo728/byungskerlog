@@ -504,6 +504,30 @@
   flex: 1;
 }
 
+/* 데스크탑 헤딩 사이즈 (post detail + admin/write) */
+@media (min-width: 769px) {
+  .prose h1,
+  .tiptap-editor .ProseMirror h1,
+  .tiptap-editor .prose h1,
+  .tiptap-editor h1 {
+    font-size: 40px !important;
+  }
+
+  .prose h2,
+  .tiptap-editor .ProseMirror h2,
+  .tiptap-editor .prose h2,
+  .tiptap-editor h2 {
+    font-size: 32px !important;
+  }
+
+  .prose h3,
+  .tiptap-editor .ProseMirror h3,
+  .tiptap-editor .prose h3,
+  .tiptap-editor h3 {
+    font-size: 24px !important;
+  }
+}
+
 /* TipTap 에디터 모바일 헤딩 사이즈 */
 @media (max-width: 768px) {
   .tiptap-editor .ProseMirror h1,
