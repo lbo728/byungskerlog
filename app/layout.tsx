@@ -12,6 +12,7 @@ import { Footer } from "@/components/layout/footer";
 import { Providers } from "./providers";
 import { StructuredData } from "@/components/seo/structured-data";
 import { Toaster } from "@/components/ui/sonner";
+import { ImageProtection } from "@/components/common/image-protection";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -144,6 +145,7 @@ export default function RootLayout({
                     <Footer />
                   </div>
                   <Toaster />
+                  <ImageProtection />
                 </Providers>
               </ThemeProvider>
             </StackTheme>
@@ -157,6 +159,7 @@ export default function RootLayout({
                 <Footer />
               </div>
               <Toaster />
+                  <ImageProtection />
             </Providers>
           </ThemeProvider>
         )}
