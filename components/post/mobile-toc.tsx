@@ -1,17 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetClose,
-  SheetFooter,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { List, ChevronsRight } from "lucide-react";
+import { List } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TocItem {
@@ -27,7 +17,8 @@ interface MobileTocProps {
 export function MobileToc({ content }: MobileTocProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeId, setActiveId] = useState<string>("");
-  const tocContainerRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const tocPanelRef = useRef<HTMLDivElement>(null);
   const activeItemRef = useRef<HTMLButtonElement>(null);
 
   const toc = useMemo(() => {
@@ -74,87 +65,110 @@ export function MobileToc({ content }: MobileTocProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [toc]);
 
-  // 활성 항목이 변경되면 TOC 내에서 자동 스크롤
   useEffect(() => {
-    if (activeItemRef.current && tocContainerRef.current) {
-      const container = tocContainerRef.current;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && activeItemRef.current && tocPanelRef.current) {
+      const panel = tocPanelRef.current;
       const activeItem = activeItemRef.current;
 
-      const containerRect = container.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
       const itemRect = activeItem.getBoundingClientRect();
 
-      if (itemRect.top < containerRect.top || itemRect.bottom > containerRect.bottom) {
+      if (itemRect.top < panelRect.top || itemRect.bottom > panelRect.bottom) {
         activeItem.scrollIntoView({
           behavior: "smooth",
           block: "center",
         });
       }
     }
-  }, [activeId]);
+  }, [activeId, isOpen]);
 
   const handleTocClick = (id: string) => {
     document.getElementById(id)?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
+    setIsOpen(false);
   };
 
   if (toc.length === 0) return null;
 
   return (
-    <div className="mobile-toc-wrapper fixed bottom-4 right-4 z-40 xl:hidden">
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
-          <button
-            className="mobile-toc-trigger flex items-center justify-center w-14 h-14 rounded-full bg-white/80 dark:bg-black/60 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-2xl text-foreground transition-all duration-300 hover:scale-110 active:scale-95"
-            style={{
-              boxShadow: "0 4px 24px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
-            }}
-          >
-            <List className="h-5 w-5" />
-          </button>
-        </SheetTrigger>
-        <SheetContent side="right" className="mobile-toc-content w-[300px] sm:w-[350px]" hideCloseButton>
-          <SheetHeader>
-            <SheetTitle>목차</SheetTitle>
-          </SheetHeader>
-          <nav ref={tocContainerRef} className="mobile-toc-nav mt-6 flex-1 overflow-y-auto">
-            <ul className="space-y-2">
-              {toc.map((item) => {
-                const isActive = activeId === item.id;
-                return (
-                  <li
-                    key={item.id}
-                    className={cn("transition-all duration-200", item.level === 2 && "ml-0", item.level === 3 && "ml-4")}
-                  >
-                    <button
-                      ref={isActive ? activeItemRef : null}
-                      onClick={() => handleTocClick(item.id)}
-                      className={cn(
-                        "toc-item block w-full text-left text-sm py-2 px-3 rounded-md transition-all duration-200",
-                        "hover:bg-accent hover:text-accent-foreground",
-                        isActive
-                          ? "bg-primary/10 text-primary font-medium"
-                          : "text-muted-foreground border-l-2 border-transparent"
-                      )}
-                    >
-                      {item.text}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-          <SheetFooter className="mobile-toc-footer flex-row justify-end mb-4">
-            <SheetClose asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <ChevronsRight className="h-4 w-4" />
-                접기
-              </Button>
-            </SheetClose>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+    <div
+      ref={menuRef}
+      className="mobile-toc-wrapper fixed bottom-4 right-4 z-40 xl:hidden"
+    >
+      <div
+        ref={tocPanelRef}
+        className={cn(
+          "floating-toc-panel absolute bottom-16 right-0 w-64 max-h-72 overflow-y-auto rounded-2xl bg-white/90 dark:bg-black/80 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-2xl p-3 transition-all duration-300 ease-out origin-bottom-right",
+          isOpen
+            ? "opacity-100 scale-100 translate-y-0"
+            : "opacity-0 scale-95 translate-y-2 pointer-events-none"
+        )}
+        style={{
+          boxShadow:
+            "0 4px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+        }}
+      >
+        <h3 className="floating-toc-header text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
+          목차
+        </h3>
+        <ul className="space-y-1">
+          {toc.map((item) => {
+            const isActive = activeId === item.id;
+            return (
+              <li
+                key={item.id}
+                className={cn(item.level === 3 && "ml-3")}
+              >
+                <button
+                  ref={isActive ? activeItemRef : null}
+                  onClick={() => handleTocClick(item.id)}
+                  className={cn(
+                    "toc-item block w-full text-left text-sm py-1.5 px-2 rounded-lg transition-all duration-200",
+                    "hover:bg-accent hover:text-accent-foreground",
+                    isActive
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {item.text}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "mobile-toc-trigger flex items-center justify-center w-14 h-14 rounded-full bg-white/80 dark:bg-black/60 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-2xl text-foreground transition-all duration-300 hover:scale-110 active:scale-95",
+          isOpen && "bg-primary/20 text-primary"
+        )}
+        style={{
+          boxShadow:
+            "0 4px 24px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+        }}
+      >
+        <List className="h-5 w-5" />
+      </button>
     </div>
   );
 }

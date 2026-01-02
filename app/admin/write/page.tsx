@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PublishModal } from "@/components/modals/publish-modal";
 import { EmbedCard } from "@/components/editor/tiptap/embed-card-extension";
 import { LinkModal } from "@/components/editor/tiptap/link-modal";
-import { WriteTocDesktop, WriteTocMobile } from "@/components/editor/write-toc";
+import { WriteTocDesktop, WriteFloatingMenu } from "@/components/editor/write-toc";
 import { WriteHeader } from "@/components/editor/write-header";
 import { WriteTagInput } from "@/components/editor/write-tag-input";
 import { WriteEditorArea } from "@/components/editor/write-editor-area";
@@ -358,7 +358,11 @@ export default function WritePage() {
         selectedText={selectedText}
       />
 
-      <WriteTocMobile content={content} editorSelector=".tiptap-editor" />
+      <WriteFloatingMenu
+        content={content}
+        editorSelector=".tiptap-editor"
+        onImageUpload={() => imageInputRef.current?.click()}
+      />
     </div>
   );
 }

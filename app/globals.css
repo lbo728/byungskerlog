@@ -503,3 +503,24 @@
 .publish-modal-mobile-footer > button {
   flex: 1;
 }
+
+/* TipTap 에디터 모바일 헤딩 사이즈 */
+@media (max-width: 768px) {
+  .tiptap-editor .ProseMirror h1,
+  .tiptap-editor .prose h1,
+  .tiptap-editor h1 {
+    font-size: 36px !important;
+  }
+
+  .tiptap-editor .ProseMirror h2,
+  .tiptap-editor .prose h2,
+  .tiptap-editor h2 {
+    font-size: 28px !important;
+  }
+
+  .tiptap-editor .ProseMirror h3,
+  .tiptap-editor .prose h3,
+  .tiptap-editor h3 {
+    font-size: 20px !important;
+  }
+}
