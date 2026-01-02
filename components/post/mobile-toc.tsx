@@ -24,15 +24,21 @@ export function MobileToc({ content }: MobileTocProps) {
   const toc = useMemo(() => {
     const headingRegex = /^(#{1,3})\s+(.+)$/gm;
     const headings: TocItem[] = [];
+    const idCounts: Record<string, number> = {};
     let match;
 
     while ((match = headingRegex.exec(content)) !== null) {
       const level = match[1].length;
       const text = match[2].trim();
-      const id = text
+      const baseId = text
         .toLowerCase()
         .replace(/\s+/g, "-")
         .replace(/[^\w가-힣-]/g, "");
+
+      // 중복 ID 처리: 첫 번째는 그대로, 이후에는 -1, -2 등 suffix 추가
+      const count = idCounts[baseId] || 0;
+      const id = count === 0 ? baseId : `${baseId}-${count}`;
+      idCounts[baseId] = count + 1;
 
       headings.push({ id, text, level });
     }
