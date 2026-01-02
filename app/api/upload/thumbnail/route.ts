@@ -2,8 +2,6 @@ import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth";
 
-const MAX_SIZE = 500 * 1024;
-
 export async function POST(request: Request): Promise<NextResponse> {
   try {
     const user = await getAuthUser();
@@ -20,11 +18,6 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     if (!request.body) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
-
-    const contentLength = request.headers.get("content-length");
-    if (contentLength && parseInt(contentLength) > MAX_SIZE) {
-      return NextResponse.json({ error: "파일 크기는 500KB 이하여야 합니다." }, { status: 413 });
     }
 
     const thumbnailFilename = `thumbnail-${Date.now()}-${filename}`;
