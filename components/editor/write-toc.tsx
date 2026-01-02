@@ -12,7 +12,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { List, ChevronsRight } from "lucide-react";
+import { List, ChevronsRight, Plus, X, Image as ImageIcon } from "lucide-react";
 
 interface TocItem {
   id: string;
@@ -253,6 +253,149 @@ export function WriteTocMobile({ content, editorSelector = ".tiptap-editor" }: W
           </SheetFooter>
         </SheetContent>
       </Sheet>
+    </div>
+  );
+}
+
+interface WriteFloatingMenuProps extends WriteTocProps {
+  onImageUpload: () => void;
+}
+
+export function WriteFloatingMenu({
+  content,
+  editorSelector = ".tiptap-editor",
+  onImageUpload,
+}: WriteFloatingMenuProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [showToc, setShowToc] = useState(false);
+  const toc = useMemo(() => extractHeadings(content), [content]);
+  const activeText = useActiveHeading(toc, editorSelector);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const handleTocClick = (text: string) => {
+    scrollToHeading(text, editorSelector);
+    setShowToc(false);
+    setIsOpen(false);
+  };
+
+  const handleImageClick = () => {
+    onImageUpload();
+    setIsOpen(false);
+  };
+
+  const handleToggleToc = () => {
+    setShowToc(!showToc);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setShowToc(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  return (
+    <div
+      ref={menuRef}
+      className="write-floating-menu fixed bottom-4 right-4 z-40 xl:hidden flex items-end gap-2"
+    >
+      <div
+        className={cn(
+          "floating-menu-panel flex items-center gap-2 transition-all duration-300 ease-out origin-right",
+          isOpen
+            ? "opacity-100 scale-100 translate-x-0"
+            : "opacity-0 scale-95 translate-x-4 pointer-events-none"
+        )}
+      >
+        {showToc && toc.length > 0 && (
+          <div
+            className="floating-toc-panel absolute bottom-16 right-0 w-64 max-h-72 overflow-y-auto rounded-2xl bg-white/90 dark:bg-black/80 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-2xl p-3"
+            style={{
+              boxShadow:
+                "0 4px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+            }}
+          >
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
+              목차
+            </h3>
+            <ul className="space-y-1">
+              {toc.map((item, index) => (
+                <li
+                  key={`${item.id}-${index}`}
+                  className={cn(item.level === 3 && "ml-3")}
+                >
+                  <button
+                    onClick={() => handleTocClick(item.text)}
+                    className={cn(
+                      "toc-item block w-full text-left text-sm py-1.5 px-2 rounded-lg transition-all duration-200",
+                      "hover:bg-accent hover:text-accent-foreground",
+                      activeText === item.text
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    {item.text}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <button
+          onClick={handleImageClick}
+          className="floating-menu-item flex items-center justify-center w-12 h-12 rounded-full bg-white/90 dark:bg-black/70 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-xl text-foreground transition-all duration-200 hover:scale-105 active:scale-95"
+          style={{
+            boxShadow:
+              "0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+          }}
+        >
+          <ImageIcon className="h-5 w-5" />
+        </button>
+
+        {toc.length > 0 && (
+          <button
+            onClick={handleToggleToc}
+            className={cn(
+              "floating-menu-item flex items-center justify-center w-12 h-12 rounded-full bg-white/90 dark:bg-black/70 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-xl text-foreground transition-all duration-200 hover:scale-105 active:scale-95",
+              showToc && "bg-primary/20 text-primary"
+            )}
+            style={{
+              boxShadow:
+                "0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+            }}
+          >
+            <List className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      <button
+        onClick={() => {
+          setIsOpen(!isOpen);
+          if (isOpen) setShowToc(false);
+        }}
+        className={cn(
+          "floating-menu-trigger flex items-center justify-center w-14 h-14 rounded-full bg-white/80 dark:bg-black/60 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-2xl text-foreground transition-all duration-300 hover:scale-110 active:scale-95",
+          isOpen && "rotate-45"
+        )}
+        style={{
+          boxShadow:
+            "0 4px 24px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+        }}
+      >
+        {isOpen ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+      </button>
     </div>
   );
 }
