@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -11,6 +11,31 @@ import { LinkCard } from "@/components/common/link-card";
 import { Copy, Check } from "lucide-react";
 import type { Components } from "react-markdown";
 import type { ReactElement, ReactNode } from "react";
+
+// 헤딩 텍스트를 ID로 변환하는 함수
+function generateHeadingId(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w가-힣-]/g, "");
+}
+
+// 마크다운 헤딩을 HTML 태그로 변환 (고유 ID 포함)
+function preprocessHeadings(content: string): string {
+  const idCounts: Record<string, number> = {};
+
+  return content.replace(/^(#{1,3})\s+(.+)$/gm, (_, hashes, text) => {
+    const level = hashes.length;
+    const trimmedText = text.trim();
+    const baseId = generateHeadingId(trimmedText);
+
+    const count = idCounts[baseId] || 0;
+    const id = count === 0 ? baseId : `${baseId}-${count}`;
+    idCounts[baseId] = count + 1;
+
+    return `<h${level} id="${id}" class="scroll-mt-24">${trimmedText}</h${level}>`;
+  });
+}
 
 interface MarkdownRendererProps {
   content: string;
@@ -63,85 +88,36 @@ function CodeBlock({ code, language }: { code: string; language: string }) {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  // 전체 content에서 헤딩 ID를 미리 계산 (중복 처리 포함)
-  const headingIds = useMemo(() => {
-    const headingRegex = /^(#{1,3})\s+(.+)$/gm;
-    const ids: string[] = [];
-    const idCounts: Record<string, number> = {};
-    let match;
+  // 헤딩을 HTML로 전처리 (고유 ID 포함)
+  const processedContent = useMemo(() => preprocessHeadings(content), [content]);
 
-    while ((match = headingRegex.exec(content)) !== null) {
-      const text = match[2].trim();
-      const baseId = text
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w가-힣-]/g, "");
+  const segments = useMemo(() => {
+    const lines = processedContent.split("\n");
+    const result: { type: "markdown" | "url"; content: string }[] = [];
+    let markdownBuffer: string[] = [];
 
-      const count = idCounts[baseId] || 0;
-      const id = count === 0 ? baseId : `${baseId}-${count}`;
-      idCounts[baseId] = count + 1;
-      ids.push(id);
+    const flushMarkdown = () => {
+      if (markdownBuffer.length > 0) {
+        result.push({ type: "markdown", content: markdownBuffer.join("\n") });
+        markdownBuffer = [];
+      }
+    };
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (URL_LINE_REGEX.test(trimmed)) {
+        flushMarkdown();
+        result.push({ type: "url", content: trimmed });
+      } else {
+        markdownBuffer.push(line);
+      }
     }
+    flushMarkdown();
 
-    return ids;
-  }, [content]);
-
-  // 렌더링 시 헤딩 인덱스 추적용 ref
-  const headingIndexRef = useRef(0);
-  // 렌더링 시작할 때 인덱스 초기화
-  headingIndexRef.current = 0;
-
-  const lines = content.split("\n");
-  const segments: { type: "markdown" | "url"; content: string }[] = [];
-
-  let markdownBuffer: string[] = [];
-
-  const flushMarkdown = () => {
-    if (markdownBuffer.length > 0) {
-      segments.push({ type: "markdown", content: markdownBuffer.join("\n") });
-      markdownBuffer = [];
-    }
-  };
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (URL_LINE_REGEX.test(trimmed)) {
-      flushMarkdown();
-      segments.push({ type: "url", content: trimmed });
-    } else {
-      markdownBuffer.push(line);
-    }
-  }
-  flushMarkdown();
+    return result;
+  }, [processedContent]);
 
   const components: Components = {
-    h1: ({ children, ...props }) => {
-      const id = headingIds[headingIndexRef.current] || "";
-      headingIndexRef.current++;
-      return (
-        <h1 id={id} className="scroll-mt-24" {...props}>
-          {children}
-        </h1>
-      );
-    },
-    h2: ({ children, ...props }) => {
-      const id = headingIds[headingIndexRef.current] || "";
-      headingIndexRef.current++;
-      return (
-        <h2 id={id} className="scroll-mt-24" {...props}>
-          {children}
-        </h2>
-      );
-    },
-    h3: ({ children, ...props }) => {
-      const id = headingIds[headingIndexRef.current] || "";
-      headingIndexRef.current++;
-      return (
-        <h3 id={id} className="scroll-mt-24" {...props}>
-          {children}
-        </h3>
-      );
-    },
     code: ({ inline, className, children, ...props }: CodeComponentProps): ReactElement => {
       const match = /language-(\w+)/.exec(className || "");
       if (!inline && match) {
