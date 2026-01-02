@@ -18,6 +18,8 @@ export function MobileToc({ content }: MobileTocProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeId, setActiveId] = useState<string>("");
   const menuRef = useRef<HTMLDivElement>(null);
+  const tocPanelRef = useRef<HTMLDivElement>(null);
+  const activeItemRef = useRef<HTMLButtonElement>(null);
 
   const toc = useMemo(() => {
     const headingRegex = /^(#{1,3})\s+(.+)$/gm;
@@ -79,6 +81,23 @@ export function MobileToc({ content }: MobileTocProps) {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen && activeItemRef.current && tocPanelRef.current) {
+      const panel = tocPanelRef.current;
+      const activeItem = activeItemRef.current;
+
+      const panelRect = panel.getBoundingClientRect();
+      const itemRect = activeItem.getBoundingClientRect();
+
+      if (itemRect.top < panelRect.top || itemRect.bottom > panelRect.bottom) {
+        activeItem.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }
+  }, [activeId, isOpen]);
+
   const handleTocClick = (id: string) => {
     document.getElementById(id)?.scrollIntoView({
       behavior: "smooth",
@@ -95,6 +114,7 @@ export function MobileToc({ content }: MobileTocProps) {
       className="mobile-toc-wrapper fixed bottom-4 right-4 z-40 xl:hidden"
     >
       <div
+        ref={tocPanelRef}
         className={cn(
           "floating-toc-panel absolute bottom-16 right-0 w-64 max-h-72 overflow-y-auto rounded-2xl bg-white/90 dark:bg-black/80 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-2xl p-3 transition-all duration-300 ease-out origin-bottom-right",
           isOpen
@@ -118,6 +138,7 @@ export function MobileToc({ content }: MobileTocProps) {
                 className={cn(item.level === 3 && "ml-3")}
               >
                 <button
+                  ref={isActive ? activeItemRef : null}
                   onClick={() => handleTocClick(item.id)}
                   className={cn(
                     "toc-item block w-full text-left text-sm py-1.5 px-2 rounded-lg transition-all duration-200",
