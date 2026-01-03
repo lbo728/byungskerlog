@@ -45,7 +45,11 @@ export function useExitConfirm({
     }
 
     if (pendingHrefRef.current) {
-      router.push(pendingHrefRef.current);
+      if (pendingHrefRef.current === "back") {
+        router.back();
+      } else {
+        router.push(pendingHrefRef.current);
+      }
       pendingHrefRef.current = null;
     }
   }, [onBeforeExit, router]);
