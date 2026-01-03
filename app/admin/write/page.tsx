@@ -63,6 +63,11 @@ export default function WritePage() {
   const [isFormInitialized, setIsFormInitialized] = useState(false);
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
   const [recoveryDraft, setRecoveryDraft] = useState<LocalDraft | null>(null);
+  const [originalContent, setOriginalContent] = useState<{
+    title: string;
+    content: string;
+    tags: string[];
+  } | null>(null);
 
   const { data: postData, isLoading: isLoadingPost } = usePost(postId || "", {
     enabled: isEditMode && !!postId,
@@ -101,10 +106,15 @@ export default function WritePage() {
     tags,
     draftId,
     postId,
-    enabled: isFormInitialized && !isEditMode,
+    originalContent,
+    enabled: isFormInitialized,
   });
 
   const handleExitWithSave = useCallback(async () => {
+    if (isEditMode) {
+      return;
+    }
+
     const latestDraft = getLatestDraft();
     const hasContent = latestDraft.title.trim() || latestDraft.content.trim();
 
@@ -127,7 +137,7 @@ export default function WritePage() {
         if (!response.ok) throw new Error("Failed to create draft");
       }
     });
-  }, [getLatestDraft, saveToServerOnExit, draftId]);
+  }, [isEditMode, getLatestDraft, saveToServerOnExit, draftId]);
 
   const {
     isModalOpen: isExitModalOpen,
@@ -135,7 +145,7 @@ export default function WritePage() {
     handleConfirmExit,
     handleCancelExit,
   } = useExitConfirm({
-    enabled: isFormInitialized && !isEditMode && hasUnsavedChanges(),
+    enabled: isFormInitialized && hasUnsavedChanges(),
     onBeforeExit: handleExitWithSave,
   });
 
@@ -224,6 +234,11 @@ export default function WritePage() {
         setTitle(postData.title);
         setTags(postData.tags || []);
         setContent(postData.content);
+        setOriginalContent({
+          title: postData.title,
+          content: postData.content,
+          tags: postData.tags || [],
+        });
         setModalPostType(postData.type || "LONG");
         setModalThumbnailUrl(postData.thumbnail || null);
         setModalThumbnailFile(null);
@@ -462,6 +477,7 @@ export default function WritePage() {
         onOpenChange={setIsExitModalOpen}
         onConfirm={handleConfirmExit}
         onCancel={handleCancelExit}
+        isEditMode={isEditMode}
       />
 
       <WriteFloatingMenu

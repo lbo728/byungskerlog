@@ -8,12 +8,19 @@ import {
   clearLocalDraft,
 } from "@/lib/storage/draft-storage";
 
+interface OriginalContent {
+  title: string;
+  content: string;
+  tags: string[];
+}
+
 interface UseAutoSaveOptions {
   title: string;
   content: string;
   tags: string[];
   draftId: string | null;
   postId?: string | null;
+  originalContent?: OriginalContent | null;
   enabled?: boolean;
 }
 
@@ -32,18 +39,28 @@ export function useAutoSave({
   tags,
   draftId,
   postId,
+  originalContent,
   enabled = true,
 }: UseAutoSaveOptions): UseAutoSaveReturn {
   const localSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedContentRef = useRef<{ title: string; content: string; tags: string[] } | null>(null);
   const currentContentRef = useRef({ title, content, tags });
+  const originalContentRef = useRef<OriginalContent | null>(null);
+  const isEditMode = !!postId;
+
+  useEffect(() => {
+    if (originalContent && !originalContentRef.current) {
+      originalContentRef.current = originalContent;
+      lastSavedContentRef.current = originalContent;
+    }
+  }, [originalContent]);
 
   useEffect(() => {
     currentContentRef.current = { title, content, tags };
   }, [title, content, tags]);
 
   useEffect(() => {
-    if (!enabled || postId) return;
+    if (!enabled || isEditMode) return;
 
     const hasContent = title.trim() || content.trim();
     if (!hasContent) return;
@@ -68,7 +85,7 @@ export function useAutoSave({
         clearTimeout(localSaveTimerRef.current);
       }
     };
-  }, [title, content, tags, draftId, postId, enabled]);
+  }, [title, content, tags, draftId, isEditMode, enabled]);
 
   useEffect(() => {
     return () => {
@@ -80,6 +97,11 @@ export function useAutoSave({
 
   const getLatestDraft = useCallback(() => {
     const current = currentContentRef.current;
+
+    if (isEditMode) {
+      return current;
+    }
+
     const saved = getDraftFromLocal();
 
     if (!saved) return current;
@@ -101,7 +123,7 @@ export function useAutoSave({
     }
 
     return { title: saved.title, content: saved.content, tags: saved.tags };
-  }, []);
+  }, [isEditMode]);
 
   const saveToServerOnExit = useCallback(async (onServerSave: () => Promise<void>) => {
     try {
@@ -126,6 +148,15 @@ export function useAutoSave({
     const hasContent = current.title.trim() || current.content.trim();
     if (!hasContent) return false;
 
+    if (isEditMode && originalContentRef.current) {
+      const original = originalContentRef.current;
+      return (
+        current.title !== original.title ||
+        current.content !== original.content ||
+        JSON.stringify(current.tags) !== JSON.stringify(original.tags)
+      );
+    }
+
     const saved = lastSavedContentRef.current;
     if (!saved) return true;
 
@@ -134,7 +165,7 @@ export function useAutoSave({
       current.content !== saved.content ||
       JSON.stringify(current.tags) !== JSON.stringify(saved.tags)
     );
-  }, []);
+  }, [isEditMode]);
 
   return {
     getLatestDraft,
