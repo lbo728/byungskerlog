@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ import {
   hasUnsavedLocalDraft,
   type LocalDraft,
 } from "@/lib/storage/draft-storage";
+import { queryKeys } from "@/lib/queryKeys";
 
 const lowlight = createLowlight(common);
 
@@ -42,6 +44,7 @@ export default function WritePage() {
   useUser({ or: "redirect" });
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const postId = searchParams.get("id");
@@ -134,6 +137,7 @@ export default function WritePage() {
           body: JSON.stringify(latestDraft),
         });
         if (!response.ok) throw new Error("Failed to update draft");
+        queryClient.invalidateQueries({ queryKey: queryKeys.drafts.detail(draftId) });
       } else {
         const response = await fetch("/api/drafts", {
           method: "POST",
@@ -142,8 +146,9 @@ export default function WritePage() {
         });
         if (!response.ok) throw new Error("Failed to create draft");
       }
+      queryClient.invalidateQueries({ queryKey: queryKeys.drafts.lists() });
     });
-  }, [isEditMode, getLatestDraft, saveToServerOnExit, draftId]);
+  }, [isEditMode, getLatestDraft, saveToServerOnExit, draftId, queryClient]);
 
   const {
     isModalOpen: isExitModalOpen,
