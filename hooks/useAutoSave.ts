@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { saveDraftToLocal, clearLocalDraft } from "@/lib/storage/draft-storage";
-
-export type SaveStatus = "saved" | "saving" | "unsaved";
+import { useEffect, useRef, useCallback } from "react";
+import { toast } from "sonner";
+import {
+  saveDraftToLocal,
+  getDraftFromLocal,
+  clearLocalDraft,
+} from "@/lib/storage/draft-storage";
 
 interface UseAutoSaveOptions {
   title: string;
@@ -12,18 +15,16 @@ interface UseAutoSaveOptions {
   draftId: string | null;
   postId?: string | null;
   enabled?: boolean;
-  onServerSave: () => Promise<void>;
 }
 
 interface UseAutoSaveReturn {
-  saveStatus: SaveStatus;
-  lastSavedAt: Date | null;
-  forceSave: () => Promise<void>;
+  getLatestDraft: () => { title: string; content: string; tags: string[] };
+  saveToServerOnExit: (onServerSave: () => Promise<void>) => Promise<void>;
   clearAutoSave: () => void;
+  hasUnsavedChanges: () => boolean;
 }
 
-const LOCAL_SAVE_DEBOUNCE = 5000;
-const SERVER_SAVE_DELAY = 60000;
+const LOCAL_SAVE_DEBOUNCE = 10000;
 
 export function useAutoSave({
   title,
@@ -32,147 +33,113 @@ export function useAutoSave({
   draftId,
   postId,
   enabled = true,
-  onServerSave,
 }: UseAutoSaveOptions): UseAutoSaveReturn {
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
-  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
-
   const localSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const serverSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastLocalContentRef = useRef({ title, content, tags });
-  const lastServerContentRef = useRef({ title, content, tags });
-  const isServerSavingRef = useRef(false);
+  const lastSavedContentRef = useRef<{ title: string; content: string; tags: string[] } | null>(null);
+  const currentContentRef = useRef({ title, content, tags });
 
-  const hasContentChangedFromLocal = useCallback(() => {
-    const last = lastLocalContentRef.current;
-    return (
-      last.title !== title ||
-      last.content !== content ||
-      JSON.stringify(last.tags) !== JSON.stringify(tags)
-    );
+  useEffect(() => {
+    currentContentRef.current = { title, content, tags };
   }, [title, content, tags]);
 
-  const hasContentChangedFromServer = useCallback(() => {
-    const last = lastServerContentRef.current;
-    return (
-      last.title !== title ||
-      last.content !== content ||
-      JSON.stringify(last.tags) !== JSON.stringify(tags)
-    );
-  }, [title, content, tags]);
-
-  const saveToLocal = useCallback(() => {
-    if (postId) return;
-
-    saveDraftToLocal({
-      title,
-      content,
-      tags,
-      draftId: draftId || undefined,
-    });
-    lastLocalContentRef.current = { title, content, tags };
-    setLastSavedAt(new Date());
-    setSaveStatus("saved");
-  }, [title, content, tags, draftId, postId]);
-
-  const saveToServer = useCallback(async () => {
-    if (isServerSavingRef.current) return;
-    if (!hasContentChangedFromServer() && draftId) return;
+  useEffect(() => {
+    if (!enabled || postId) return;
 
     const hasContent = title.trim() || content.trim();
     if (!hasContent) return;
 
-    isServerSavingRef.current = true;
-    setSaveStatus("saving");
-
-    try {
-      await onServerSave();
-      lastServerContentRef.current = { title, content, tags };
-      lastLocalContentRef.current = { title, content, tags };
-      setLastSavedAt(new Date());
-      setSaveStatus("saved");
-
-      if (!postId) {
-        clearLocalDraft();
-      }
-    } catch {
-      setSaveStatus("unsaved");
-    } finally {
-      isServerSavingRef.current = false;
-    }
-  }, [onServerSave, hasContentChangedFromServer, draftId, title, content, tags, postId]);
-
-  const forceSave = useCallback(async () => {
     if (localSaveTimerRef.current) {
       clearTimeout(localSaveTimerRef.current);
-      localSaveTimerRef.current = null;
-    }
-    if (serverSaveTimerRef.current) {
-      clearTimeout(serverSaveTimerRef.current);
-      serverSaveTimerRef.current = null;
     }
 
-    await saveToServer();
-  }, [saveToServer]);
+    localSaveTimerRef.current = setTimeout(() => {
+      saveDraftToLocal({
+        title,
+        content,
+        tags,
+        draftId: draftId || undefined,
+      });
+      lastSavedContentRef.current = { title, content, tags };
+      toast.success("임시 저장되었습니다.");
+    }, LOCAL_SAVE_DEBOUNCE);
+
+    return () => {
+      if (localSaveTimerRef.current) {
+        clearTimeout(localSaveTimerRef.current);
+      }
+    };
+  }, [title, content, tags, draftId, postId, enabled]);
+
+  useEffect(() => {
+    return () => {
+      if (localSaveTimerRef.current) {
+        clearTimeout(localSaveTimerRef.current);
+      }
+    };
+  }, []);
+
+  const getLatestDraft = useCallback(() => {
+    const current = currentContentRef.current;
+    const saved = getDraftFromLocal();
+
+    if (!saved) return current;
+
+    const currentHasContent = current.title.trim() || current.content.trim();
+    const savedHasContent = saved.title.trim() || saved.content.trim();
+
+    if (!currentHasContent && savedHasContent) {
+      return { title: saved.title, content: saved.content, tags: saved.tags };
+    }
+
+    const isCurrentDifferentFromSaved =
+      current.title !== saved.title ||
+      current.content !== saved.content ||
+      JSON.stringify(current.tags) !== JSON.stringify(saved.tags);
+
+    if (isCurrentDifferentFromSaved) {
+      return current;
+    }
+
+    return { title: saved.title, content: saved.content, tags: saved.tags };
+  }, []);
+
+  const saveToServerOnExit = useCallback(async (onServerSave: () => Promise<void>) => {
+    try {
+      await onServerSave();
+      clearLocalDraft();
+    } catch (error) {
+      console.error("Failed to save on exit:", error);
+    }
+  }, []);
 
   const clearAutoSave = useCallback(() => {
     clearLocalDraft();
+    lastSavedContentRef.current = null;
     if (localSaveTimerRef.current) {
       clearTimeout(localSaveTimerRef.current);
       localSaveTimerRef.current = null;
     }
-    if (serverSaveTimerRef.current) {
-      clearTimeout(serverSaveTimerRef.current);
-      serverSaveTimerRef.current = null;
-    }
   }, []);
 
-  useEffect(() => {
-    if (!enabled) return;
-    if (postId) return;
+  const hasUnsavedChanges = useCallback(() => {
+    const current = currentContentRef.current;
+    const hasContent = current.title.trim() || current.content.trim();
+    if (!hasContent) return false;
 
-    const hasContent = title.trim() || content.trim();
-    if (!hasContent) return;
+    const saved = lastSavedContentRef.current;
+    if (!saved) return true;
 
-    if (hasContentChangedFromLocal()) {
-      setSaveStatus("unsaved");
-    }
-
-    if (localSaveTimerRef.current) {
-      clearTimeout(localSaveTimerRef.current);
-    }
-    localSaveTimerRef.current = setTimeout(saveToLocal, LOCAL_SAVE_DEBOUNCE);
-
-    if (serverSaveTimerRef.current) {
-      clearTimeout(serverSaveTimerRef.current);
-    }
-    serverSaveTimerRef.current = setTimeout(saveToServer, SERVER_SAVE_DELAY);
-
-    return () => {
-      if (localSaveTimerRef.current) {
-        clearTimeout(localSaveTimerRef.current);
-      }
-      if (serverSaveTimerRef.current) {
-        clearTimeout(serverSaveTimerRef.current);
-      }
-    };
-  }, [title, content, tags, enabled, postId, saveToLocal, saveToServer, hasContentChangedFromLocal]);
-
-  useEffect(() => {
-    return () => {
-      if (localSaveTimerRef.current) {
-        clearTimeout(localSaveTimerRef.current);
-      }
-      if (serverSaveTimerRef.current) {
-        clearTimeout(serverSaveTimerRef.current);
-      }
-    };
+    return (
+      current.title !== saved.title ||
+      current.content !== saved.content ||
+      JSON.stringify(current.tags) !== JSON.stringify(saved.tags)
+    );
   }, []);
 
   return {
-    saveStatus,
-    lastSavedAt,
-    forceSave,
+    getLatestDraft,
+    saveToServerOnExit,
     clearAutoSave,
+    hasUnsavedChanges,
   };
 }

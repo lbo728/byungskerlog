@@ -7,6 +7,7 @@ import { useUser } from "@stackframe/stack";
 import { Input } from "@/components/ui/input";
 import { PublishModal } from "@/components/modals/publish-modal";
 import { RecoveryModal } from "@/components/modals/recovery-modal";
+import { ExitConfirmModal } from "@/components/modals/exit-confirm-modal";
 import { EmbedCard } from "@/components/editor/tiptap/embed-card-extension";
 import { LinkModal } from "@/components/editor/tiptap/link-modal";
 import { WriteTocDesktop, WriteFloatingMenu } from "@/components/editor/write-toc";
@@ -23,6 +24,7 @@ import { useImageUpload } from "@/hooks/useImageUpload";
 import { useTagInput } from "@/hooks/useTagInput";
 import { useDraftSave } from "@/hooks/useDraftSave";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { useExitConfirm } from "@/hooks/useExitConfirm";
 import { useLinkModal } from "@/hooks/useLinkModal";
 import { generateExcerpt } from "@/lib/excerpt";
 import { usePost } from "@/hooks/usePost";
@@ -93,14 +95,48 @@ export default function WritePage() {
     initialDraftId: draftIdParam,
   });
 
-  const { saveStatus, clearAutoSave } = useAutoSave({
+  const { getLatestDraft, saveToServerOnExit, clearAutoSave, hasUnsavedChanges } = useAutoSave({
     title,
     content,
     tags,
     draftId,
     postId,
     enabled: isFormInitialized && !isEditMode,
-    onServerSave: handleTempSave,
+  });
+
+  const handleExitWithSave = useCallback(async () => {
+    const latestDraft = getLatestDraft();
+    const hasContent = latestDraft.title.trim() || latestDraft.content.trim();
+
+    if (!hasContent) return;
+
+    await saveToServerOnExit(async () => {
+      if (draftId) {
+        const response = await fetch(`/api/drafts/${draftId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(latestDraft),
+        });
+        if (!response.ok) throw new Error("Failed to update draft");
+      } else {
+        const response = await fetch("/api/drafts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(latestDraft),
+        });
+        if (!response.ok) throw new Error("Failed to create draft");
+      }
+    });
+  }, [getLatestDraft, saveToServerOnExit, draftId]);
+
+  const {
+    isModalOpen: isExitModalOpen,
+    setIsModalOpen: setIsExitModalOpen,
+    handleConfirmExit,
+    handleCancelExit,
+  } = useExitConfirm({
+    enabled: isFormInitialized && !isEditMode && hasUnsavedChanges(),
+    onBeforeExit: handleExitWithSave,
   });
 
   const editor = useEditor({
@@ -249,20 +285,6 @@ export default function WritePage() {
     }
   }, [isEditMode, draftIdParam, isFormInitialized]);
 
-  useEffect(() => {
-    if (isEditMode) return;
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (saveStatus === "unsaved") {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [saveStatus, isEditMode]);
-
   const handleRecoverDraft = useCallback(() => {
     if (recoveryDraft) {
       setTitle(recoveryDraft.title);
@@ -334,7 +356,6 @@ export default function WritePage() {
         isLoading={isLoading}
         isSavingDraft={isSavingDraft}
         isFetchingPost={isFetchingPost}
-        saveStatus={saveStatus}
         onTempSave={handleTempSave}
         onPublish={handleOpenPublishModal}
       />
@@ -435,6 +456,13 @@ export default function WritePage() {
           onDiscard={handleDiscardDraft}
         />
       )}
+
+      <ExitConfirmModal
+        open={isExitModalOpen}
+        onOpenChange={setIsExitModalOpen}
+        onConfirm={handleConfirmExit}
+        onCancel={handleCancelExit}
+      />
 
       <WriteFloatingMenu
         content={content}
