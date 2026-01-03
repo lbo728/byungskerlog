@@ -68,6 +68,11 @@ export default function WritePage() {
     content: string;
     tags: string[];
   } | null>(null);
+  const [initialDraftContent, setInitialDraftContent] = useState<{
+    title: string;
+    content: string;
+    tags: string[];
+  } | null>(null);
 
   const { data: postData, isLoading: isLoadingPost } = usePost(postId || "", {
     enabled: isEditMode && !!postId,
@@ -107,6 +112,7 @@ export default function WritePage() {
     draftId,
     postId,
     originalContent,
+    initialDraftContent,
     enabled: isFormInitialized,
   });
 
@@ -259,6 +265,11 @@ export default function WritePage() {
         setTags(draftData.tags || []);
         setContent(draftData.content || "");
         setDraftId(draftData.id);
+        setInitialDraftContent({
+          title: draftData.title || "",
+          content: draftData.content || "",
+          tags: draftData.tags || [],
+        });
         setIsFormInitialized(true);
       });
     }

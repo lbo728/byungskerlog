@@ -21,6 +21,7 @@ interface UseAutoSaveOptions {
   draftId: string | null;
   postId?: string | null;
   originalContent?: OriginalContent | null;
+  initialDraftContent?: OriginalContent | null;
   enabled?: boolean;
 }
 
@@ -40,10 +41,12 @@ export function useAutoSave({
   draftId,
   postId,
   originalContent,
+  initialDraftContent,
   enabled = true,
 }: UseAutoSaveOptions): UseAutoSaveReturn {
   const localSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSavedContentRef = useRef<{ title: string; content: string; tags: string[] } | null>(null);
+  const lastLocalSaveRef = useRef<{ title: string; content: string; tags: string[] } | null>(null);
+  const serverSavedContentRef = useRef<{ title: string; content: string; tags: string[] } | null>(null);
   const currentContentRef = useRef({ title, content, tags });
   const originalContentRef = useRef<OriginalContent | null>(null);
   const isEditMode = !!postId;
@@ -51,9 +54,15 @@ export function useAutoSave({
   useEffect(() => {
     if (originalContent && !originalContentRef.current) {
       originalContentRef.current = originalContent;
-      lastSavedContentRef.current = originalContent;
+      serverSavedContentRef.current = originalContent;
     }
   }, [originalContent]);
+
+  useEffect(() => {
+    if (initialDraftContent && !serverSavedContentRef.current) {
+      serverSavedContentRef.current = initialDraftContent;
+    }
+  }, [initialDraftContent]);
 
   useEffect(() => {
     currentContentRef.current = { title, content, tags };
@@ -64,6 +73,14 @@ export function useAutoSave({
 
     const hasContent = title.trim() || content.trim();
     if (!hasContent) return;
+
+    const lastLocal = lastLocalSaveRef.current;
+    const hasLocalChanges = !lastLocal ||
+      lastLocal.title !== title ||
+      lastLocal.content !== content ||
+      JSON.stringify(lastLocal.tags) !== JSON.stringify(tags);
+
+    if (!hasLocalChanges) return;
 
     if (localSaveTimerRef.current) {
       clearTimeout(localSaveTimerRef.current);
@@ -76,7 +93,7 @@ export function useAutoSave({
         tags,
         draftId: draftId || undefined,
       });
-      lastSavedContentRef.current = { title, content, tags };
+      lastLocalSaveRef.current = { title, content, tags };
       toast.success("임시 저장되었습니다.");
     }, LOCAL_SAVE_DEBOUNCE);
 
@@ -136,7 +153,8 @@ export function useAutoSave({
 
   const clearAutoSave = useCallback(() => {
     clearLocalDraft();
-    lastSavedContentRef.current = null;
+    lastLocalSaveRef.current = null;
+    serverSavedContentRef.current = null;
     if (localSaveTimerRef.current) {
       clearTimeout(localSaveTimerRef.current);
       localSaveTimerRef.current = null;
@@ -157,13 +175,13 @@ export function useAutoSave({
       );
     }
 
-    const saved = lastSavedContentRef.current;
-    if (!saved) return true;
+    const serverSaved = serverSavedContentRef.current;
+    if (!serverSaved) return true;
 
     return (
-      current.title !== saved.title ||
-      current.content !== saved.content ||
-      JSON.stringify(current.tags) !== JSON.stringify(saved.tags)
+      current.title !== serverSaved.title ||
+      current.content !== serverSaved.content ||
+      JSON.stringify(current.tags) !== JSON.stringify(serverSaved.tags)
     );
   }, [isEditMode]);
 
