@@ -155,10 +155,15 @@ export default function WritePage() {
     setIsModalOpen: setIsExitModalOpen,
     handleConfirmExit,
     handleCancelExit,
+    triggerExit,
   } = useExitConfirm({
     enabled: isFormInitialized && hasUnsavedChanges(),
     onBeforeExit: handleExitWithSave,
   });
+
+  const handleExit = useCallback(() => {
+    triggerExit("/admin/posts");
+  }, [triggerExit]);
 
   const editor = useEditor({
     extensions: [
@@ -387,6 +392,7 @@ export default function WritePage() {
         isLoading={isLoading}
         isSavingDraft={isSavingDraft}
         isFetchingPost={isFetchingPost}
+        onExit={handleExit}
         onTempSave={handleTempSave}
         onPublish={handleOpenPublishModal}
       />
