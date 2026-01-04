@@ -3,8 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { BookOpen, ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { useUser } from "@stackframe/stack";

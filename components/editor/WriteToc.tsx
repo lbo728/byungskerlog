@@ -10,8 +10,8 @@ import {
   SheetTrigger,
   SheetClose,
   SheetFooter,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/Sheet";
+import { Button } from "@/components/ui/Button";
 import { List, ChevronsRight, Plus, X, Image as ImageIcon } from "lucide-react";
 
 interface TocItem {

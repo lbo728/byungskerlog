@@ -5,9 +5,9 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { format } from "date-fns";
 import { ArrowLeft, BookOpen } from "lucide-react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { calculateReadingTime } from "@/lib/reading-time";
 
 export const revalidate = 3600;

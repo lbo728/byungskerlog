@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ThemeToggle } from "@/components/common/theme-toggle";
-import { VisitorCount } from "@/components/analytics/visitor-count";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
+import { VisitorCount } from "@/components/analytics/VisitorCount";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUser, useStackApp } from "@stackframe/stack";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/Button";
+import { Sheet, SheetContent, SheetHeader, SheetTrigger, SheetClose } from "@/components/ui/Sheet";
 import { PenSquare, LogOut, Menu, FileText, FolderOpen, ChevronDown, ChevronsRight } from "lucide-react";
 
 const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
