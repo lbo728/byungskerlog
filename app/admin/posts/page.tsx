@@ -4,10 +4,10 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { ArrowLeft, Pencil, Trash2, Plus, X, BookOpen, Check, BarChart3, TrendingUp, Eye } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import {
@@ -19,9 +19,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/AlertDialog";
 import type { Post, Series } from "@/lib/types/post";
-import { SlugEditModal } from "@/components/modals/slug-edit-modal";
+import { SlugEditModal } from "@/components/modals/SlugEditModal";
 import { useAdminPosts } from "@/hooks/useAdminPosts";
 import { useSeries } from "@/hooks/useSeries";
 import { useDeletePost } from "@/hooks/usePostMutations";

@@ -4,9 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/common/theme-toggle";
-import { VisitorCount } from "@/components/analytics/visitor-count";
+import { Button } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
+import { VisitorCount } from "@/components/analytics/VisitorCount";
 import { cn } from "@/lib/utils";
 
 const navItems = [

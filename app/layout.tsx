@@ -6,13 +6,13 @@ import Script from "next/script";
 import "./globals.css";
 
 import { cn } from "@/lib/utils";
-import { ThemeProvider } from "@/components/common/theme-provider";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
+import { ThemeProvider } from "@/components/common/ThemeProvider";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import { Providers } from "./providers";
-import { StructuredData } from "@/components/seo/structured-data";
-import { Toaster } from "@/components/ui/sonner";
-import { ImageProtection } from "@/components/common/image-protection";
+import { StructuredData } from "@/components/seo/StructuredData";
+import { Toaster } from "@/components/ui/Sonner";
+import { ImageProtection } from "@/components/common/ImageProtection";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

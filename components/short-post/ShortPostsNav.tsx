@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/Collapsible";
+import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ArrowLeft, ArrowRight, ChevronDown, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
