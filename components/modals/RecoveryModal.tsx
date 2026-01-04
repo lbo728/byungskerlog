@@ -7,8 +7,8 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
 import { FileWarning } from "lucide-react";
 import type { LocalDraft } from "@/lib/storage/draft-storage";
 
