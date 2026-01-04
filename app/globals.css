@@ -117,9 +117,17 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    overflow-y: scroll;
+  }
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Radix UI 모달 열릴 때 fixed 요소 레이아웃 시프트 방지 */
+body[data-scroll-locked] .write-header-wrapper {
+  padding-right: var(--removed-body-scroll-bar-size, 0px);
 }
 
 /* iOS에서 input 포커스 시 확대 방지 */

@@ -2,10 +2,13 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Input } from "@/components/ui/input";
 import { PublishModal } from "@/components/modals/publish-modal";
+import { RecoveryModal } from "@/components/modals/recovery-modal";
+import { ExitConfirmModal } from "@/components/modals/exit-confirm-modal";
 import { EmbedCard } from "@/components/editor/tiptap/embed-card-extension";
 import { LinkModal } from "@/components/editor/tiptap/link-modal";
 import { WriteTocDesktop, WriteFloatingMenu } from "@/components/editor/write-toc";
@@ -21,10 +24,19 @@ import { common, createLowlight } from "lowlight";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useTagInput } from "@/hooks/useTagInput";
 import { useDraftSave } from "@/hooks/useDraftSave";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import { useExitConfirm } from "@/hooks/useExitConfirm";
 import { useLinkModal } from "@/hooks/useLinkModal";
 import { generateExcerpt } from "@/lib/excerpt";
 import { usePost } from "@/hooks/usePost";
 import { useDraft } from "@/hooks/useDrafts";
+import {
+  getDraftFromLocal,
+  clearLocalDraft,
+  hasUnsavedLocalDraft,
+  type LocalDraft,
+} from "@/lib/storage/draft-storage";
+import { queryKeys } from "@/lib/queryKeys";
 
 const lowlight = createLowlight(common);
 
@@ -32,6 +44,7 @@ export default function WritePage() {
   useUser({ or: "redirect" });
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const postId = searchParams.get("id");
@@ -51,6 +64,18 @@ export default function WritePage() {
   const [modalSubSlug, setModalSubSlug] = useState<string>("");
   const [isExcerptInitialized, setIsExcerptInitialized] = useState(false);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
+  const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
+  const [recoveryDraft, setRecoveryDraft] = useState<LocalDraft | null>(null);
+  const [originalContent, setOriginalContent] = useState<{
+    title: string;
+    content: string;
+    tags: string[];
+  } | null>(null);
+  const [initialDraftContent, setInitialDraftContent] = useState<{
+    title: string;
+    content: string;
+    tags: string[];
+  } | null>(null);
 
   const { data: postData, isLoading: isLoadingPost } = usePost(postId || "", {
     enabled: isEditMode && !!postId,
@@ -82,6 +107,63 @@ export default function WritePage() {
     content,
     initialDraftId: draftIdParam,
   });
+
+  const { getLatestDraft, saveToServerOnExit, clearAutoSave, hasUnsavedChanges } = useAutoSave({
+    title,
+    content,
+    tags,
+    draftId,
+    postId,
+    originalContent,
+    initialDraftContent,
+    enabled: isFormInitialized,
+  });
+
+  const handleExitWithSave = useCallback(async () => {
+    if (isEditMode) {
+      return;
+    }
+
+    const latestDraft = getLatestDraft();
+    const hasContent = latestDraft.title.trim() || latestDraft.content.trim();
+
+    if (!hasContent) return;
+
+    await saveToServerOnExit(async () => {
+      if (draftId) {
+        const response = await fetch(`/api/drafts/${draftId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(latestDraft),
+        });
+        if (!response.ok) throw new Error("Failed to update draft");
+        queryClient.invalidateQueries({ queryKey: queryKeys.drafts.detail(draftId) });
+      } else {
+        const response = await fetch("/api/drafts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(latestDraft),
+        });
+        if (!response.ok) throw new Error("Failed to create draft");
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.drafts.lists() });
+    });
+  }, [isEditMode, getLatestDraft, saveToServerOnExit, draftId, queryClient]);
+
+  const {
+    isModalOpen: isExitModalOpen,
+    setIsModalOpen: setIsExitModalOpen,
+    handleConfirmExit,
+    handleCancelExit,
+    triggerExit,
+  } = useExitConfirm({
+    enabled: isFormInitialized && hasUnsavedChanges(),
+    onBeforeExit: handleExitWithSave,
+  });
+
+  const handleExit = useCallback(() => {
+    triggerExit("/admin/posts");
+  }, [triggerExit]);
 
   const editor = useEditor({
     extensions: [
@@ -168,6 +250,11 @@ export default function WritePage() {
         setTitle(postData.title);
         setTags(postData.tags || []);
         setContent(postData.content);
+        setOriginalContent({
+          title: postData.title,
+          content: postData.content,
+          tags: postData.tags || [],
+        });
         setModalPostType(postData.type || "LONG");
         setModalThumbnailUrl(postData.thumbnail || null);
         setModalThumbnailFile(null);
@@ -188,6 +275,11 @@ export default function WritePage() {
         setTags(draftData.tags || []);
         setContent(draftData.content || "");
         setDraftId(draftData.id);
+        setInitialDraftContent({
+          title: draftData.title || "",
+          content: draftData.content || "",
+          tags: draftData.tags || [],
+        });
         setIsFormInitialized(true);
       });
     }
@@ -214,6 +306,38 @@ export default function WritePage() {
       router.push("/admin/drafts");
     }
   }, [isLoadingDraft, isEditMode, draftIdParam, draftData, router]);
+
+  useEffect(() => {
+    if (!isEditMode && !draftIdParam && isFormInitialized) {
+      if (hasUnsavedLocalDraft(null)) {
+        const localDraft = getDraftFromLocal();
+        if (localDraft) {
+          queueMicrotask(() => {
+            setRecoveryDraft(localDraft);
+            setIsRecoveryModalOpen(true);
+          });
+        }
+      }
+    }
+  }, [isEditMode, draftIdParam, isFormInitialized]);
+
+  const handleRecoverDraft = useCallback(() => {
+    if (recoveryDraft) {
+      setTitle(recoveryDraft.title);
+      setTags(recoveryDraft.tags);
+      setContent(recoveryDraft.content);
+      if (recoveryDraft.draftId) {
+        setDraftId(recoveryDraft.draftId);
+        window.history.replaceState(null, "", `/admin/write?draft=${recoveryDraft.draftId}`);
+      }
+      toast.success("이전 글이 복구되었습니다.");
+    }
+  }, [recoveryDraft, setTags, setDraftId]);
+
+  const handleDiscardDraft = useCallback(() => {
+    clearLocalDraft();
+    setRecoveryDraft(null);
+  }, []);
 
   const handleOpenPublishModal = () => {
     if (!title.trim()) {
@@ -255,6 +379,7 @@ export default function WritePage() {
   }, [modalThumbnailUrl]);
 
   const handlePublishSuccess = (slug: string) => {
+    clearAutoSave();
     toast.success(isEditMode ? "글이 수정되었습니다." : "글이 발행되었습니다.");
     router.push(`/posts/${slug}`);
     router.refresh();
@@ -267,6 +392,7 @@ export default function WritePage() {
         isLoading={isLoading}
         isSavingDraft={isSavingDraft}
         isFetchingPost={isFetchingPost}
+        onExit={handleExit}
         onTempSave={handleTempSave}
         onPublish={handleOpenPublishModal}
       />
@@ -356,6 +482,24 @@ export default function WritePage() {
         onRemove={currentLinkUrl ? handleLinkRemove : undefined}
         initialUrl={currentLinkUrl}
         selectedText={selectedText}
+      />
+
+      {recoveryDraft && (
+        <RecoveryModal
+          open={isRecoveryModalOpen}
+          onOpenChange={setIsRecoveryModalOpen}
+          localDraft={recoveryDraft}
+          onRecover={handleRecoverDraft}
+          onDiscard={handleDiscardDraft}
+        />
+      )}
+
+      <ExitConfirmModal
+        open={isExitModalOpen}
+        onOpenChange={setIsExitModalOpen}
+        onConfirm={handleConfirmExit}
+        onCancel={handleCancelExit}
+        isEditMode={isEditMode}
       />
 
       <WriteFloatingMenu
