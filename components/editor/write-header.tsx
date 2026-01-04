@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/common/theme-toggle";
@@ -24,6 +24,7 @@ interface WriteHeaderProps {
   isFetchingPost: boolean;
   onTempSave: () => void;
   onPublish: () => void;
+  onExit: () => void;
 }
 
 export function WriteHeader({
@@ -33,8 +34,8 @@ export function WriteHeader({
   isFetchingPost,
   onTempSave,
   onPublish,
+  onExit,
 }: WriteHeaderProps) {
-  const router = useRouter();
   const pathname = usePathname();
 
   return (
@@ -91,7 +92,7 @@ export function WriteHeader({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push("/admin/posts")}
+                onClick={onExit}
                 className="gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />

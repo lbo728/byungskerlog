@@ -61,7 +61,6 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@next/swc-darwin-arm64": "^16.1.1",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-query-devtools": "^5.91.1",
