@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useUser } from "@stackframe/stack";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Pencil } from "lucide-react";
-import { AboutEditModal } from "@/components/modals/about-edit-modal";
+import { AboutEditModal } from "@/components/modals/AboutEditModal";
 
 export function AboutPageActions() {
   const user = useUser();

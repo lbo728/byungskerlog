@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { ArrowLeft, Pencil, Trash2, Plus } from "lucide-react";
 import {
   AlertDialog,
@@ -15,7 +15,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/AlertDialog";
 import { useDrafts } from "@/hooks/useDrafts";
 import { useDeleteDraft } from "@/hooks/useDraftMutations";
 import type { Draft } from "@/lib/types/post";

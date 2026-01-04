@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { PostListClient } from "@/components/post/post-list-client";
-import { AdSense } from "@/components/seo/adsense";
+import { PostListClient } from "@/components/post/PostListClient";
+import { AdSense } from "@/components/seo/Adsense";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;

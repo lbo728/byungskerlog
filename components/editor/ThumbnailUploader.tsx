@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { ImageIcon, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import Image from "next/image";
 
 interface ThumbnailUploaderProps {

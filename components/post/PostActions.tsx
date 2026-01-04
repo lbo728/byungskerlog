@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@stackframe/stack";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Pencil, Trash2, Share2 } from "lucide-react";
-import { SubSlugModal } from "@/components/modals/sub-slug-modal";
+import { SubSlugModal } from "@/components/modals/SubSlugModal";
 import { useDeletePost } from "@/hooks/useDeletePost";
 import { useClipboard } from "@/hooks/useClipboard";
 

@@ -3,17 +3,17 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import TiptapLink from "@tiptap/extension-link";
 import { common, createLowlight } from "lowlight";
-import { EmbedCard } from "@/components/editor/tiptap/embed-card-extension";
-import { LinkModal } from "@/components/editor/tiptap/link-modal";
+import { EmbedCard } from "@/components/editor/tiptap/EmbedCardExtension";
+import { LinkModal } from "@/components/editor/tiptap/LinkModal";
 import { useLinkModal } from "@/hooks/useLinkModal";
 import { useImageUpload } from "@/hooks/useImageUpload";
 

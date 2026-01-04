@@ -2,16 +2,16 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ThumbnailUploader } from "@/components/editor/thumbnail-uploader";
-import { SeriesSelect } from "@/components/editor/series-select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
+import { Label } from "@/components/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
+import { ThumbnailUploader } from "@/components/editor/ThumbnailUploader";
+import { SeriesSelect } from "@/components/editor/SeriesSelect";
 import { optimizeImage } from "@/lib/image-optimizer";
 import { X, Plus } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/Input";
 
 const MAX_THUMBNAIL_SIZE = 500 * 1024;
 const DRAG_CLOSE_THRESHOLD = 100;

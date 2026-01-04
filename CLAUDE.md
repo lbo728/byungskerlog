@@ -17,6 +17,12 @@ This is a Next.js 16-based personal blog application with admin capabilities. Th
 
 - html 작성 시 반드시 Semantic Tag 를 사용해.
 
+## Naming Conventions
+
+- 컴포넌트 파일명은 반드시 **PascalCase**로 작성해야해. (e.g., `PostDetail.tsx`, `Header.tsx`, `MarkdownRenderer.tsx`)
+- 훅 파일명은 **camelCase**로 작성해. (e.g., `usePost.ts`, `useDrafts.ts`)
+- 그 외 유틸리티, 타입 등의 파일은 **kebab-case**로 작성해. (e.g., `post-data.ts`, `api-client.ts`)
+
 ## Git Rules
 
 - 반드시 **lbo728** 계정으로 커밋, 푸시, PR을 진행해야해.

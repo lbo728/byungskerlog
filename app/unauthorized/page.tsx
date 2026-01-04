@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useStackApp } from "@stackframe/stack";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 export default function UnauthorizedPage() {
   const app = useStackApp();
