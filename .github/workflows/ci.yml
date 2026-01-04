@@ -21,10 +21,7 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
+        run: rm -f package-lock.json && npm install
 
       - name: Run ESLint
         run: npm run lint
@@ -47,10 +44,7 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
+        run: rm -f package-lock.json && npm install
 
       - name: Build application
         run: npm run build
