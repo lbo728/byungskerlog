@@ -8,7 +8,7 @@ export default function PostLoading() {
           <div className="post-main-content max-w-3xl w-full">
             <div className="back-to-posts inline-flex items-center gap-1 text-sm text-muted-foreground mb-6">
               <ArrowLeft className="h-4 w-4" />
-              <div className="h-4 w-12 bg-muted rounded animate-pulse" />
+              <span>Post</span>
             </div>
 
             <article>

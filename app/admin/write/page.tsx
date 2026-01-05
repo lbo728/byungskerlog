@@ -163,8 +163,9 @@ export default function WritePage() {
   });
 
   const handleExit = useCallback(() => {
-    triggerExit("/admin/posts");
-  }, [triggerExit]);
+    const exitPath = draftIdParam ? "/admin/drafts" : "/admin/posts";
+    triggerExit(exitPath);
+  }, [triggerExit, draftIdParam]);
 
   const editor = useEditor({
     extensions: [
@@ -386,7 +387,8 @@ export default function WritePage() {
   const handlePublishSuccess = (slug: string) => {
     clearAutoSave();
     toast.success(isEditMode ? "글이 수정되었습니다." : "글이 발행되었습니다.");
-    router.push(`/posts/${slug}`);
+    const path = modalPostType === "SHORT" ? `/short/${slug}` : `/posts/${slug}`;
+    router.push(path);
     router.refresh();
   };
 

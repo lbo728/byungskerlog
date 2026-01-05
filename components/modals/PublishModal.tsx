@@ -43,13 +43,19 @@ interface PublishModalProps {
 }
 
 function generateSlug(title: string): string {
-  return title
+  const slug = title
     .toLowerCase()
     .replace(/[^a-z0-9가-힣\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "")
     .trim();
+
+  if (!slug) {
+    return `post-${Date.now()}`;
+  }
+
+  return slug;
 }
 
 function useIsMobile() {
@@ -219,7 +225,7 @@ export function PublishModal({
   }, [title, content, tags, postType, excerpt, thumbnailUrl, thumbnailFile, seriesId, isEditMode, postId, draftId, onOpenChange, onPublishSuccess, slug, subSlug]);
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (info.offset.y > DRAG_CLOSE_THRESHOLD) {
+    if (!isPublishing && info.offset.y > DRAG_CLOSE_THRESHOLD) {
       onOpenChange(false);
     }
     setDragY(0);
@@ -377,7 +383,7 @@ export function PublishModal({
               animate={{ opacity: 1 - dragY / 300 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              onClick={() => onOpenChange(false)}
+              onClick={() => !isPublishing && onOpenChange(false)}
             />
             <motion.div
               className="publish-modal-mobile fixed inset-0 z-50 flex flex-col bg-background"
@@ -432,7 +438,7 @@ export function PublishModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(open) => !isPublishing && onOpenChange(open)}>
       <DialogContent className="publish-modal sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>포스트 미리보기</DialogTitle>
