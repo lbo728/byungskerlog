@@ -26,7 +26,6 @@ interface WriteHeaderProps {
   onTempSave: () => void;
   onPublish: () => void;
   onExit: () => void;
-  isEditorFocused?: boolean;
 }
 
 export function WriteHeader({
@@ -37,17 +36,15 @@ export function WriteHeader({
   onTempSave,
   onPublish,
   onExit,
-  isEditorFocused = false,
 }: WriteHeaderProps) {
   const pathname = usePathname();
   const isScrollVisible = useScrollHeader({ threshold: 30 });
-  const shouldShowHeader = isScrollVisible && !isEditorFocused;
 
   return (
     <header
       className={cn(
         "write-header-wrapper fixed top-0 left-0 right-0 z-50 w-full bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 transition-transform duration-300 ease-in-out",
-        !shouldShowHeader && "-translate-y-full"
+        !isScrollVisible && "-translate-y-full"
       )}
     >
       <div className="write-main-header border-b border-border/40">

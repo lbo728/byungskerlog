@@ -66,7 +66,6 @@ export default function WritePage() {
   const [isExcerptInitialized, setIsExcerptInitialized] = useState(false);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
-  const [isEditorFocused, setIsEditorFocused] = useState(false);
   const [recoveryDraft, setRecoveryDraft] = useState<LocalDraft | null>(null);
   const [originalContent, setOriginalContent] = useState<{
     title: string;
@@ -216,8 +215,6 @@ export default function WritePage() {
           "prose prose-lg dark:prose-invert max-w-none focus:outline-none p-8 pb-16 min-h-full",
       },
     },
-    onFocus: () => setIsEditorFocused(true),
-    onBlur: () => setIsEditorFocused(false),
   });
 
   const {
@@ -405,7 +402,6 @@ export default function WritePage() {
         onExit={handleExit}
         onTempSave={handleTempSave}
         onPublish={handleOpenPublishModal}
-        isEditorFocused={isEditorFocused}
       />
 
       <div className="container mx-auto max-w-full overflow-x-hidden pt-28">
