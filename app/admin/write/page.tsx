@@ -20,6 +20,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import TiptapLink from "@tiptap/extension-link";
+import Placeholder from "@tiptap/extension-placeholder";
 import { common, createLowlight } from "lowlight";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useTagInput } from "@/hooks/useTagInput";
@@ -189,6 +190,10 @@ export default function WritePage() {
         transformPastedText: true,
         transformCopiedText: true,
         linkify: true,
+      }),
+      Placeholder.configure({
+        placeholder: "내용을 입력하세요...",
+        emptyEditorClass: "is-editor-empty",
       }),
     ],
     content,
