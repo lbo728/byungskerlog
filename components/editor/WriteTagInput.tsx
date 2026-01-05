@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { X } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 
 interface WriteTagInputProps {
@@ -40,10 +41,17 @@ export function WriteTagInput({
         {tags.map((tag, index) => (
           <span
             key={index}
-            onClick={() => onRemoveTag(index)}
-            className="tag-item px-3 py-1 bg-primary/10 text-primary rounded-full text-sm cursor-pointer hover:bg-primary/20 transition-colors"
+            className="tag-item group flex items-center gap-1 pl-3 pr-2 py-1 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 transition-colors"
           >
             {tag}
+            <button
+              type="button"
+              onClick={() => onRemoveTag(index)}
+              className="tag-remove-button p-0.5 rounded-full hover:bg-primary/30 transition-colors"
+              aria-label={`${tag} 태그 삭제`}
+            >
+              <X className="w-3 h-3" />
+            </button>
           </span>
         ))}
       </div>
