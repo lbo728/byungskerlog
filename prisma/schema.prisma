@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,27 +8,22 @@ datasource db {
   directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
-enum PostType {
-  LONG
-  SHORT
-}
-
 model Post {
   id        String     @id @default(cuid())
   slug      String     @unique
-  subSlug   String?    @unique
   title     String
   content   String
   excerpt   String?
-  thumbnail String?
   tags      String[]   @default([])
-  type      PostType   @default(LONG)
   published Boolean    @default(false)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  views     PostView[]
   seriesId  String?
-  series    Series?    @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+  thumbnail String?
+  subSlug   String?    @unique
+  type      PostType   @default(LONG)
+  series    Series?    @relation(fields: [seriesId], references: [id])
+  views     PostView[]
 
   @@index([seriesId])
   @@index([type])
@@ -53,10 +42,10 @@ model Series {
 model PostView {
   id        String   @id @default(cuid())
   postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   viewedAt  DateTime @default(now())
   ipAddress String?
   userAgent String?
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId])
   @@index([viewedAt])
@@ -81,4 +70,9 @@ model Draft {
   updatedAt DateTime @updatedAt
 
   @@index([authorId])
+}
+
+enum PostType {
+  LONG
+  SHORT
 }
