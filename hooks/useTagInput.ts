@@ -29,7 +29,7 @@ export function useTagInput({
   const [tagInput, setTagInput] = useState("");
   const [allTags, setAllTags] = useState<string[]>([]);
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
 
   useEffect(() => {
     const fetchAllTags = async () => {
@@ -66,7 +66,7 @@ export function useTagInput({
       }
       setTagInput("");
       setShowTagSuggestions(false);
-      setSelectedSuggestionIndex(0);
+      setSelectedSuggestionIndex(-1);
     },
     [tags]
   );
@@ -81,21 +81,29 @@ export function useTagInput({
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedSuggestionIndex((prev) =>
-          prev < filteredSuggestions.length - 1 ? prev + 1 : prev
-        );
+        if (showTagSuggestions && filteredSuggestions.length > 0) {
+          setSelectedSuggestionIndex((prev) =>
+            prev < filteredSuggestions.length - 1 ? prev + 1 : prev
+          );
+        }
         return;
       }
 
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : 0));
+        if (showTagSuggestions && filteredSuggestions.length > 0) {
+          setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        }
         return;
       }
 
       if (e.key === "Enter") {
         e.preventDefault();
-        if (showTagSuggestions && filteredSuggestions.length > 0) {
+        if (
+          showTagSuggestions &&
+          selectedSuggestionIndex >= 0 &&
+          filteredSuggestions[selectedSuggestionIndex]
+        ) {
           addTag(filteredSuggestions[selectedSuggestionIndex]);
         } else if (tagInput.trim()) {
           addTag(tagInput);
@@ -105,6 +113,7 @@ export function useTagInput({
 
       if (e.key === "Escape") {
         setShowTagSuggestions(false);
+        setSelectedSuggestionIndex(-1);
         return;
       }
     },
@@ -122,7 +131,7 @@ export function useTagInput({
       const value = e.target.value;
       setTagInput(value);
       setShowTagSuggestions(value.trim().length > 0);
-      setSelectedSuggestionIndex(0);
+      setSelectedSuggestionIndex(-1);
     },
     []
   );
