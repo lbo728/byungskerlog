@@ -8,9 +8,6 @@ export const size = {
 };
 export const contentType = "image/png";
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel.app";
-
 export default async function Image({
   params,
 }: {
@@ -165,8 +162,6 @@ export default async function Image({
     );
   }
 
-  const logoUrl = `${siteUrl}/logo-byungsker.png`;
-
   return new ImageResponse(
     <div
       style={{
@@ -177,17 +172,50 @@ export default async function Image({
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "#000000",
+        gap: "32px",
       }}
     >
-      <img
-        src={logoUrl}
-        alt="Byungsker Blog Logo"
-        width={400}
-        height={186}
+      <svg
+        width="120"
+        height="120"
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect width="100" height="100" rx="20" fill="#3b82f6" />
+        <path
+          d="M25 30h50M25 50h35M25 70h45"
+          stroke="white"
+          strokeWidth="8"
+          strokeLinecap="round"
+        />
+      </svg>
+      <div
         style={{
-          objectFit: "contain",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "8px",
         }}
-      />
+      >
+        <span
+          style={{
+            fontSize: 48,
+            fontWeight: 700,
+            color: "white",
+          }}
+        >
+          Byungsker Log
+        </span>
+        <span
+          style={{
+            fontSize: 24,
+            color: "#a1a1aa",
+          }}
+        >
+          Short Post
+        </span>
+      </div>
     </div>,
     {
       ...size,
