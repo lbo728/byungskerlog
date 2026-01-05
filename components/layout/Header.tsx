@@ -57,7 +57,10 @@ export function Header() {
 
           <nav className="desktop-nav hidden md:flex items-center gap-6">
             {navItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const isActive =
+                pathname === item.href ||
+                pathname.startsWith(`${item.href}/`) ||
+                (item.href === "/short-posts" && pathname.startsWith("/short/"));
               return (
                 <Link
                   key={item.href}
@@ -100,7 +103,10 @@ export function Header() {
               <div className="mobile-menu-content flex flex-col gap-4 mt-4">
                 <div className="nav-section flex flex-col gap-3">
                   {navItems.map((item) => {
-                    const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    const isActive =
+                      pathname === item.href ||
+                      pathname.startsWith(`${item.href}/`) ||
+                      (item.href === "/short-posts" && pathname.startsWith("/short/"));
                     return (
                       <Link
                         key={item.href}
