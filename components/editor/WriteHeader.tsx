@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -41,28 +41,38 @@ export function WriteHeader({
 }: WriteHeaderProps) {
   const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
-  const handleScroll = useCallback(() => {
-    const currentScrollY = window.scrollY;
-    const isAtTop = currentScrollY < 10;
-    const isScrollingDown = currentScrollY > lastScrollY;
-
-    if (isAtTop) {
-      setIsVisible(true);
-    } else if (isScrollingDown) {
-      setIsVisible(true);
-    } else {
-      setIsVisible(false);
-    }
-
-    setLastScrollY(currentScrollY);
-  }, [lastScrollY]);
+  const lastScrollYRef = useRef(0);
+  const ticking = useRef(false);
 
   useEffect(() => {
+    const handleScroll = () => {
+      if (ticking.current) return;
+
+      ticking.current = true;
+      requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
+        const lastScrollY = lastScrollYRef.current;
+        const isAtTop = currentScrollY < 10;
+        const scrollDelta = currentScrollY - lastScrollY;
+        const isScrollingDown = scrollDelta > 5;
+        const isScrollingUp = scrollDelta < -5;
+
+        if (isAtTop) {
+          setIsVisible(true);
+        } else if (isScrollingDown) {
+          setIsVisible(true);
+        } else if (isScrollingUp) {
+          setIsVisible(false);
+        }
+
+        lastScrollYRef.current = currentScrollY;
+        ticking.current = false;
+      });
+    };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+  }, []);
 
   const shouldShowHeader = isVisible && !isEditorFocused;
 
@@ -70,7 +80,7 @@ export function WriteHeader({
     <header
       className={cn(
         "write-header-wrapper fixed top-0 left-0 right-0 z-50 w-full bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 transition-transform duration-300 ease-in-out",
-        !shouldShowHeader && "md:translate-y-0 -translate-y-full"
+        !shouldShowHeader && "-translate-y-full"
       )}
     >
       <div className="write-main-header border-b border-border/40">
