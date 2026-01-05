@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const canonicalUrl = `${siteUrl}/posts/${post.slug}`;
-  const imageUrl = post.thumbnail || `${siteUrl}/og-image.png`;
+  const ogImageUrl = `${siteUrl}/posts/${encodeURIComponent(post.slug)}/opengraph-image`;
   const description = post.excerpt || post.content.replace(/[#*`\n]/g, "").substring(0, 200) + "...";
 
   return {
@@ -74,9 +74,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       tags: post.tags || [],
       images: [
         {
-          url: imageUrl,
-          width: post.thumbnail ? undefined : 1200,
-          height: post.thumbnail ? undefined : 630,
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
           alt: post.title,
         },
       ],
@@ -85,7 +85,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       card: "summary_large_image",
       title: `${post.title} written by Byungsker`,
       description,
-      images: [imageUrl],
+      images: [ogImageUrl],
       creator: "@byungsker",
     },
     alternates: {

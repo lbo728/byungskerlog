@@ -51,6 +51,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const canonicalUrl = `${siteUrl}/short/${post.slug}`;
+  const ogImageUrl = `${siteUrl}/short/${encodeURIComponent(post.slug)}/opengraph-image`;
   const description = post.excerpt || post.content.replace(/[#*`\n]/g, "").substring(0, 200) + "...";
 
   return {
@@ -70,11 +71,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       modifiedTime: post.updatedAt.toISOString(),
       authors: ["이병우 (Byungsker)"],
       tags: post.tags || [],
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${post.title} written by Byungsker`,
       description,
+      images: [ogImageUrl],
       creator: "@byungsker",
     },
     alternates: {
