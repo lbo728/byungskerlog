@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -8,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { VisitorCount } from "@/components/analytics/VisitorCount";
+import { useScrollHeader } from "@/hooks/useScrollHeader";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -40,41 +40,8 @@ export function WriteHeader({
   isEditorFocused = false,
 }: WriteHeaderProps) {
   const pathname = usePathname();
-  const [isVisible, setIsVisible] = useState(true);
-  const lastScrollYRef = useRef(0);
-  const ticking = useRef(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (ticking.current) return;
-
-      ticking.current = true;
-      requestAnimationFrame(() => {
-        const currentScrollY = window.scrollY;
-        const lastScrollY = lastScrollYRef.current;
-        const isAtTop = currentScrollY < 10;
-        const scrollDelta = currentScrollY - lastScrollY;
-        const isScrollingDown = scrollDelta > 5;
-        const isScrollingUp = scrollDelta < -5;
-
-        if (isAtTop) {
-          setIsVisible(true);
-        } else if (isScrollingDown) {
-          setIsVisible(true);
-        } else if (isScrollingUp) {
-          setIsVisible(false);
-        }
-
-        lastScrollYRef.current = currentScrollY;
-        ticking.current = false;
-      });
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const shouldShowHeader = isVisible && !isEditorFocused;
+  const isScrollVisible = useScrollHeader({ threshold: 30 });
+  const shouldShowHeader = isScrollVisible && !isEditorFocused;
 
   return (
     <header

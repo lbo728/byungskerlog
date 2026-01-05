@@ -8,6 +8,7 @@ import { VisitorCount } from "@/components/analytics/VisitorCount";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUser, useStackApp } from "@stackframe/stack";
+import { useScrollHeader } from "@/hooks/useScrollHeader";
 import { Button } from "@/components/ui/Button";
 import { Sheet, SheetContent, SheetHeader, SheetTrigger, SheetClose } from "@/components/ui/Sheet";
 import { PenSquare, LogOut, Menu, FileText, FolderOpen, ChevronDown, ChevronsRight } from "lucide-react";
@@ -20,6 +21,12 @@ export function Header() {
   const app = useStackApp();
   const [isOpen, setIsOpen] = useState(false);
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
+
+  const isDetailPage =
+    (pathname.startsWith("/posts/") && pathname !== "/posts") ||
+    (pathname.startsWith("/short/") && pathname !== "/short");
+
+  const isScrollVisible = useScrollHeader({ threshold: 30, disabled: !isDetailPage });
 
   const isAuthorized = user && user.primaryEmail && ALLOWED_EMAILS.includes(user.primaryEmail);
 
@@ -38,7 +45,12 @@ export function Header() {
   };
 
   return (
-    <header className="header-wrapper sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header
+      className={cn(
+        "header-wrapper sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 transition-transform duration-300 ease-in-out",
+        isDetailPage && !isScrollVisible && "-translate-y-full"
+      )}
+    >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -57,7 +69,10 @@ export function Header() {
 
           <nav className="desktop-nav hidden md:flex items-center gap-6">
             {navItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const isActive =
+                pathname === item.href ||
+                pathname.startsWith(`${item.href}/`) ||
+                (item.href === "/short-posts" && pathname.startsWith("/short/"));
               return (
                 <Link
                   key={item.href}
@@ -100,7 +115,10 @@ export function Header() {
               <div className="mobile-menu-content flex flex-col gap-4 mt-4">
                 <div className="nav-section flex flex-col gap-3">
                   {navItems.map((item) => {
-                    const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    const isActive =
+                      pathname === item.href ||
+                      pathname.startsWith(`${item.href}/`) ||
+                      (item.href === "/short-posts" && pathname.startsWith("/short/"));
                     return (
                       <Link
                         key={item.href}
