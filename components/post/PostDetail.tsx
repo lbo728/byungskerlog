@@ -101,7 +101,6 @@ export function PostDetail({
                       </time>
                     </div>
                   </div>
-                  <PostActions postId={post.id} postTitle={post.title} postSlug={post.slug} postSubSlug={post.subSlug} />
                   {post.series && (
                     <div className="series-badge flex items-center gap-2">
                       <BookOpen className="h-4 w-4 text-emerald-500" />
@@ -117,6 +116,7 @@ export function PostDetail({
                       ))}
                     </div>
                   )}
+                  <PostActions postId={post.id} postTitle={post.title} postSlug={post.slug} postSubSlug={post.subSlug} />
                 </div>
               </header>
 
