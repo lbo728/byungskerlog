@@ -430,7 +430,7 @@ export function PublishModal({
                 <div className="space-y-6 py-4">{modalContent}</div>
               </main>
 
-              <footer className="publish-modal-mobile-footer fixed bottom-0 left-0 right-0 flex gap-2 p-4 bg-background border-t safe-area-bottom">
+              <footer className="publish-modal-mobile-footer fixed bottom-0 left-0 right-0 flex gap-2 p-4 pb-6 bg-background border-t safe-area-bottom">
                 {footerButtons}
               </footer>
             </motion.div>
