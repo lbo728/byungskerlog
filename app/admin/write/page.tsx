@@ -29,14 +29,10 @@ import { useAutoSave } from "@/hooks/useAutoSave";
 import { useExitConfirm } from "@/hooks/useExitConfirm";
 import { useLinkModal } from "@/hooks/useLinkModal";
 import { generateExcerpt } from "@/lib/excerpt";
+import { generateSlug } from "@/lib/utils/slug";
 import { usePost } from "@/hooks/usePost";
 import { useDraft } from "@/hooks/useDrafts";
-import {
-  getDraftFromLocal,
-  clearLocalDraft,
-  hasUnsavedLocalDraft,
-  type LocalDraft,
-} from "@/lib/storage/draft-storage";
+import { getDraftFromLocal, clearLocalDraft, hasUnsavedLocalDraft, type LocalDraft } from "@/lib/storage/draft-storage";
 import { queryKeys } from "@/lib/queryKeys";
 
 const lowlight = createLowlight(common);
@@ -63,6 +59,7 @@ export default function WritePage() {
   const [modalExcerpt, setModalExcerpt] = useState<string>("");
   const [modalSlug, setModalSlug] = useState<string>("");
   const [modalSubSlug, setModalSubSlug] = useState<string>("");
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [isExcerptInitialized, setIsExcerptInitialized] = useState(false);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
@@ -181,8 +178,7 @@ export default function WritePage() {
         autolink: true,
         linkOnPaste: false,
         HTMLAttributes: {
-          class:
-            "text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer",
+          class: "text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer",
         },
       }),
       EmbedCard,
@@ -211,29 +207,18 @@ export default function WritePage() {
     },
     editorProps: {
       attributes: {
-        class:
-          "prose prose-lg dark:prose-invert max-w-none focus:outline-none p-8 pb-16 min-h-full",
+        class: "prose prose-lg dark:prose-invert max-w-none focus:outline-none p-8 pb-16 min-h-full",
       },
     },
   });
 
-  const {
-    isDragging,
-    isUploading,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
-    handleFileSelect,
-  } = useImageUpload({ editor, imageInputRef });
+  const { isDragging, isUploading, handleDragOver, handleDragLeave, handleDrop, handleFileSelect } = useImageUpload({
+    editor,
+    imageInputRef,
+  });
 
-  const {
-    isLinkModalOpen,
-    setIsLinkModalOpen,
-    selectedText,
-    currentLinkUrl,
-    handleLinkSubmit,
-    handleLinkRemove,
-  } = useLinkModal({ editor });
+  const { isLinkModalOpen, setIsLinkModalOpen, selectedText, currentLinkUrl, handleLinkSubmit, handleLinkRemove } =
+    useLinkModal({ editor });
 
   useEffect(() => {
     if (editor && content) {
@@ -345,6 +330,21 @@ export default function WritePage() {
     setRecoveryDraft(null);
   }, []);
 
+  const handleTitleChange = useCallback(
+    (newTitle: string) => {
+      setTitle(newTitle);
+      if (isEditMode && !isSlugManuallyEdited) {
+        setModalSlug(generateSlug(newTitle));
+      }
+    },
+    [isEditMode, isSlugManuallyEdited]
+  );
+
+  const handleSlugChange = useCallback((newSlug: string) => {
+    setModalSlug(newSlug);
+    setIsSlugManuallyEdited(true);
+  }, []);
+
   const handleOpenPublishModal = () => {
     if (!title.trim()) {
       toast.warning("제목을 입력해주세요.");
@@ -361,20 +361,23 @@ export default function WritePage() {
     setIsPublishModalOpen(true);
   };
 
-  const handleThumbnailFileChange = useCallback((file: File | null) => {
-    if (modalThumbnailUrl?.startsWith("blob:")) {
-      URL.revokeObjectURL(modalThumbnailUrl);
-    }
+  const handleThumbnailFileChange = useCallback(
+    (file: File | null) => {
+      if (modalThumbnailUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(modalThumbnailUrl);
+      }
 
-    if (file) {
-      const blobUrl = URL.createObjectURL(file);
-      setModalThumbnailUrl(blobUrl);
-      setModalThumbnailFile(file);
-    } else {
-      setModalThumbnailUrl(null);
-      setModalThumbnailFile(null);
-    }
-  }, [modalThumbnailUrl]);
+      if (file) {
+        const blobUrl = URL.createObjectURL(file);
+        setModalThumbnailUrl(blobUrl);
+        setModalThumbnailFile(file);
+      } else {
+        setModalThumbnailUrl(null);
+        setModalThumbnailFile(null);
+      }
+    },
+    [modalThumbnailUrl]
+  );
 
   const handleThumbnailRemove = useCallback(() => {
     if (modalThumbnailUrl?.startsWith("blob:")) {
@@ -421,7 +424,7 @@ export default function WritePage() {
                   type="text"
                   placeholder="제목을 입력하세요"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => handleTitleChange(e.target.value)}
                   className="title-input text-base font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
                   disabled={isLoading}
                 />
@@ -477,7 +480,7 @@ export default function WritePage() {
         excerpt={modalExcerpt}
         onExcerptChange={setModalExcerpt}
         slug={modalSlug}
-        onSlugChange={setModalSlug}
+        onSlugChange={handleSlugChange}
         subSlug={modalSubSlug}
         onSubSlugChange={setModalSubSlug}
       />
