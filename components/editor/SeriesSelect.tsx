@@ -95,7 +95,7 @@ export function SeriesSelect({ value, onChange, disabled }: SeriesSelectProps) {
         <SelectTrigger className="w-full">
           <SelectValue placeholder="시리즈 선택" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent position="popper" sideOffset={4} className="max-h-[200px]">
           <SelectItem value="none">무분류</SelectItem>
           {series.map((s) => (
             <SelectItem key={s.id} value={s.id}>

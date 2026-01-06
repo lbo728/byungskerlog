@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { PublishModal } from "@/components/modals/PublishModal";
 import { RecoveryModal } from "@/components/modals/RecoveryModal";
 import { ExitConfirmModal } from "@/components/modals/ExitConfirmModal";
+import { ClearConfirmModal } from "@/components/modals/ClearConfirmModal";
 import { EmbedCard } from "@/components/editor/tiptap/EmbedCardExtension";
 import { LinkModal } from "@/components/editor/tiptap/LinkModal";
 import { WriteTocDesktop, WriteFloatingMenu } from "@/components/editor/WriteToc";
@@ -29,14 +30,10 @@ import { useAutoSave } from "@/hooks/useAutoSave";
 import { useExitConfirm } from "@/hooks/useExitConfirm";
 import { useLinkModal } from "@/hooks/useLinkModal";
 import { generateExcerpt } from "@/lib/excerpt";
+import { generateSlug } from "@/lib/utils/slug";
 import { usePost } from "@/hooks/usePost";
 import { useDraft } from "@/hooks/useDrafts";
-import {
-  getDraftFromLocal,
-  clearLocalDraft,
-  hasUnsavedLocalDraft,
-  type LocalDraft,
-} from "@/lib/storage/draft-storage";
+import { getDraftFromLocal, clearLocalDraft, hasUnsavedLocalDraft, type LocalDraft } from "@/lib/storage/draft-storage";
 import { queryKeys } from "@/lib/queryKeys";
 
 const lowlight = createLowlight(common);
@@ -63,9 +60,11 @@ export default function WritePage() {
   const [modalExcerpt, setModalExcerpt] = useState<string>("");
   const [modalSlug, setModalSlug] = useState<string>("");
   const [modalSubSlug, setModalSubSlug] = useState<string>("");
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [isExcerptInitialized, setIsExcerptInitialized] = useState(false);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [recoveryDraft, setRecoveryDraft] = useState<LocalDraft | null>(null);
   const [originalContent, setOriginalContent] = useState<{
     title: string;
@@ -181,8 +180,7 @@ export default function WritePage() {
         autolink: true,
         linkOnPaste: false,
         HTMLAttributes: {
-          class:
-            "text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer",
+          class: "text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer",
         },
       }),
       EmbedCard,
@@ -211,29 +209,18 @@ export default function WritePage() {
     },
     editorProps: {
       attributes: {
-        class:
-          "prose prose-lg dark:prose-invert max-w-none focus:outline-none p-8 pb-16 min-h-full",
+        class: "prose prose-lg dark:prose-invert max-w-none focus:outline-none p-8 pb-16 min-h-full",
       },
     },
   });
 
-  const {
-    isDragging,
-    isUploading,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
-    handleFileSelect,
-  } = useImageUpload({ editor, imageInputRef });
+  const { isDragging, isUploading, handleDragOver, handleDragLeave, handleDrop, handleFileSelect } = useImageUpload({
+    editor,
+    imageInputRef,
+  });
 
-  const {
-    isLinkModalOpen,
-    setIsLinkModalOpen,
-    selectedText,
-    currentLinkUrl,
-    handleLinkSubmit,
-    handleLinkRemove,
-  } = useLinkModal({ editor });
+  const { isLinkModalOpen, setIsLinkModalOpen, selectedText, currentLinkUrl, handleLinkSubmit, handleLinkRemove } =
+    useLinkModal({ editor });
 
   useEffect(() => {
     if (editor && content) {
@@ -345,6 +332,30 @@ export default function WritePage() {
     setRecoveryDraft(null);
   }, []);
 
+  const handleTitleChange = useCallback(
+    (newTitle: string) => {
+      setTitle(newTitle);
+      if (isEditMode && !isSlugManuallyEdited) {
+        setModalSlug(generateSlug(newTitle));
+      }
+    },
+    [isEditMode, isSlugManuallyEdited]
+  );
+
+  const handleSlugChange = useCallback((newSlug: string) => {
+    setModalSlug(newSlug);
+    setIsSlugManuallyEdited(true);
+  }, []);
+
+  const handleClearContent = useCallback(() => {
+    setTitle("");
+    setContent("");
+    setTags([]);
+    editor?.commands.clearContent();
+    setIsClearModalOpen(false);
+    toast.success("내용이 모두 삭제되었습니다.");
+  }, [editor, setTags]);
+
   const handleOpenPublishModal = () => {
     if (!title.trim()) {
       toast.warning("제목을 입력해주세요.");
@@ -361,20 +372,23 @@ export default function WritePage() {
     setIsPublishModalOpen(true);
   };
 
-  const handleThumbnailFileChange = useCallback((file: File | null) => {
-    if (modalThumbnailUrl?.startsWith("blob:")) {
-      URL.revokeObjectURL(modalThumbnailUrl);
-    }
+  const handleThumbnailFileChange = useCallback(
+    (file: File | null) => {
+      if (modalThumbnailUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(modalThumbnailUrl);
+      }
 
-    if (file) {
-      const blobUrl = URL.createObjectURL(file);
-      setModalThumbnailUrl(blobUrl);
-      setModalThumbnailFile(file);
-    } else {
-      setModalThumbnailUrl(null);
-      setModalThumbnailFile(null);
-    }
-  }, [modalThumbnailUrl]);
+      if (file) {
+        const blobUrl = URL.createObjectURL(file);
+        setModalThumbnailUrl(blobUrl);
+        setModalThumbnailFile(file);
+      } else {
+        setModalThumbnailUrl(null);
+        setModalThumbnailFile(null);
+      }
+    },
+    [modalThumbnailUrl]
+  );
 
   const handleThumbnailRemove = useCallback(() => {
     if (modalThumbnailUrl?.startsWith("blob:")) {
@@ -386,6 +400,7 @@ export default function WritePage() {
 
   const handlePublishSuccess = (slug: string) => {
     clearAutoSave();
+    queryClient.invalidateQueries({ queryKey: queryKeys.posts.lists() });
     toast.success(isEditMode ? "글이 수정되었습니다." : "글이 발행되었습니다.");
     const path = modalPostType === "SHORT" ? `/short/${slug}` : `/posts/${slug}`;
     router.push(path);
@@ -421,7 +436,7 @@ export default function WritePage() {
                   type="text"
                   placeholder="제목을 입력하세요"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => handleTitleChange(e.target.value)}
                   className="title-input text-base font-bold border-none p-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
                   disabled={isLoading}
                 />
@@ -450,6 +465,8 @@ export default function WritePage() {
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onFileSelect={handleFileSelect}
+                onClearContent={() => setIsClearModalOpen(true)}
+                hasContent={!!content.trim()}
               />
             </div>
           </div>
@@ -477,7 +494,7 @@ export default function WritePage() {
         excerpt={modalExcerpt}
         onExcerptChange={setModalExcerpt}
         slug={modalSlug}
-        onSlugChange={setModalSlug}
+        onSlugChange={handleSlugChange}
         subSlug={modalSubSlug}
         onSubSlugChange={setModalSubSlug}
       />
@@ -508,6 +525,8 @@ export default function WritePage() {
         onCancel={handleCancelExit}
         isEditMode={isEditMode}
       />
+
+      <ClearConfirmModal open={isClearModalOpen} onOpenChange={setIsClearModalOpen} onConfirm={handleClearContent} />
 
       <WriteFloatingMenu
         content={content}

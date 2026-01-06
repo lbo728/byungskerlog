@@ -12,6 +12,7 @@ import { SeriesSelect } from "@/components/editor/SeriesSelect";
 import { optimizeImage } from "@/lib/image-optimizer";
 import { X, Plus } from "lucide-react";
 import { Input } from "@/components/ui/Input";
+import { generateSlug } from "@/lib/utils/slug";
 
 const MAX_THUMBNAIL_SIZE = 500 * 1024;
 const DRAG_CLOSE_THRESHOLD = 100;
@@ -40,22 +41,6 @@ interface PublishModalProps {
   onSlugChange?: (slug: string) => void;
   subSlug?: string;
   onSubSlugChange?: (subSlug: string) => void;
-}
-
-function generateSlug(title: string): string {
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9가-힣\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .trim();
-
-  if (!slug) {
-    return `post-${Date.now()}`;
-  }
-
-  return slug;
 }
 
 function useIsMobile() {
@@ -222,7 +207,23 @@ export function PublishModal({
     } finally {
       setIsPublishing(false);
     }
-  }, [title, content, tags, postType, excerpt, thumbnailUrl, thumbnailFile, seriesId, isEditMode, postId, draftId, onOpenChange, onPublishSuccess, slug, subSlug]);
+  }, [
+    title,
+    content,
+    tags,
+    postType,
+    excerpt,
+    thumbnailUrl,
+    thumbnailFile,
+    seriesId,
+    isEditMode,
+    postId,
+    draftId,
+    onOpenChange,
+    onPublishSuccess,
+    slug,
+    subSlug,
+  ]);
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (!isPublishing && info.offset.y > DRAG_CLOSE_THRESHOLD) {
@@ -249,11 +250,15 @@ export function PublishModal({
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="LONG" id="type-long" />
-            <Label htmlFor="type-long" className="cursor-pointer">Long Post</Label>
+            <Label htmlFor="type-long" className="cursor-pointer">
+              Long Post
+            </Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="SHORT" id="type-short" />
-            <Label htmlFor="type-short" className="cursor-pointer">Short Post</Label>
+            <Label htmlFor="type-short" className="cursor-pointer">
+              Short Post
+            </Label>
           </div>
         </RadioGroup>
       </div>
@@ -422,12 +427,10 @@ export function PublishModal({
               </div>
 
               <main className="publish-modal-mobile-content flex-1 overflow-y-auto px-4 pb-24">
-                <div className="space-y-6 py-4">
-                  {modalContent}
-                </div>
+                <div className="space-y-6 py-4">{modalContent}</div>
               </main>
 
-              <footer className="publish-modal-mobile-footer fixed bottom-0 left-0 right-0 flex gap-2 p-4 bg-background border-t safe-area-bottom">
+              <footer className="publish-modal-mobile-footer fixed bottom-0 left-0 right-0 flex gap-2 p-4 pb-6 bg-background border-t safe-area-bottom">
                 {footerButtons}
               </footer>
             </motion.div>
@@ -444,13 +447,9 @@ export function PublishModal({
           <DialogTitle>포스트 미리보기</DialogTitle>
         </DialogHeader>
 
-        <div className="publish-modal-content grid gap-6 py-4">
-          {modalContent}
-        </div>
+        <div className="publish-modal-content grid gap-6 py-4">{modalContent}</div>
 
-        <DialogFooter className="gap-1">
-          {footerButtons}
-        </DialogFooter>
+        <DialogFooter className="gap-1">{footerButtons}</DialogFooter>
       </DialogContent>
     </Dialog>
   );
