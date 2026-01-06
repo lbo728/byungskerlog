@@ -9,6 +9,7 @@ import { oneDarkCustom } from "@/lib/syntax-theme";
 import { cn } from "@/lib/utils";
 import { LinkCard } from "@/components/common/LinkCard";
 import { Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 import type { Components } from "react-markdown";
 import type { ReactElement, ReactNode } from "react";
 
@@ -56,9 +57,11 @@ function CodeBlock({ code, language }: { code: string; language: string }) {
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
+      toast.success("코드가 복사되었습니다");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy code:", err);
+      toast.error("복사에 실패했습니다");
     }
   };
 
