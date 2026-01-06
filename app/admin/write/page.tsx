@@ -389,6 +389,7 @@ export default function WritePage() {
 
   const handlePublishSuccess = (slug: string) => {
     clearAutoSave();
+    queryClient.invalidateQueries({ queryKey: queryKeys.posts.lists() });
     toast.success(isEditMode ? "글이 수정되었습니다." : "글이 발행되었습니다.");
     const path = modalPostType === "SHORT" ? `/short/${slug}` : `/posts/${slug}`;
     router.push(path);
