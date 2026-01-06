@@ -85,25 +85,23 @@ export function PostDetail({
                   {post.title}
                 </h1>
                 <div className="post-header-meta flex gap-4 flex-col">
-                  <div className="post-meta-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="post-dates flex flex-col gap-1 text-muted-foreground text-sm">
-                      <div className="post-created flex items-center gap-2 flex-wrap">
-                        <span>작성:</span>
-                        <time dateTime={post.createdAt.toISOString()}>
-                          {format(new Date(post.createdAt), "MMMM d, yyyy 'at' HH:mm")}
-                        </time>
-                        <span className="hidden sm:inline">·</span>
-                        <span>{calculateReadingTime(post.content)}</span>
-                      </div>
-                      <div className="post-updated flex items-center gap-2">
-                        <span>최종 수정:</span>
-                        <time dateTime={post.updatedAt.toISOString()}>
-                          {format(new Date(post.updatedAt), "MMMM d, yyyy 'at' HH:mm")}
-                        </time>
-                      </div>
+                  <div className="post-dates flex flex-col gap-1 text-muted-foreground text-sm">
+                    <div className="post-created flex items-center gap-2 flex-wrap">
+                      <span>작성:</span>
+                      <time dateTime={post.createdAt.toISOString()}>
+                        {format(new Date(post.createdAt), "MMMM d, yyyy 'at' HH:mm")}
+                      </time>
+                      <span className="hidden sm:inline">·</span>
+                      <span>{calculateReadingTime(post.content)}</span>
                     </div>
-                    <PostActions postId={post.id} postTitle={post.title} postSlug={post.slug} postSubSlug={post.subSlug} />
+                    <div className="post-updated flex items-center gap-2">
+                      <span>최종 수정:</span>
+                      <time dateTime={post.updatedAt.toISOString()}>
+                        {format(new Date(post.updatedAt), "MMMM d, yyyy 'at' HH:mm")}
+                      </time>
+                    </div>
                   </div>
+                  <PostActions postId={post.id} postTitle={post.title} postSlug={post.slug} postSubSlug={post.subSlug} />
                   {post.series && (
                     <div className="series-badge flex items-center gap-2">
                       <BookOpen className="h-4 w-4 text-emerald-500" />

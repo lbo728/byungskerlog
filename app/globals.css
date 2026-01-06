@@ -570,17 +570,17 @@ body[data-scroll-locked] .write-header-wrapper {
   }
 }
 
-/* Post Detail 모바일 헤딩 사이즈 */
+/* Post Detail 모바일 헤딩 사이즈 (article 내 prose) */
 @media (max-width: 768px) {
-  .prose h1:not(.tiptap-editor h1) {
+  article .prose h1 {
     font-size: 28px !important;
   }
 
-  .prose h2:not(.tiptap-editor h2) {
+  article .prose h2 {
     font-size: 24px !important;
   }
 
-  .prose h3:not(.tiptap-editor h3) {
+  article .prose h3 {
     font-size: 20px !important;
   }
 }
