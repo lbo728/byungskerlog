@@ -107,7 +107,10 @@ export function SubSlugModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sub-slug-modal sm:max-w-[425px]">
+      <DialogContent
+        className="sub-slug-modal sm:max-w-[425px]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <div className="sub-slug-modal-icon flex items-center justify-center w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 mb-2">
             <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
