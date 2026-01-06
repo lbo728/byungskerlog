@@ -5,7 +5,8 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { BookOpen, ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { PostsListSkeleton } from "@/components/skeleton/PostsListSkeleton";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { useUser } from "@stackframe/stack";
 import { useRouter } from "next/navigation";
@@ -44,11 +45,7 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
   };
 
   if (isPending || !data) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PostsListSkeleton />;
   }
 
   const { posts, pagination } = data;

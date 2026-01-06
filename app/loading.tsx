@@ -1,5 +1,9 @@
+import { PostListSkeleton } from "@/components/skeleton/PostListSkeleton";
+
 export default function Loading() {
-  // Stack uses React Suspense, which will render this page while user data is being fetched.
-  // See: https://nextjs.org/docs/app/api-reference/file-conventions/loading
-  return <></>;
+  return (
+    <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <PostListSkeleton />
+    </div>
+  );
 }
