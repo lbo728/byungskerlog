@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { PublishModal } from "@/components/modals/PublishModal";
 import { RecoveryModal } from "@/components/modals/RecoveryModal";
 import { ExitConfirmModal } from "@/components/modals/ExitConfirmModal";
+import { ClearConfirmModal } from "@/components/modals/ClearConfirmModal";
 import { EmbedCard } from "@/components/editor/tiptap/EmbedCardExtension";
 import { LinkModal } from "@/components/editor/tiptap/LinkModal";
 import { WriteTocDesktop, WriteFloatingMenu } from "@/components/editor/WriteToc";
@@ -63,6 +64,7 @@ export default function WritePage() {
   const [isExcerptInitialized, setIsExcerptInitialized] = useState(false);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [recoveryDraft, setRecoveryDraft] = useState<LocalDraft | null>(null);
   const [originalContent, setOriginalContent] = useState<{
     title: string;
@@ -345,6 +347,15 @@ export default function WritePage() {
     setIsSlugManuallyEdited(true);
   }, []);
 
+  const handleClearContent = useCallback(() => {
+    setTitle("");
+    setContent("");
+    setTags([]);
+    editor?.commands.clearContent();
+    setIsClearModalOpen(false);
+    toast.success("내용이 모두 삭제되었습니다.");
+  }, [editor, setTags]);
+
   const handleOpenPublishModal = () => {
     if (!title.trim()) {
       toast.warning("제목을 입력해주세요.");
@@ -454,6 +465,8 @@ export default function WritePage() {
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onFileSelect={handleFileSelect}
+                onClearContent={() => setIsClearModalOpen(true)}
+                hasContent={!!content.trim()}
               />
             </div>
           </div>
@@ -512,6 +525,8 @@ export default function WritePage() {
         onCancel={handleCancelExit}
         isEditMode={isEditMode}
       />
+
+      <ClearConfirmModal open={isClearModalOpen} onOpenChange={setIsClearModalOpen} onConfirm={handleClearContent} />
 
       <WriteFloatingMenu
         content={content}
