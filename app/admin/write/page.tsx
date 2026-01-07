@@ -21,6 +21,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import TiptapLink from "@tiptap/extension-link";
+import TiptapImage from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import { common, createLowlight } from "lowlight";
 import { useImageUpload } from "@/hooks/useImageUpload";
@@ -181,6 +182,13 @@ export default function WritePage() {
         linkOnPaste: false,
         HTMLAttributes: {
           class: "text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer",
+        },
+      }),
+      TiptapImage.configure({
+        inline: false,
+        allowBase64: false,
+        HTMLAttributes: {
+          class: "rounded-lg shadow-md my-6 max-w-full h-auto",
         },
       }),
       EmbedCard,
