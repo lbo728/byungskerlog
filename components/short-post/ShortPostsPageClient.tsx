@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/Button";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { ShortPostsSkeleton } from "@/components/skeleton/ShortPostsSkeleton";
 import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { useUser } from "@stackframe/stack";
@@ -42,24 +42,11 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
     router.push(`/admin/write?id=${postId}`);
   };
 
-  if (isPending || !data) {
-    return (
-      <ul className="short-posts-list divide-y divide-border">
-        {Array.from({ length: 10 }).map((_, i) => (
-          <li key={i} className="short-post-item py-4">
-            <div className="short-post-row flex items-center gap-4">
-              <Skeleton className="h-4 w-[85px] shrink-0" />
-              <Skeleton className="h-5 flex-1" />
-              <Skeleton className="h-4 w-16 shrink-0 hidden sm:block" />
-              <div className="hidden md:flex items-center gap-1.5 shrink-0">
-                <Skeleton className="h-5 w-12 rounded-full" />
-                <Skeleton className="h-5 w-12 rounded-full" />
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-    );
+  if (!data) {
+    if (isPending) {
+      return <ShortPostsSkeleton />;
+    }
+    return null;
   }
 
   const { posts, pagination } = data;
@@ -114,8 +101,9 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
                   </div>
                 )}
 
+                {/* Desktop Admin Actions */}
                 {user && (
-                  <div className="short-post-actions flex items-center gap-1 shrink-0">
+                  <div className="short-post-actions items-center gap-1 shrink-0 hidden sm:flex">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -160,6 +148,28 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
                   </>
                 )}
               </div>
+
+              {/* Mobile Admin Actions - Below Tags */}
+              {user && (
+                <div className="short-post-mobile-actions flex items-center gap-1 mt-2 ml-[101px] sm:hidden">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={(e) => handleEdit(post.id, e)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    onClick={(e) => handleDelete(post.id, post.title, e)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
             </Link>
           </li>
         ))}

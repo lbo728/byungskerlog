@@ -1,5 +1,6 @@
-import { prisma } from "@/lib/prisma";
-import { PostListClient } from "@/components/post/PostListClient";
+import { Suspense } from "react";
+import { PostListLoader } from "@/components/post/PostListLoader";
+import { PostListSkeleton } from "@/components/skeleton/PostListSkeleton";
 import { AdSense } from "@/components/seo/Adsense";
 import type { Metadata } from "next";
 
@@ -18,48 +19,15 @@ export const metadata: Metadata = {
   },
 };
 
-async function getPosts() {
-  try {
-    const posts = await prisma.post.findMany({
-      where: { published: true },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        excerpt: true,
-        content: true,
-        thumbnail: true,
-        tags: true,
-        type: true,
-        createdAt: true,
-        updatedAt: true,
-        series: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
-      },
-    });
-    return posts;
-  } catch {
-    return [];
-  }
-}
-
-export default async function Home() {
-  const posts = await getPosts();
-
+export default function Home() {
   return (
     <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      {/* Top Ad */}
       <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP || ""} className="mb-8" />
 
-      <PostListClient initialData={posts} />
+      <Suspense fallback={<PostListSkeleton />}>
+        <PostListLoader />
+      </Suspense>
 
-      {/* Bottom Ad */}
       <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM || ""} className="mt-8" />
     </div>
   );

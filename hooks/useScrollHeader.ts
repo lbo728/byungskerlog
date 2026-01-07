@@ -16,7 +16,6 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
 
   useEffect(() => {
     if (disabled) {
-      setIsVisible(true);
       return;
     }
 
@@ -57,5 +56,5 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [threshold, disabled]);
 
-  return isVisible;
+  return disabled ? true : isVisible;
 }

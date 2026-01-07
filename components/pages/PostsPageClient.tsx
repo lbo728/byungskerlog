@@ -5,7 +5,8 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { BookOpen, ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { PostsListSkeleton } from "@/components/skeleton/PostsListSkeleton";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { useUser } from "@stackframe/stack";
 import { useRouter } from "next/navigation";
@@ -43,12 +44,11 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
     router.push(`/admin/write?id=${postId}`);
   };
 
-  if (isPending || !data) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+  if (!data) {
+    if (isPending) {
+      return <PostsListSkeleton />;
+    }
+    return null;
   }
 
   const { posts, pagination } = data;
@@ -97,22 +97,41 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
                       <span>{calculateReadingTime(post.content)}</span>
                     </div>
 
-                    {/* Tags */}
-                    {post.tags && post.tags.length > 0 && (
-                      <div className="post-item-tags flex flex-wrap gap-1.5 mt-3">
-                        {post.tags.slice(0, 3).map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-0.5 bg-muted text-muted-foreground rounded text-xs"
+                    {/* Tags & Admin Actions Row */}
+                    <div className="post-item-tags-row flex items-center gap-1.5 mt-3">
+                      {post.tags && post.tags.length > 0 && (
+                        <div className="post-item-tags flex flex-wrap gap-1.5">
+                          {post.tags.slice(0, 3).map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-0.5 bg-muted text-muted-foreground rounded text-xs"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                          {post.tags.length > 3 && (
+                            <span className="text-xs text-muted-foreground">+{post.tags.length - 3}</span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Admin Actions - Right of Tags */}
+                      {user && (
+                        <div className="post-item-actions flex items-center gap-1 ml-auto">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => handleEdit(post.id, e)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={(e) => handleDelete(post.id, post.title, e)}
                           >
-                            {tag}
-                          </span>
-                        ))}
-                        {post.tags.length > 3 && (
-                          <span className="text-xs text-muted-foreground">+{post.tags.length - 3}</span>
-                        )}
-                      </div>
-                    )}
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Thumbnail */}
@@ -127,23 +146,6 @@ export function PostsPageClient({ initialData, currentPage }: PostsPageClientPro
                           sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, 144px"
                         />
                       </div>
-                    </div>
-                  )}
-
-                  {/* Admin Actions */}
-                  {user && (
-                    <div className="post-item-actions flex flex-col gap-1 flex-shrink-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEdit(post.id, e)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={(e) => handleDelete(post.id, post.title, e)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   )}
                 </div>

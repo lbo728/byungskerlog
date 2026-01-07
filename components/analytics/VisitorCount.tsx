@@ -5,6 +5,7 @@ import { useUser } from "@stackframe/stack";
 import { Users } from "lucide-react";
 import { queryKeys } from "@/lib/queryKeys";
 import { apiClient } from "@/lib/api/client";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 interface VisitorStats {
   today: number;
@@ -31,8 +32,15 @@ export function VisitorCount() {
   // Don't render if user is not logged in
   if (!user) return null;
 
-  // Don't render while loading
-  if (isLoading) return null;
+  // Show skeleton while loading (icon always visible)
+  if (isLoading) {
+    return (
+      <div className="visitor-count-skeleton flex items-center gap-2 text-xs text-muted-foreground pl-4">
+        <Users className="h-3.5 w-3.5" />
+        <Skeleton className="h-4 w-[140px]" />
+      </div>
+    );
+  }
 
   // Don't render if stats failed to load
   if (!stats) return null;

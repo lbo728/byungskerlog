@@ -117,6 +117,7 @@ export function PostDetail({
                       ))}
                     </div>
                   )}
+                  <PostActions postId={post.id} postTitle={post.title} postSlug={post.slug} postSubSlug={post.subSlug} />
                 </div>
               </header>
 
