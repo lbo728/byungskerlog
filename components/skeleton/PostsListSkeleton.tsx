@@ -1,8 +1,19 @@
 import { Skeleton } from "@/components/ui/Skeleton";
 
-export function PostsListSkeleton() {
+interface PostsListSkeletonProps {
+  showHeader?: boolean;
+}
+
+export function PostsListSkeleton({ showHeader = false }: PostsListSkeletonProps) {
   return (
-    <div className="post-list-grid grid gap-0 divide-y divide-border">
+    <>
+      {showHeader && (
+        <div className="posts-header flex items-baseline gap-3 mb-8">
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-6 w-8" />
+        </div>
+      )}
+      <div className="post-list-grid grid gap-0 divide-y divide-border">
       {Array.from({ length: 10 }).map((_, i) => (
         <article key={i} className="post-item py-6">
           <div className="post-item-inner flex gap-4 sm:gap-6">
@@ -28,6 +39,7 @@ export function PostsListSkeleton() {
           </div>
         </article>
       ))}
-    </div>
+      </div>
+    </>
   );
 }

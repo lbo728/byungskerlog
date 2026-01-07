@@ -1,14 +1,10 @@
+import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { PostDetail } from "@/components/post/PostDetail";
-import {
-  getPost,
-  getSeriesPosts,
-  getPrevNextPosts,
-  getRelatedPosts,
-  getShortPostsNav,
-} from "@/lib/post-data";
+import { PostDetailLoader } from "@/components/post/PostDetailLoader";
+import { PostDetailSkeleton } from "@/components/skeleton/PostDetailSkeleton";
+import { getPost } from "@/lib/post-data";
 
 export const revalidate = 3600;
 
@@ -106,31 +102,9 @@ export default async function PostPage({
     notFound();
   }
 
-  const seriesPosts = await getSeriesPosts(post.seriesId);
-  const { prevPost, nextPost } = await getPrevNextPosts(
-    post.createdAt,
-    post.seriesId,
-    post.slug,
-    false
-  );
-  const relatedPosts = await getRelatedPosts(post.tags || [], post.slug, false);
-  const { prevShortPost, nextShortPost } = await getShortPostsNav(
-    post.createdAt,
-    post.slug,
-    post.type
-  );
-
   return (
-    <PostDetail
-      post={post}
-      slug={slug}
-      seriesPosts={seriesPosts}
-      prevPost={prevPost}
-      nextPost={nextPost}
-      relatedPosts={relatedPosts}
-      prevShortPost={prevShortPost}
-      nextShortPost={nextShortPost}
-      isFromShort={false}
-    />
+    <Suspense fallback={<PostDetailSkeleton />}>
+      <PostDetailLoader slug={slug} isFromShort={false} />
+    </Suspense>
   );
 }

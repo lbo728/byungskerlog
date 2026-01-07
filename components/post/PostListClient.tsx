@@ -47,11 +47,10 @@ export function PostListClient({ initialData }: PostListClientProps) {
     router.push(`/admin/write?id=${postId}`);
   };
 
-  if (isPending) {
-    return <PostListSkeleton />;
-  }
-
   if (!posts || posts.length === 0) {
+    if (isPending) {
+      return <PostListSkeleton />;
+    }
     return (
       <div className="text-center py-20">
         <p className="text-xl text-muted-foreground">아직 작성된 포스트가 없습니다.</p>

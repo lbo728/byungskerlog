@@ -42,8 +42,11 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
     router.push(`/admin/write?id=${postId}`);
   };
 
-  if (isPending || !data) {
-    return <ShortPostsSkeleton />;
+  if (!data) {
+    if (isPending) {
+      return <ShortPostsSkeleton />;
+    }
+    return null;
   }
 
   const { posts, pagination } = data;
@@ -98,8 +101,9 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
                   </div>
                 )}
 
+                {/* Desktop Admin Actions */}
                 {user && (
-                  <div className="short-post-actions flex items-center gap-1 shrink-0">
+                  <div className="short-post-actions items-center gap-1 shrink-0 hidden sm:flex">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -144,6 +148,28 @@ export function ShortPostsPageClient({ initialData, currentPage }: ShortPostsPag
                   </>
                 )}
               </div>
+
+              {/* Mobile Admin Actions - Below Tags */}
+              {user && (
+                <div className="short-post-mobile-actions flex items-center gap-1 mt-2 ml-[101px] sm:hidden">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={(e) => handleEdit(post.id, e)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    onClick={(e) => handleDelete(post.id, post.title, e)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
             </Link>
           </li>
         ))}
