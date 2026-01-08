@@ -11,6 +11,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import TiptapLink from "@tiptap/extension-link";
+import TiptapImage from "@tiptap/extension-image";
 import { common, createLowlight } from "lowlight";
 import { EmbedCard } from "@/components/editor/tiptap/EmbedCardExtension";
 import { LinkModal } from "@/components/editor/tiptap/LinkModal";
@@ -48,8 +49,14 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
         autolink: true,
         linkOnPaste: false,
         HTMLAttributes: {
-          class:
-            "text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer",
+          class: "text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer",
+        },
+      }),
+      TiptapImage.configure({
+        inline: false,
+        allowBase64: false,
+        HTMLAttributes: {
+          class: "rounded-lg shadow-md my-6 max-w-full h-auto",
         },
       }),
       EmbedCard,
@@ -74,8 +81,7 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
     },
     editorProps: {
       attributes: {
-        class:
-          "prose prose-lg dark:prose-invert max-w-none focus:outline-none p-6 min-h-full",
+        class: "prose prose-lg dark:prose-invert max-w-none focus:outline-none p-6 min-h-full",
       },
     },
     onCreate: () => {
@@ -83,23 +89,13 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
     },
   });
 
-  const {
-    isDragging,
-    isUploading,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
-    handleFileSelect,
-  } = useImageUpload({ editor, imageInputRef });
+  const { isDragging, isUploading, handleDragOver, handleDragLeave, handleDrop, handleFileSelect } = useImageUpload({
+    editor,
+    imageInputRef,
+  });
 
-  const {
-    isLinkModalOpen,
-    setIsLinkModalOpen,
-    selectedText,
-    currentLinkUrl,
-    handleLinkSubmit,
-    handleLinkRemove,
-  } = useLinkModal({ editor });
+  const { isLinkModalOpen, setIsLinkModalOpen, selectedText, currentLinkUrl, handleLinkSubmit, handleLinkRemove } =
+    useLinkModal({ editor });
 
   useEffect(() => {
     if (open) {
@@ -219,22 +215,15 @@ export function AboutEditModal({ open, onOpenChange }: AboutEditModalProps) {
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              <EditorContent
-                editor={editor}
-                className="tiptap-editor h-full"
-              />
+              <EditorContent editor={editor} className="tiptap-editor h-full" />
               {isDragging && (
                 <div className="absolute inset-0 flex items-center justify-center bg-primary/10 pointer-events-none z-10">
-                  <div className="text-primary font-medium text-lg">
-                    이미지를 여기에 놓으세요
-                  </div>
+                  <div className="text-primary font-medium text-lg">이미지를 여기에 놓으세요</div>
                 </div>
               )}
               {isUploading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-                  <div className="text-muted-foreground font-medium">
-                    이미지 업로드 중...
-                  </div>
+                  <div className="text-muted-foreground font-medium">이미지 업로드 중...</div>
                 </div>
               )}
               <input
