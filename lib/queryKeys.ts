@@ -10,6 +10,7 @@ export interface AdminPostsFilters {
   sortBy?: string;
   startDate?: string;
   endDate?: string;
+  search?: string;
 }
 
 export const queryKeys = {
@@ -26,8 +27,7 @@ export const queryKeys = {
     detail: (slug: string) => [...queryKeys.posts.details(), slug] as const,
     detailById: (id: string) => [...queryKeys.posts.details(), "id", id] as const,
     adminLists: () => [...queryKeys.posts.all, "admin"] as const,
-    adminList: (filters: AdminPostsFilters) =>
-      [...queryKeys.posts.adminLists(), filters] as const,
+    adminList: (filters: AdminPostsFilters) => [...queryKeys.posts.adminLists(), filters] as const,
   },
 
   shortPosts: {

@@ -76,3 +76,13 @@ enum PostType {
   LONG
   SHORT
 }
+
+model CustomSnippet {
+  id        String   @id @default(cuid())
+  name      String
+  content   String
+  shortcut  String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -40,6 +40,10 @@ async function fetchAdminPosts(filters: AdminPostsFilters): Promise<AdminPostsDa
     params.set("endDate", filters.endDate);
   }
 
+  if (filters.search) {
+    params.set("search", filters.search);
+  }
+
   return apiClient.get<AdminPostsData>(`/api/posts?${params}`);
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
@@ -8,8 +8,25 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { ArrowLeft, Pencil, Trash2, Plus, X, BookOpen, Check, BarChart3, TrendingUp, Eye } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  Plus,
+  X,
+  BookOpen,
+  Check,
+  BarChart3,
+  TrendingUp,
+  Eye,
+  Square,
+  CheckSquare,
+  Globe,
+  GlobeLock,
+  Search,
+  Type,
+} from "lucide-react";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,11 +39,24 @@ import {
 } from "@/components/ui/AlertDialog";
 import type { Post, Series } from "@/lib/types/post";
 import { SlugEditModal } from "@/components/modals/SlugEditModal";
+import { BulkActionConfirmModal } from "@/components/modals/BulkActionConfirmModal";
+import { Highlight } from "@/components/ui/Highlight";
 import { useAdminPosts } from "@/hooks/useAdminPosts";
 import { useSeries } from "@/hooks/useSeries";
 import { useDeletePost } from "@/hooks/usePostMutations";
+import { useBulkPostAction } from "@/hooks/useBulkPostMutations";
 import { useCreateSeries, useUpdateSeries, useDeleteSeries } from "@/hooks/useSeriesMutations";
+import { useDebounce } from "@/hooks/useDebounce";
 import type { AdminPostsFilters } from "@/lib/queryKeys";
+import { CategoryChart } from "@/components/charts/CategoryChart";
+import { ViewsChart } from "@/components/charts/ViewsChart";
+import { CountChart } from "@/components/charts/CountChart";
+import { useCategoryAnalytics, useViewsAnalytics, useCountAnalytics } from "@/hooks/usePostAnalytics";
+import { useSnippets, useCreateSnippet, useUpdateSnippet, useDeleteSnippet } from "@/hooks/useSnippets";
+import { ShortcutInput } from "@/components/editor/ShortcutInput";
+import type { CustomSnippet } from "@/lib/types/snippet";
+
+type BulkAction = "delete" | "publish" | "unpublish";
 
 export default function AdminPostsPage() {
   useUser({ or: "redirect" });
@@ -48,9 +78,33 @@ export default function AdminPostsPage() {
   const [sortBy, setSortBy] = useState<string>("desc");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const [chartPeriod, setChartPeriod] = useState<"daily" | "weekly" | "monthly">("daily");
-  const [analyticsData] = useState<{ date: string; views: number }[]>([]);
+  const [analyticsTab, setAnalyticsTab] = useState<"category" | "views" | "count">("category");
+  const [analyticsStartDate, setAnalyticsStartDate] = useState<string>(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().split("T")[0];
+  });
+  const [analyticsEndDate, setAnalyticsEndDate] = useState<string>(() => {
+    return new Date().toISOString().split("T")[0];
+  });
+  const [analyticsType, setAnalyticsType] = useState<"all" | "LONG" | "SHORT">("all");
+
+  const [selectedPostIds, setSelectedPostIds] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState<BulkAction | null>(null);
+  const [bulkActionDialogOpen, setBulkActionDialogOpen] = useState(false);
+
+  const [newSnippetName, setNewSnippetName] = useState("");
+  const [newSnippetContent, setNewSnippetContent] = useState("");
+  const [newSnippetShortcut, setNewSnippetShortcut] = useState("");
+  const [editingSnippetId, setEditingSnippetId] = useState<string | null>(null);
+  const [editingSnippetName, setEditingSnippetName] = useState("");
+  const [editingSnippetContent, setEditingSnippetContent] = useState("");
+  const [editingSnippetShortcut, setEditingSnippetShortcut] = useState("");
+  const [deleteSnippetDialogOpen, setDeleteSnippetDialogOpen] = useState(false);
+  const [snippetToDelete, setSnippetToDelete] = useState<CustomSnippet | null>(null);
 
   const filters: AdminPostsFilters = useMemo(
     () => ({
@@ -59,8 +113,9 @@ export default function AdminPostsPage() {
       sortBy,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
+      search: debouncedSearch || undefined,
     }),
-    [selectedTag, selectedType, sortBy, startDate, endDate]
+    [selectedTag, selectedType, sortBy, startDate, endDate, debouncedSearch]
   );
 
   const { data: postsData, isLoading: isLoadingPosts } = useAdminPosts({ filters });
@@ -68,7 +123,30 @@ export default function AdminPostsPage() {
     enabled: activeTab === "series",
   });
 
+  const analyticsOptions = {
+    startDate: analyticsStartDate,
+    endDate: analyticsEndDate,
+    type: analyticsType,
+    enabled: activeTab === "analytics",
+  };
+
+  const { data: categoryData = [], isLoading: isLoadingCategory } = useCategoryAnalytics(analyticsOptions);
+  const { data: viewsData = [], isLoading: isLoadingViews } = useViewsAnalytics(analyticsOptions);
+  const { data: countData = [], isLoading: isLoadingCount } = useCountAnalytics(analyticsOptions);
+
+  const { data: snippets = [], isLoading: isLoadingSnippets } = useSnippets();
+  const createSnippetMutation = useCreateSnippet();
+  const updateSnippetMutation = useUpdateSnippet();
+  const deleteSnippetMutation = useDeleteSnippet();
+
   const deletePostMutation = useDeletePost();
+  const bulkActionMutation = useBulkPostAction({
+    onSuccess: () => {
+      setSelectedPostIds(new Set());
+      setBulkActionDialogOpen(false);
+      setBulkAction(null);
+    },
+  });
   const createSeriesMutation = useCreateSeries();
   const updateSeriesMutation = useUpdateSeries();
   const deleteSeriesMutation = useDeleteSeries();
@@ -82,6 +160,44 @@ export default function AdminPostsPage() {
     });
     return Array.from(tags).sort();
   }, [posts]);
+
+  const selectedPosts = useMemo(() => posts.filter((post) => selectedPostIds.has(post.id)), [posts, selectedPostIds]);
+
+  const isAllSelected = posts.length > 0 && selectedPostIds.size === posts.length;
+  const isSomeSelected = selectedPostIds.size > 0;
+
+  const handleToggleAll = useCallback(() => {
+    if (isAllSelected) {
+      setSelectedPostIds(new Set());
+    } else {
+      setSelectedPostIds(new Set(posts.map((post) => post.id)));
+    }
+  }, [isAllSelected, posts]);
+
+  const handleTogglePost = useCallback((postId: string) => {
+    setSelectedPostIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleBulkActionClick = useCallback((action: BulkAction) => {
+    setBulkAction(action);
+    setBulkActionDialogOpen(true);
+  }, []);
+
+  const handleBulkActionConfirm = useCallback(() => {
+    if (!bulkAction || selectedPostIds.size === 0) return;
+    bulkActionMutation.mutate({
+      action: bulkAction,
+      postIds: Array.from(selectedPostIds),
+    });
+  }, [bulkAction, selectedPostIds, bulkActionMutation]);
 
   const handleDeleteClick = (post: Post) => {
     setPostToDelete(post);
@@ -99,6 +215,7 @@ export default function AdminPostsPage() {
     setSortBy("desc");
     setStartDate("");
     setEndDate("");
+    setSearchQuery("");
   };
 
   const handleDeleteConfirm = async () => {
@@ -176,6 +293,76 @@ export default function AdminPostsPage() {
     }
   };
 
+  const handleCreateSnippet = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSnippetName.trim() || !newSnippetContent.trim()) return;
+
+    try {
+      await createSnippetMutation.mutateAsync({
+        name: newSnippetName.trim(),
+        content: newSnippetContent.trim(),
+        shortcut: newSnippetShortcut.trim() || null,
+      });
+      toast.success("스니펫이 추가되었습니다.");
+      setNewSnippetName("");
+      setNewSnippetContent("");
+      setNewSnippetShortcut("");
+    } catch {
+      toast.error("스니펫 추가에 실패했습니다.");
+    }
+  };
+
+  const handleStartEditSnippet = (snippet: CustomSnippet) => {
+    setEditingSnippetId(snippet.id);
+    setEditingSnippetName(snippet.name);
+    setEditingSnippetContent(snippet.content);
+    setEditingSnippetShortcut(snippet.shortcut || "");
+  };
+
+  const handleCancelEditSnippet = () => {
+    setEditingSnippetId(null);
+    setEditingSnippetName("");
+    setEditingSnippetContent("");
+    setEditingSnippetShortcut("");
+  };
+
+  const handleUpdateSnippet = async (id: string) => {
+    if (!editingSnippetName.trim() || !editingSnippetContent.trim()) return;
+
+    try {
+      await updateSnippetMutation.mutateAsync({
+        id,
+        data: {
+          name: editingSnippetName.trim(),
+          content: editingSnippetContent.trim(),
+          shortcut: editingSnippetShortcut.trim() || null,
+        },
+      });
+      toast.success("스니펫이 수정되었습니다.");
+      handleCancelEditSnippet();
+    } catch {
+      toast.error("스니펫 수정에 실패했습니다.");
+    }
+  };
+
+  const handleDeleteSnippetClick = (snippet: CustomSnippet) => {
+    setSnippetToDelete(snippet);
+    setDeleteSnippetDialogOpen(true);
+  };
+
+  const handleDeleteSnippetConfirm = async () => {
+    if (!snippetToDelete) return;
+
+    try {
+      await deleteSnippetMutation.mutateAsync(snippetToDelete.id);
+      toast.success("스니펫이 삭제되었습니다.");
+      setDeleteSnippetDialogOpen(false);
+      setSnippetToDelete(null);
+    } catch {
+      toast.error("스니펫 삭제에 실패했습니다.");
+    }
+  };
+
   return (
     <div className="admin-posts-page min-h-screen bg-background">
       <header className="admin-header sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
@@ -217,6 +404,13 @@ export default function AdminPostsPage() {
                 <BarChart3 className="h-4 w-4 mr-2" />
                 분석
               </TabsTrigger>
+              <TabsTrigger
+                value="snippets"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4"
+              >
+                <Type className="h-4 w-4 mr-2" />
+                스니펫
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -227,6 +421,20 @@ export default function AdminPostsPage() {
           <div className="posts-filters border-b border-border bg-muted/30">
             <div className="container mx-auto px-4 py-4">
               <div className="flex flex-wrap gap-4 items-end">
+                <div className="flex-[2] min-w-[250px]">
+                  <label className="text-sm font-medium mb-2 block">검색</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="제목, 태그, 시리즈, 날짜(YYYY-MM-DD)..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex-1 min-w-[200px]">
                   <label className="text-sm font-medium mb-2 block">태그</label>
                   <Select value={selectedTag} onValueChange={setSelectedTag}>
@@ -291,6 +499,61 @@ export default function AdminPostsPage() {
             </div>
           </div>
 
+          {isSomeSelected && (
+            <div className="bulk-action-toolbar border-b border-border bg-primary/5">
+              <div className="container mx-auto px-4 py-3">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleToggleAll}
+                      className="p-1 hover:bg-muted rounded transition-colors"
+                      aria-label={isAllSelected ? "전체 선택 해제" : "전체 선택"}
+                    >
+                      {isAllSelected ? (
+                        <CheckSquare className="h-5 w-5 text-primary" />
+                      ) : (
+                        <Square className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </button>
+                    <span className="text-sm font-medium">{selectedPostIds.size}개 선택됨</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleBulkActionClick("publish")}
+                      className="gap-2"
+                    >
+                      <Globe className="h-4 w-4" />
+                      공개
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleBulkActionClick("unpublish")}
+                      className="gap-2"
+                    >
+                      <GlobeLock className="h-4 w-4" />
+                      비공개
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleBulkActionClick("delete")}
+                      className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      삭제
+                    </Button>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedPostIds(new Set())}>
+                    선택 해제
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="posts-content container mx-auto px-4 py-8">
             {isLoadingPosts ? (
               <div className="text-center py-12">
@@ -306,59 +569,80 @@ export default function AdminPostsPage() {
                 {posts.map((post) => (
                   <div
                     key={post.id}
-                    className="post-card border border-border rounded-lg p-4 sm:p-6 hover:border-primary/50 transition-colors"
+                    className={`post-card border rounded-lg p-4 sm:p-6 transition-colors ${
+                      selectedPostIds.has(post.id)
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                      <div className="post-card-content flex-1 min-w-0">
-                        <div className="post-card-header flex flex-wrap items-center gap-2 mb-2">
-                          <h2 className="text-lg sm:text-xl font-semibold truncate max-w-full">{post.title}</h2>
-                          {post.type === "SHORT" && (
-                            <span className="px-2 py-0.5 text-xs bg-violet-500/10 text-violet-500 rounded">Short</span>
+                      <div className="post-card-checkbox-wrapper flex gap-3 items-start">
+                        <button
+                          onClick={() => handleTogglePost(post.id)}
+                          className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0 mt-0.5"
+                          aria-label={selectedPostIds.has(post.id) ? "선택 해제" : "선택"}
+                        >
+                          {selectedPostIds.has(post.id) ? (
+                            <CheckSquare className="h-5 w-5 text-primary" />
+                          ) : (
+                            <Square className="h-5 w-5 text-muted-foreground" />
                           )}
-                          {!post.published && (
-                            <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded">비공개</span>
-                          )}
-                        </div>
-                        {post.excerpt && (
-                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{post.excerpt}</p>
-                        )}
-                        <div className="post-card-meta flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
-                          <span>{formatDate(post.createdAt)}</span>
-                          <span className="px-2 py-0.5 bg-muted rounded whitespace-nowrap">
-                            일간 {post.dailyViews || 0} / 총 {post.totalViews || 0}
-                          </span>
-                        </div>
-                        <div className="post-card-slugs flex flex-wrap items-center gap-2 mt-2 text-xs">
-                          <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded font-mono">
-                            /{post.slug}
-                          </span>
-                          {post.subSlug && (
-                            <span className="px-2 py-0.5 bg-orange-500/10 text-orange-500 rounded font-mono">
-                              /{post.subSlug}
-                            </span>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 px-2 gap-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSlugEditClick(post);
-                            }}
-                          >
-                            <Pencil className="h-3 w-3" />
-                            <span className="text-xs">변경</span>
-                          </Button>
-                        </div>
-                        {post.tags.length > 0 && (
-                          <div className="post-card-tags flex flex-wrap gap-1.5 mt-2">
-                            {post.tags.map((tag, index) => (
-                              <span key={index} className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded">
-                                {tag}
+                        </button>
+                        <div className="post-card-content flex-1 min-w-0">
+                          <div className="post-card-header flex flex-wrap items-center gap-2 mb-2">
+                            <h2 className="text-lg sm:text-xl font-semibold truncate max-w-full">
+                              <Highlight text={post.title} query={debouncedSearch} />
+                            </h2>
+                            {post.type === "SHORT" && (
+                              <span className="px-2 py-0.5 text-xs bg-violet-500/10 text-violet-500 rounded">
+                                Short
                               </span>
-                            ))}
+                            )}
+                            {!post.published && (
+                              <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded">비공개</span>
+                            )}
                           </div>
-                        )}
+                          {post.excerpt && (
+                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{post.excerpt}</p>
+                          )}
+                          <div className="post-card-meta flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
+                            <span>{formatDate(post.createdAt)}</span>
+                            <span className="px-2 py-0.5 bg-muted rounded whitespace-nowrap">
+                              일간 {post.dailyViews || 0} / 총 {post.totalViews || 0}
+                            </span>
+                          </div>
+                          <div className="post-card-slugs flex flex-wrap items-center gap-2 mt-2 text-xs">
+                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded font-mono">
+                              /{post.slug}
+                            </span>
+                            {post.subSlug && (
+                              <span className="px-2 py-0.5 bg-orange-500/10 text-orange-500 rounded font-mono">
+                                /{post.subSlug}
+                              </span>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 gap-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSlugEditClick(post);
+                              }}
+                            >
+                              <Pencil className="h-3 w-3" />
+                              <span className="text-xs">변경</span>
+                            </Button>
+                          </div>
+                          {post.tags.length > 0 && (
+                            <div className="post-card-tags flex flex-wrap gap-1.5 mt-2">
+                              {post.tags.map((tag, index) => (
+                                <span key={index} className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="post-card-actions flex items-center gap-2 flex-shrink-0 self-end sm:self-start">
                         <Button variant="ghost" size="sm" onClick={() => router.push(`/posts/${post.slug}`)}>
@@ -400,10 +684,7 @@ export default function AdminPostsPage() {
               onKeyDown={(e) => e.key === "Enter" && handleAddSeries()}
               className="max-w-sm"
             />
-            <Button
-              onClick={handleAddSeries}
-              disabled={createSeriesMutation.isPending || !newSeriesName.trim()}
-            >
+            <Button onClick={handleAddSeries} disabled={createSeriesMutation.isPending || !newSeriesName.trim()}>
               <Plus className="h-4 w-4 mr-2" />
               추가
             </Button>
@@ -491,117 +772,222 @@ export default function AdminPostsPage() {
 
       {activeTab === "analytics" && (
         <div className="analytics-content container mx-auto px-4 py-8">
-          <div className="analytics-grid grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <section className="analytics-top-views">
-              <div className="flex items-center gap-2 mb-4">
-                <Eye className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-semibold">조회수 TOP 5</h2>
+          <div className="analytics-filters border border-border rounded-lg p-4 mb-6">
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex-1 min-w-[150px]">
+                <label className="text-sm font-medium mb-2 block">시작일</label>
+                <Input type="date" value={analyticsStartDate} onChange={(e) => setAnalyticsStartDate(e.target.value)} />
               </div>
-              <div className="space-y-3">
-                {posts
-                  .filter((p) => p.published)
-                  .sort((a, b) => (b.totalViews || 0) - (a.totalViews || 0))
-                  .slice(0, 5)
-                  .map((post, index) => (
-                    <div
-                      key={post.id}
-                      className="analytics-item flex items-center gap-3 p-3 border border-border rounded-lg hover:border-primary/50 cursor-pointer transition-colors"
-                      onClick={() => router.push(`/posts/${post.slug}`)}
-                    >
-                      <span className="text-2xl font-bold text-muted-foreground w-8">{index + 1}</span>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium truncate">{post.title}</h3>
-                        <p className="text-sm text-muted-foreground">{formatDate(post.createdAt)}</p>
-                      </div>
-                      <div className="flex items-center gap-1 text-primary font-semibold">
-                        <TrendingUp className="h-4 w-4" />
-                        {post.totalViews || 0}
-                      </div>
-                    </div>
-                  ))}
-                {posts.filter((p) => p.published).length === 0 && (
-                  <p className="text-muted-foreground text-center py-8">게시된 포스트가 없습니다.</p>
-                )}
+              <div className="flex-1 min-w-[150px]">
+                <label className="text-sm font-medium mb-2 block">종료일</label>
+                <Input type="date" value={analyticsEndDate} onChange={(e) => setAnalyticsEndDate(e.target.value)} />
               </div>
-            </section>
-
-            <section className="analytics-chart">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-semibold">조회수 추이</h2>
-                </div>
-                <Select value={chartPeriod} onValueChange={(v) => setChartPeriod(v as typeof chartPeriod)}>
-                  <SelectTrigger className="w-[120px]">
+              <div className="flex-1 min-w-[150px]">
+                <label className="text-sm font-medium mb-2 block">글 유형</label>
+                <Select value={analyticsType} onValueChange={(v) => setAnalyticsType(v as typeof analyticsType)}>
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="daily">일별</SelectItem>
-                    <SelectItem value="weekly">주간별</SelectItem>
-                    <SelectItem value="monthly">월별</SelectItem>
+                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="LONG">Long</SelectItem>
+                    <SelectItem value="SHORT">Short</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="chart-container h-[300px] border border-border rounded-lg p-4">
-                {analyticsData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={analyticsData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="date" className="text-xs" />
-                      <YAxis className="text-xs" />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="views"
-                        stroke="hsl(var(--primary))"
-                        fill="hsl(var(--primary) / 0.2)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    조회수 데이터가 없습니다.
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <section className="analytics-summary lg:col-span-2">
-              <h2 className="text-lg font-semibold mb-4">전체 통계</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="stat-card p-4 border border-border rounded-lg text-center">
-                  <p className="text-3xl font-bold text-primary">
-                    {posts.filter((p) => p.published).length}
-                  </p>
-                  <p className="text-sm text-muted-foreground">게시된 글</p>
-                </div>
-                <div className="stat-card p-4 border border-border rounded-lg text-center">
-                  <p className="text-3xl font-bold text-primary">
-                    {posts.filter((p) => !p.published).length}
-                  </p>
-                  <p className="text-sm text-muted-foreground">비공개 글</p>
-                </div>
-                <div className="stat-card p-4 border border-border rounded-lg text-center">
-                  <p className="text-3xl font-bold text-primary">
-                    {posts.reduce((sum, p) => sum + (p.totalViews || 0), 0).toLocaleString()}
-                  </p>
-                  <p className="text-sm text-muted-foreground">총 조회수</p>
-                </div>
-                <div className="stat-card p-4 border border-border rounded-lg text-center">
-                  <p className="text-3xl font-bold text-primary">
-                    {posts.reduce((sum, p) => sum + (p.dailyViews || 0), 0).toLocaleString()}
-                  </p>
-                  <p className="text-sm text-muted-foreground">오늘 조회수</p>
-                </div>
-              </div>
-            </section>
+            </div>
           </div>
+
+          <div className="analytics-tab-navigation flex gap-2 mb-6">
+            <Button
+              variant={analyticsTab === "category" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAnalyticsTab("category")}
+              className="gap-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              카테고리별
+            </Button>
+            <Button
+              variant={analyticsTab === "views" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAnalyticsTab("views")}
+              className="gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              조회수 TOP
+            </Button>
+            <Button
+              variant={analyticsTab === "count" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAnalyticsTab("count")}
+              className="gap-2"
+            >
+              <TrendingUp className="h-4 w-4" />
+              글쓰기 추이
+            </Button>
+          </div>
+
+          <div className="analytics-chart-display border border-border rounded-lg p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4">
+              {analyticsTab === "category" && "태그별 포스트 수"}
+              {analyticsTab === "views" && "조회수 TOP 10"}
+              {analyticsTab === "count" && "기간별 글쓰기 추이"}
+            </h2>
+            {analyticsTab === "category" && <CategoryChart data={categoryData} isLoading={isLoadingCategory} />}
+            {analyticsTab === "views" && <ViewsChart data={viewsData} isLoading={isLoadingViews} />}
+            {analyticsTab === "count" && <CountChart data={countData} isLoading={isLoadingCount} />}
+          </div>
+
+          <section className="analytics-summary">
+            <h2 className="text-lg font-semibold mb-4">전체 통계</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="stat-card p-4 border border-border rounded-lg text-center">
+                <p className="text-3xl font-bold text-primary">{posts.filter((p) => p.published).length}</p>
+                <p className="text-sm text-muted-foreground">게시된 글</p>
+              </div>
+              <div className="stat-card p-4 border border-border rounded-lg text-center">
+                <p className="text-3xl font-bold text-primary">{posts.filter((p) => !p.published).length}</p>
+                <p className="text-sm text-muted-foreground">비공개 글</p>
+              </div>
+              <div className="stat-card p-4 border border-border rounded-lg text-center">
+                <p className="text-3xl font-bold text-primary">
+                  {posts.reduce((sum, p) => sum + (p.totalViews || 0), 0).toLocaleString()}
+                </p>
+                <p className="text-sm text-muted-foreground">총 조회수</p>
+              </div>
+              <div className="stat-card p-4 border border-border rounded-lg text-center">
+                <p className="text-3xl font-bold text-primary">
+                  {posts.reduce((sum, p) => sum + (p.dailyViews || 0), 0).toLocaleString()}
+                </p>
+                <p className="text-sm text-muted-foreground">오늘 조회수</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {activeTab === "snippets" && (
+        <div className="snippets-content container mx-auto px-4 py-8 max-w-2xl">
+          <div className="mobile-notice md:hidden mb-6 p-4 border border-border rounded-lg bg-muted/50">
+            <p className="text-sm text-muted-foreground text-center">추가 및 수정은 데스크탑에서 진행해주세요.</p>
+          </div>
+
+          <form
+            onSubmit={handleCreateSnippet}
+            className="add-snippet-form hidden md:block mb-8 p-4 border border-border rounded-lg"
+          >
+            <h2 className="text-sm font-semibold mb-4">새 스니펫 추가</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+              <Input
+                placeholder="이름 (예: 구분선)"
+                value={newSnippetName}
+                onChange={(e) => setNewSnippetName(e.target.value)}
+              />
+              <Input
+                placeholder="내용 (예: ---)"
+                value={newSnippetContent}
+                onChange={(e) => setNewSnippetContent(e.target.value)}
+                className="font-mono"
+              />
+              <ShortcutInput
+                value={newSnippetShortcut}
+                onChange={setNewSnippetShortcut}
+                placeholder="클릭 후 단축키 입력"
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={createSnippetMutation.isPending || !newSnippetName.trim() || !newSnippetContent.trim()}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              추가
+            </Button>
+          </form>
+
+          {isLoadingSnippets ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">로딩 중...</p>
+            </div>
+          ) : snippets.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">등록된 스니펫이 없습니다.</p>
+            </div>
+          ) : (
+            <div className="snippets-list space-y-3">
+              {snippets.map((snippet) => (
+                <div key={snippet.id} className="snippet-item border border-border rounded-lg p-4">
+                  {editingSnippetId === snippet.id ? (
+                    <div className="edit-form space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <Input
+                          value={editingSnippetName}
+                          onChange={(e) => setEditingSnippetName(e.target.value)}
+                          placeholder="이름"
+                          autoFocus
+                        />
+                        <Input
+                          value={editingSnippetContent}
+                          onChange={(e) => setEditingSnippetContent(e.target.value)}
+                          placeholder="내용"
+                          className="font-mono"
+                        />
+                        <ShortcutInput
+                          value={editingSnippetShortcut}
+                          onChange={setEditingSnippetShortcut}
+                          placeholder="클릭 후 단축키 입력"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleUpdateSnippet(snippet.id)}
+                          disabled={updateSnippetMutation.isPending}
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          저장
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={handleCancelEditSnippet}>
+                          <X className="h-4 w-4 mr-1" />
+                          취소
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="snippet-info flex items-center gap-4">
+                        <span className="text-2xl font-mono bg-muted px-3 py-1 rounded">{snippet.content}</span>
+                        <div>
+                          <p className="font-medium">{snippet.name}</p>
+                          {snippet.shortcut && (
+                            <p className="text-xs text-muted-foreground">단축키: {snippet.shortcut}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="snippet-actions flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleStartEditSnippet(snippet)}
+                          className="hidden md:flex"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteSnippetClick(snippet)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -648,6 +1034,27 @@ export default function AdminPostsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={deleteSnippetDialogOpen} onOpenChange={setDeleteSnippetDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>스니펫을 삭제하시겠습니까?</AlertDialogTitle>
+            <AlertDialogDescription>
+              &ldquo;{snippetToDelete?.name}&rdquo; 스니펫이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteSnippetMutation.isPending}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSnippetConfirm}
+              disabled={deleteSnippetMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteSnippetMutation.isPending ? "삭제 중..." : "삭제"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {postToEditSlug && (
         <SlugEditModal
           open={slugEditModalOpen}
@@ -660,6 +1067,15 @@ export default function AdminPostsPage() {
           }}
         />
       )}
+
+      <BulkActionConfirmModal
+        open={bulkActionDialogOpen}
+        onOpenChange={setBulkActionDialogOpen}
+        action={bulkAction}
+        selectedPosts={selectedPosts}
+        onConfirm={handleBulkActionConfirm}
+        isPending={bulkActionMutation.isPending}
+      />
     </div>
   );
 }
