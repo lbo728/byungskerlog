@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { useUser, useStackApp } from "@stackframe/stack";
 import { useScrollHeader } from "@/hooks/useScrollHeader";
 import { Button } from "@/components/ui/Button";
-import { Sheet, SheetContent, SheetHeader, SheetTrigger, SheetClose } from "@/components/ui/Sheet";
+import { SwipeDrawer, SwipeDrawerHeader, SwipeDrawerContent } from "@/components/ui/SwipeDrawer";
 import { PenSquare, LogOut, Menu, FileText, FolderOpen, ChevronDown, ChevronsRight } from "lucide-react";
 
 const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
@@ -97,21 +97,18 @@ export function Header() {
             <ThemeToggle />
           </nav>
 
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="sm">
-                <Menu className="h-5 w-5" />
+          <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setIsOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </Button>
+
+          <SwipeDrawer open={isOpen} onOpenChange={setIsOpen}>
+            <SwipeDrawerHeader className="mobile-menu-header flex-row items-center justify-end">
+              <Button variant="ghost" size="sm" className="gap-2" onClick={() => setIsOpen(false)}>
+                <ChevronsRight className="h-5 w-5" />
+                접기
               </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]" hideCloseButton>
-              <SheetHeader className="mobile-menu-header flex-row items-center justify-end">
-                <SheetClose asChild>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <ChevronsRight className="h-5 w-5" />
-                    접기
-                  </Button>
-                </SheetClose>
-              </SheetHeader>
+            </SwipeDrawerHeader>
+            <SwipeDrawerContent>
               <div className="mobile-menu-content flex flex-col gap-4 mt-4">
                 <div className="nav-section flex flex-col gap-3">
                   {navItems.map((item) => {
@@ -171,13 +168,13 @@ export function Header() {
                   </div>
                 )}
 
-                <div className="visitor-section flex items-center justify-between py-4 border-t">
+                <div className="visitor-section flex items-center justify-between py-4 border-t px-4">
                   <VisitorCount />
                   <ThemeToggle />
                 </div>
               </div>
-            </SheetContent>
-          </Sheet>
+            </SwipeDrawerContent>
+          </SwipeDrawer>
         </div>
       </div>
 

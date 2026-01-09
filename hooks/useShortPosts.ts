@@ -30,6 +30,8 @@ export function useShortPosts(options: UseShortPostsOptions = {}) {
     queryKey: queryKeys.shortPosts.list(page),
     queryFn: () => fetchShortPosts(page, limit),
     initialData,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // 1시간
+    refetchOnMount: !initialData,
+    refetchOnWindowFocus: false,
   });
 }

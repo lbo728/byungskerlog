@@ -1,0 +1,59 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api/client";
+
+type StatType = "category" | "views" | "count";
+
+interface CategoryStat {
+  tag: string;
+  count: number;
+}
+
+interface ViewsStat {
+  title: string;
+  slug: string;
+  views: number;
+}
+
+interface CountStat {
+  date: string;
+  count: number;
+}
+
+interface UsePostAnalyticsOptions {
+  startDate?: string;
+  endDate?: string;
+  type: "all" | "LONG" | "SHORT";
+  statType: StatType;
+  enabled?: boolean;
+}
+
+export function usePostAnalytics<T = CategoryStat[] | ViewsStat[] | CountStat[]>(options: UsePostAnalyticsOptions) {
+  const { startDate, endDate, type, statType, enabled = true } = options;
+
+  const params = new URLSearchParams();
+  if (startDate) params.set("startDate", startDate);
+  if (endDate) params.set("endDate", endDate);
+  params.set("type", type);
+  params.set("statType", statType);
+
+  return useQuery({
+    queryKey: ["post-analytics", { startDate, endDate, type, statType }],
+    queryFn: () => apiClient.get<T>(`/api/posts/analytics?${params}`),
+    enabled: enabled && !!startDate && !!endDate,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCategoryAnalytics(options: Omit<UsePostAnalyticsOptions, "statType">) {
+  return usePostAnalytics<CategoryStat[]>({ ...options, statType: "category" });
+}
+
+export function useViewsAnalytics(options: Omit<UsePostAnalyticsOptions, "statType">) {
+  return usePostAnalytics<ViewsStat[]>({ ...options, statType: "views" });
+}
+
+export function useCountAnalytics(options: Omit<UsePostAnalyticsOptions, "statType">) {
+  return usePostAnalytics<CountStat[]>({ ...options, statType: "count" });
+}

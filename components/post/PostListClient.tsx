@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
-import { BookOpen, Clock, Flame, Loader2, Pencil, Trash2 } from "lucide-react";
+import { BookOpen, Clock, Flame, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
+import { PostListSkeleton } from "@/components/skeleton/PostListSkeleton";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
@@ -46,15 +47,10 @@ export function PostListClient({ initialData }: PostListClientProps) {
     router.push(`/admin/write?id=${postId}`);
   };
 
-  if (isPending) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   if (!posts || posts.length === 0) {
+    if (isPending) {
+      return <PostListSkeleton />;
+    }
     return (
       <div className="text-center py-20">
         <p className="text-xl text-muted-foreground">아직 작성된 포스트가 없습니다.</p>

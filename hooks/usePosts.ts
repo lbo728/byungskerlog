@@ -41,7 +41,9 @@ export function usePosts(options: UsePostsOptions = {}) {
     queryKey: queryKeys.posts.list({ page, limit, sortBy }),
     queryFn: () => fetchPosts(page, limit, sortBy),
     initialData,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // 1시간
+    refetchOnMount: !initialData, // initialData가 있으면 마운트 시 리패칭 안함
+    refetchOnWindowFocus: false,
     enabled,
   });
 }
@@ -60,7 +62,9 @@ export function useHomePosts(options: UseHomePostsOptions = {}) {
       return data.posts;
     },
     initialData,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // 1시간
+    refetchOnMount: !initialData,
+    refetchOnWindowFocus: false,
   });
 }
 

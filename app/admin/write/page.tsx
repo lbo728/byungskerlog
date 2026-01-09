@@ -21,6 +21,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import TiptapLink from "@tiptap/extension-link";
+import TiptapImage from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import { common, createLowlight } from "lowlight";
 import { useImageUpload } from "@/hooks/useImageUpload";
@@ -35,6 +36,7 @@ import { usePost } from "@/hooks/usePost";
 import { useDraft } from "@/hooks/useDrafts";
 import { getDraftFromLocal, clearLocalDraft, hasUnsavedLocalDraft, type LocalDraft } from "@/lib/storage/draft-storage";
 import { queryKeys } from "@/lib/queryKeys";
+import { useSnippets } from "@/hooks/useSnippets";
 
 const lowlight = createLowlight(common);
 
@@ -100,6 +102,8 @@ export default function WritePage() {
     handleTagInput,
     handleTagInputChange,
   } = useTagInput();
+
+  const { data: snippets = [] } = useSnippets();
 
   const { draftId, setDraftId, isSavingDraft, handleTempSave } = useDraftSave({
     title,
@@ -181,6 +185,13 @@ export default function WritePage() {
         linkOnPaste: false,
         HTMLAttributes: {
           class: "text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer",
+        },
+      }),
+      TiptapImage.configure({
+        inline: false,
+        allowBase64: false,
+        HTMLAttributes: {
+          class: "rounded-lg shadow-md my-6 max-w-full h-auto",
         },
       }),
       EmbedCard,
@@ -313,6 +324,64 @@ export default function WritePage() {
       }
     }
   }, [isEditMode, draftIdParam, isFormInitialized]);
+
+  useEffect(() => {
+    // Map special characters to their e.code values
+    const specialKeyCodeMap: Record<string, string> = {
+      "[": "BracketLeft",
+      "]": "BracketRight",
+      "{": "BracketLeft",
+      "}": "BracketRight",
+      ";": "Semicolon",
+      "'": "Quote",
+      ",": "Comma",
+      ".": "Period",
+      "/": "Slash",
+      "\\": "Backslash",
+      "`": "Backquote",
+      "-": "Minus",
+      "=": "Equal",
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!editor || snippets.length === 0) return;
+
+      for (const snippet of snippets) {
+        if (!snippet.shortcut) continue;
+
+        const parts = snippet.shortcut.toLowerCase().split("+");
+        const needsCtrl = parts.includes("ctrl");
+        const needsMeta = parts.includes("meta") || parts.includes("cmd");
+        const needsShift = parts.includes("shift");
+        const needsAlt = parts.includes("alt");
+        const modifierKeys = ["ctrl", "shift", "alt", "meta", "cmd"];
+        const key = parts.filter((p) => !modifierKeys.includes(p))[0];
+
+        if (!key) continue;
+
+        const expectedCode = specialKeyCodeMap[key];
+        const keyMatches =
+          e.key.toLowerCase() === key ||
+          e.code.toLowerCase() === `key${key}` ||
+          e.code.toLowerCase() === `digit${key}` ||
+          (expectedCode && e.code === expectedCode);
+
+        const ctrlMatches = needsCtrl ? e.ctrlKey : !e.ctrlKey;
+        const metaMatches = needsMeta ? e.metaKey : !e.metaKey;
+        const shiftMatches = needsShift ? e.shiftKey : !e.shiftKey;
+        const altMatches = needsAlt ? e.altKey : !e.altKey;
+
+        if (keyMatches && ctrlMatches && metaMatches && shiftMatches && altMatches) {
+          e.preventDefault();
+          editor.commands.insertContent(snippet.content);
+          return;
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [editor, snippets]);
 
   const handleRecoverDraft = useCallback(() => {
     if (recoveryDraft) {
@@ -532,6 +601,9 @@ export default function WritePage() {
         content={content}
         editorSelector=".tiptap-editor"
         onImageUpload={() => imageInputRef.current?.click()}
+        onSnippetInsert={(snippetContent) => {
+          editor?.commands.insertContent(snippetContent);
+        }}
       />
     </div>
   );

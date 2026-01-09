@@ -570,6 +570,21 @@ body[data-scroll-locked] .write-header-wrapper {
   }
 }
 
+/* Post Detail 모바일 헤딩 사이즈 (article 내 prose) */
+@media (max-width: 768px) {
+  article .prose h1 {
+    font-size: 28px !important;
+  }
+
+  article .prose h2 {
+    font-size: 24px !important;
+  }
+
+  article .prose h3 {
+    font-size: 20px !important;
+  }
+}
+
 /* 이미지 보호 - 드래그 및 선택 방지 */
 img {
   -webkit-user-select: none;

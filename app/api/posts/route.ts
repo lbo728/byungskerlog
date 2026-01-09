@@ -82,6 +82,7 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const type = searchParams.get("type");
+    const search = searchParams.get("search");
 
     const skip = (page - 1) * limit;
 
@@ -93,6 +94,12 @@ export async function GET(request: NextRequest) {
         gte?: Date;
         lt?: Date;
       };
+      OR?: Array<{
+        title?: { contains: string; mode: "insensitive" };
+        tags?: { has: string };
+        series?: { name: { contains: string; mode: "insensitive" } };
+        createdAt?: { gte: Date; lt: Date };
+      }>;
     };
 
     const where: WhereClause = {};
@@ -119,6 +126,29 @@ export async function GET(request: NextRequest) {
         end.setDate(end.getDate() + 1);
         where.createdAt.lt = end;
       }
+    }
+
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
+      const orConditions: WhereClause["OR"] = [
+        { title: { contains: searchTerm, mode: "insensitive" } },
+        { tags: { has: searchTerm } },
+        { series: { name: { contains: searchTerm, mode: "insensitive" } } },
+      ];
+
+      const datePattern = /^\d{4}[-/]\d{2}[-/]\d{2}$/;
+      if (datePattern.test(searchTerm)) {
+        const searchDate = new Date(searchTerm.replace(/\//g, "-"));
+        if (!isNaN(searchDate.getTime())) {
+          const nextDay = new Date(searchDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          orConditions.push({
+            createdAt: { gte: searchDate, lt: nextDay },
+          });
+        }
+      }
+
+      where.OR = orConditions;
     }
 
     const total = await prisma.post.count({ where });
@@ -186,9 +216,7 @@ export async function GET(request: NextRequest) {
     }));
 
     const sortedPosts =
-      sortBy === "popular"
-        ? postsWithViews.sort((a, b) => b.totalViews - a.totalViews)
-        : postsWithViews;
+      sortBy === "popular" ? postsWithViews.sort((a, b) => b.totalViews - a.totalViews) : postsWithViews;
 
     return NextResponse.json({
       posts: sortedPosts,

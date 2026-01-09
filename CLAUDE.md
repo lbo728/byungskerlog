@@ -27,9 +27,27 @@ This is a Next.js 16-based personal blog application with admin capabilities. Th
 
 - 반드시 **lbo728** 계정으로 커밋, 푸시, PR을 진행해야해.
 - 커밋 메세지는 영문 컨벤셔널 커밋으로 해야해.(단, description은 한글 불릿 포인트로 작성해.)
+
+### Branch Strategy
+
+```
+main (정식 릴리즈만)
+  ↑ 특별 요청 시에만 PR
+dev (기본 base branch - GitHub default)
+  ↑ 일반 개발 PR
+feature/* / fix/* 등 서브 브랜치
+```
+
+- **main**: 정식 릴리즈 전용. dev로부터 머지만 허용.
+- **dev**: 기본 개발 브랜치. 모든 feature/fix 브랜치의 base.
+- **feature/\***: 기능 개발 브랜치. 반드시 dev를 향해 PR 생성.
+- main으로 PR 생성은 **사용자가 명시적으로 요청할 때만** 수행.
+
+### PR Rules
+
 - 요청한 작업이 '덩어리' 단위라면 맥락에 맞추어 브랜치를 생성해서 작업해야해.
   - 맥락 별로 커밋을 만들며 진행해야해.
-  - 작업 덩어리가 완료된다면 main(dev가 있다면 dev)브랜치를 향하는 PR을 생성해서 코멘트를 작성해야해.(하단 템플릿에서 인용문을 지우고 해당 내용을 작성하면돼. PR 이름은 브랜치 이름)
+  - 작업 덩어리가 완료된다면 **dev** 브랜치를 향하는 PR을 생성해서 코멘트를 작성해야해.(하단 템플릿에서 인용문을 지우고 해당 내용을 작성하면돼. PR 이름은 브랜치 이름)
   ```
   > 이번 PR의 목적을 한 문장으로 요약해주세요.
   >
