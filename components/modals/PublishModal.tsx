@@ -44,6 +44,7 @@ interface PublishModalProps {
   onSubSlugChange?: (subSlug: string) => void;
   socialLinkedinContent?: string;
   socialThreadsContent?: string[];
+  onRequestSocialMediaModal?: () => void;
 }
 
 function useIsMobile() {
@@ -88,6 +89,7 @@ export function PublishModal({
   onSubSlugChange,
   socialLinkedinContent,
   socialThreadsContent,
+  onRequestSocialMediaModal,
 }: PublishModalProps) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,6 +111,10 @@ export function PublishModal({
     onPostTypeChange(type);
     if (type === "SHORT") {
       onThumbnailRemove();
+      if (onRequestSocialMediaModal) {
+        onOpenChange(false);
+        onRequestSocialMediaModal();
+      }
     }
   };
 

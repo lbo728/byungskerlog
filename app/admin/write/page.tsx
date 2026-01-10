@@ -588,6 +588,7 @@ export default function WritePage() {
         onSubSlugChange={setModalSubSlug}
         socialLinkedinContent={socialLinkedinContent}
         socialThreadsContent={socialThreadsContent}
+        onRequestSocialMediaModal={() => setIsSocialMediaModalOpen(true)}
       />
 
       <LinkModal
