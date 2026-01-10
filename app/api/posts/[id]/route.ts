@@ -78,6 +78,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       type,
       linkedinUrl,
       threadsUrl,
+      linkedinContent,
+      threadsContent,
     } = body;
 
     const post = await prisma.post.update({
@@ -95,6 +97,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         ...(seriesId !== undefined && { seriesId }),
         ...(linkedinUrl !== undefined && { linkedinUrl: linkedinUrl || null }),
         ...(threadsUrl !== undefined && { threadsUrl: threadsUrl || null }),
+        ...(linkedinContent !== undefined && { linkedinContent: linkedinContent || null }),
+        ...(threadsContent !== undefined && { threadsContent }),
       },
     });
 

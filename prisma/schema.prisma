@@ -21,10 +21,12 @@ model Post {
   seriesId    String?
   thumbnail   String?
   subSlug     String?    @unique
-  type        PostType   @default(LONG)
-  linkedinUrl String?
-  threadsUrl  String?
-  series      Series?    @relation(fields: [seriesId], references: [id])
+  type            PostType   @default(LONG)
+  linkedinUrl     String?
+  threadsUrl      String?
+  linkedinContent String?
+  threadsContent  String[]   @default([])
+  series          Series?    @relation(fields: [seriesId], references: [id])
   views       PostView[]
 
   @@index([seriesId])

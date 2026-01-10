@@ -32,7 +32,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, slug: requestedSlug, excerpt, content, tags, published, thumbnail, seriesId, type } = body;
+    const {
+      title,
+      slug: requestedSlug,
+      excerpt,
+      content,
+      tags,
+      published,
+      thumbnail,
+      seriesId,
+      type,
+      linkedinContent,
+      threadsContent,
+    } = body;
 
     if (!title || !requestedSlug || !content) {
       throw ApiError.validationError("Missing required fields", {
@@ -53,6 +65,8 @@ export async function POST(request: NextRequest) {
         published: published ?? false,
         thumbnail: thumbnail || null,
         seriesId: seriesId || null,
+        linkedinContent: linkedinContent || null,
+        threadsContent: threadsContent || [],
       },
     });
 

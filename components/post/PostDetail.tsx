@@ -126,12 +126,6 @@ export function PostDetail({
                   {post.type === "SHORT" && (post.linkedinUrl || post.threadsUrl) && (
                     <SocialMediaLinks linkedinUrl={post.linkedinUrl} threadsUrl={post.threadsUrl} />
                   )}
-                  <PostActions
-                    postId={post.id}
-                    postTitle={post.title}
-                    postSlug={post.slug}
-                    postSubSlug={post.subSlug}
-                  />
                 </div>
               </header>
 
