@@ -30,6 +30,8 @@ export interface UpdatePostData {
   published?: boolean;
   thumbnail?: string | null;
   seriesId?: string | null;
+  linkedinUrl?: string | null;
+  threadsUrl?: string | null;
 }
 
 interface MutationOptions {
@@ -72,8 +74,7 @@ export function useUpdatePost(options: MutationOptions = {}) {
   const { onSuccess, onError, showToast = true } = options;
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdatePostData }) =>
-      apiClient.patch<Post>(`/api/posts/${id}`, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdatePostData }) => apiClient.patch<Post>(`/api/posts/${id}`, data),
     onSuccess: (updatedPost) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.shortPosts.all });
@@ -151,6 +152,44 @@ export function usePublishPost(options: MutationOptions = {}) {
     onError: (error: Error) => {
       if (showToast) {
         toast.error(error.message || "게시 상태 변경에 실패했습니다.");
+      }
+      onError?.(error);
+    },
+  });
+}
+
+export function useUpdateSocialLinks(options: MutationOptions = {}) {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const { onSuccess, onError, showToast = true } = options;
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      linkedinUrl,
+      threadsUrl,
+    }: {
+      id: string;
+      linkedinUrl?: string | null;
+      threadsUrl?: string | null;
+    }) => apiClient.patch<Post>(`/api/posts/${id}`, { linkedinUrl, threadsUrl }),
+    onSuccess: (updatedPost) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.shortPosts.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.posts.detail(updatedPost.slug),
+      });
+
+      if (showToast) {
+        toast.success("SNS 링크가 업데이트되었습니다.");
+      }
+
+      router.refresh();
+      onSuccess?.();
+    },
+    onError: (error: Error) => {
+      if (showToast) {
+        toast.error(error.message || "SNS 링크 업데이트에 실패했습니다.");
       }
       onError?.(error);
     },

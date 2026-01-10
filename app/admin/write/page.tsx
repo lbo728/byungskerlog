@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Input } from "@/components/ui/Input";
 import { PublishModal } from "@/components/modals/PublishModal";
+import { SocialMediaModal } from "@/components/modals/SocialMediaModal";
 import { RecoveryModal } from "@/components/modals/RecoveryModal";
 import { ExitConfirmModal } from "@/components/modals/ExitConfirmModal";
 import { ClearConfirmModal } from "@/components/modals/ClearConfirmModal";
@@ -67,6 +68,9 @@ export default function WritePage() {
   const [isFormInitialized, setIsFormInitialized] = useState(false);
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [isSocialMediaModalOpen, setIsSocialMediaModalOpen] = useState(false);
+  const [socialLinkedinContent, setSocialLinkedinContent] = useState("");
+  const [socialThreadsContent, setSocialThreadsContent] = useState<string[]>([]);
   const [recoveryDraft, setRecoveryDraft] = useState<LocalDraft | null>(null);
   const [originalContent, setOriginalContent] = useState<{
     title: string;
@@ -434,6 +438,22 @@ export default function WritePage() {
       toast.warning("내용을 입력해주세요.");
       return;
     }
+
+    if (modalPostType === "SHORT") {
+      setIsSocialMediaModalOpen(true);
+    } else {
+      if (!isExcerptInitialized) {
+        setModalExcerpt(generateExcerpt(content, 150));
+        setIsExcerptInitialized(true);
+      }
+      setIsPublishModalOpen(true);
+    }
+  };
+
+  const handleSaveSocialContent = (linkedin: string, threads: string[]) => {
+    setSocialLinkedinContent(linkedin);
+    setSocialThreadsContent(threads);
+    setIsSocialMediaModalOpen(false);
     if (!isExcerptInitialized) {
       setModalExcerpt(generateExcerpt(content, 150));
       setIsExcerptInitialized(true);
@@ -566,6 +586,8 @@ export default function WritePage() {
         onSlugChange={handleSlugChange}
         subSlug={modalSubSlug}
         onSubSlugChange={setModalSubSlug}
+        socialLinkedinContent={socialLinkedinContent}
+        socialThreadsContent={socialThreadsContent}
       />
 
       <LinkModal
@@ -596,6 +618,14 @@ export default function WritePage() {
       />
 
       <ClearConfirmModal open={isClearModalOpen} onOpenChange={setIsClearModalOpen} onConfirm={handleClearContent} />
+
+      <SocialMediaModal
+        open={isSocialMediaModalOpen}
+        onOpenChange={setIsSocialMediaModalOpen}
+        title={title}
+        originalContent={content}
+        onSave={handleSaveSocialContent}
+      />
 
       <WriteFloatingMenu
         content={content}
