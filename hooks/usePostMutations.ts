@@ -32,6 +32,8 @@ export interface UpdatePostData {
   seriesId?: string | null;
   linkedinUrl?: string | null;
   threadsUrl?: string | null;
+  linkedinContent?: string | null;
+  threadsContent?: string[];
 }
 
 interface MutationOptions {

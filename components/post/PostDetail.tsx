@@ -124,7 +124,13 @@ export function PostDetail({
                     </div>
                   )}
                   {post.type === "SHORT" && (post.linkedinUrl || post.threadsUrl) && (
-                    <SocialMediaLinks linkedinUrl={post.linkedinUrl} threadsUrl={post.threadsUrl} />
+                    <SocialMediaLinks
+                      linkedinUrl={post.linkedinUrl}
+                      threadsUrl={post.threadsUrl}
+                      postId={post.id}
+                      linkedinContent={post.linkedinContent}
+                      threadsContent={post.threadsContent}
+                    />
                   )}
                 </div>
               </header>

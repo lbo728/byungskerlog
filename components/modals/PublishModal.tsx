@@ -15,10 +15,12 @@ import { Input } from "@/components/ui/Input";
 import { generateSlug } from "@/lib/utils/slug";
 import { toast } from "sonner";
 import { useSocialMediaConvert } from "@/hooks/useSocialMediaConvert";
+import { cn } from "@/lib/utils";
 
 const MAX_THUMBNAIL_SIZE = 500 * 1024;
 const DRAG_CLOSE_THRESHOLD = 100;
 const THREADS_CHAR_LIMIT = 500;
+const LINKEDIN_CHAR_LIMIT = 3000;
 
 interface PublishModalProps {
   open: boolean;
@@ -85,7 +87,11 @@ function splitTextByCharLimit(text: string, limit: number): string[] {
 }
 
 function formatSnsContent(title: string, content: string): string {
-  return `<'${title}'>\n\n${content}`;
+  return `<${title}>\n\n${content}`;
+}
+
+function formatCount(count: number): string {
+  return count.toLocaleString();
 }
 
 export function PublishModal({
@@ -123,6 +129,7 @@ export function PublishModal({
   const [linkedinContent, setLinkedinContent] = useState("");
   const [threadsContent, setThreadsContent] = useState<string[]>([""]);
   const [isFullView, setIsFullView] = useState(false);
+  const [snsTab, setSnsTab] = useState<"linkedin" | "threads">("linkedin");
 
   const { mutate: convertWithAI, isPending: isAILoading } = useSocialMediaConvert();
 
@@ -130,6 +137,7 @@ export function PublishModal({
     if (open) {
       setStep(1);
       setIsFullView(false);
+      setSnsTab("linkedin");
     }
   }, [open]);
 
@@ -161,6 +169,7 @@ export function PublishModal({
 
   const handleBackToStep1 = () => {
     setStep(1);
+    setIsFullView(false);
   };
 
   const handleAIImprove = (platform: "linkedin" | "threads") => {
@@ -182,24 +191,25 @@ export function PublishModal({
     );
   };
 
-  const handleCopyContent = (platform: "linkedin" | "threads") => {
-    if (platform === "linkedin") {
-      navigator.clipboard.writeText(linkedinContent);
-      toast.success("LinkedIn 콘텐츠가 복사되었습니다.");
-    } else {
-      const combined = threadsContent.join("\n\n---\n\n");
-      navigator.clipboard.writeText(combined);
-      toast.success("Threads 콘텐츠가 복사되었습니다.");
-    }
+  const handleCopyLinkedin = () => {
+    navigator.clipboard.writeText(linkedinContent);
+    toast.success("LinkedIn 콘텐츠가 복사되었습니다.");
   };
 
-  const handleOpenSns = (platform: "linkedin" | "threads") => {
-    handleCopyContent(platform);
-    if (platform === "linkedin") {
-      window.open("https://www.linkedin.com/in/byungsker/", "_blank");
-    } else {
-      window.open("https://www.threads.com/@byungsker_letter", "_blank");
-    }
+  const handleCopyThreadsPost = (index: number) => {
+    navigator.clipboard.writeText(threadsContent[index]);
+    toast.success(`Threads 포스트 ${index + 1}이 복사되었습니다.`);
+  };
+
+  const handleOpenLinkedin = () => {
+    handleCopyLinkedin();
+    window.open("https://www.linkedin.com/in/byungsker/overlay/create-post/", "_blank");
+  };
+
+  const handleOpenThreads = () => {
+    navigator.clipboard.writeText(threadsContent[0] || "");
+    toast.success("첫 번째 Threads 포스트가 복사되었습니다.");
+    window.open("https://www.threads.com/@byungsker_letter", "_blank");
   };
 
   const handleThreadsContentChange = (index: number, value: string) => {
@@ -355,14 +365,14 @@ export function PublishModal({
     }
   };
 
-  const LinkedInIcon = () => (
-    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+  const LinkedInIcon = ({ className }: { className?: string }) => (
+    <svg className={cn("h-4 w-4", className)} fill="currentColor" viewBox="0 0 24 24">
       <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
     </svg>
   );
 
-  const ThreadsIcon = () => (
-    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+  const ThreadsIcon = ({ className }: { className?: string }) => (
+    <svg className={cn("h-4 w-4", className)} fill="currentColor" viewBox="0 0 24 24">
       <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.291 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 0 1 3.02.142l-.126.742a12.833 12.833 0 0 0-2.787-.13c-1.21.07-2.2.415-2.865 1.002-.684.604-1.045 1.411-.99 2.216.05.879.485 1.622 1.229 2.096.682.435 1.569.636 2.488.565 1.248-.096 2.218-.543 2.88-1.329.52-.62.86-1.467.976-2.521a4.525 4.525 0 0 1 1.065.258c1.164.438 1.957 1.217 2.362 2.31.588 1.586.621 4.013-1.569 6.127-1.82 1.755-4.093 2.549-7.156 2.582z" />
     </svg>
   );
@@ -418,7 +428,7 @@ export function PublishModal({
               className="h-[120px] resize-none"
               maxLength={200}
             />
-            <p className="text-xs text-muted-foreground text-right">{excerpt.length}/200</p>
+            <p className="text-xs text-muted-foreground text-right">{formatCount(excerpt.length)}/200</p>
           </div>
 
           <SeriesSelect value={seriesId} onChange={onSeriesIdChange} disabled={isPublishing} />
@@ -495,10 +505,157 @@ export function PublishModal({
     </>
   );
 
-  const snsContentHeight = isFullView ? "h-[400px]" : "h-[140px]";
+  const linkedinTab = (
+    <div className="linkedin-tab-content space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => handleAIImprove("linkedin")}
+            disabled={isAILoading}
+            className="h-8 px-3 text-xs gap-1.5"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            AI로 개선하기
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleCopyLinkedin}
+            className="h-8 px-3 text-xs gap-1.5"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            복사
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleOpenLinkedin}
+            className="h-8 px-3 text-xs gap-1.5"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            LinkedIn에 포스트
+          </Button>
+        </div>
+      </div>
+      <Textarea
+        value={linkedinContent}
+        onChange={(e) => setLinkedinContent(e.target.value)}
+        placeholder="LinkedIn 콘텐츠..."
+        className={cn("resize-none transition-all duration-200", isFullView ? "h-[calc(100dvh-280px)]" : "h-[300px]")}
+        disabled={isPublishing || isAILoading}
+      />
+      <p
+        className={cn(
+          "text-xs text-right",
+          linkedinContent.length > LINKEDIN_CHAR_LIMIT ? "text-destructive" : "text-muted-foreground"
+        )}
+      >
+        {formatCount(linkedinContent.length)}/{formatCount(LINKEDIN_CHAR_LIMIT)}
+      </p>
+    </div>
+  );
+
+  const threadsTab = (
+    <div className="threads-tab-content space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">{threadsContent.length}개 포스트</span>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => handleAIImprove("threads")}
+            disabled={isAILoading}
+            className="h-8 px-3 text-xs gap-1.5"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            AI로 개선하기
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleOpenThreads}
+            className="h-8 px-3 text-xs gap-1.5"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Threads에 포스트
+          </Button>
+        </div>
+      </div>
+      <div
+        className={cn(
+          "threads-posts space-y-4 overflow-y-auto",
+          isFullView ? "max-h-[calc(100dvh-320px)]" : "max-h-[400px]"
+        )}
+      >
+        {threadsContent.map((threadPost, index) => (
+          <div key={index} className="thread-post-item space-y-2 p-3 border rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">포스트 {index + 1}</span>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCopyThreadsPost(index)}
+                  className="h-7 px-2 text-xs gap-1"
+                >
+                  <Copy className="h-3 w-3" />
+                  복사
+                </Button>
+                {threadsContent.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveThreadsPost(index)}
+                    className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                  >
+                    삭제
+                  </Button>
+                )}
+              </div>
+            </div>
+            <Textarea
+              value={threadPost}
+              onChange={(e) => handleThreadsContentChange(index, e.target.value)}
+              placeholder={`Threads 포스트 ${index + 1}...`}
+              className="h-[120px] resize-none"
+              disabled={isPublishing || isAILoading}
+            />
+            <p
+              className={cn(
+                "text-xs text-right",
+                threadPost.length > THREADS_CHAR_LIMIT ? "text-destructive" : "text-muted-foreground"
+              )}
+            >
+              {formatCount(threadPost.length)}/{formatCount(THREADS_CHAR_LIMIT)}
+            </p>
+          </div>
+        ))}
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleAddThreadsPost}
+        className="w-full"
+        disabled={isPublishing}
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        포스트 추가
+      </Button>
+    </div>
+  );
 
   const step2Content = (
-    <div className="sns-edit-step space-y-6">
+    <div className="sns-edit-step space-y-4">
       <div className="sns-edit-header flex items-center justify-between">
         <Button type="button" variant="ghost" size="sm" onClick={handleBackToStep1} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
@@ -510,140 +667,36 @@ export function PublishModal({
         </Button>
       </div>
 
-      <div className="linkedin-section space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium flex items-center gap-2">
-            <LinkedInIcon />
-            LinkedIn
-          </Label>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => handleAIImprove("linkedin")}
-              disabled={isAILoading}
-              className="h-7 px-2 text-xs gap-1"
-            >
-              <Sparkles className="h-3 w-3" />
-              AI로 개선하기
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => handleCopyContent("linkedin")}
-              className="h-7 px-2 text-xs gap-1"
-            >
-              <Copy className="h-3 w-3" />
-              복사
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => handleOpenSns("linkedin")}
-              className="h-7 px-2 text-xs gap-1"
-            >
-              <ExternalLink className="h-3 w-3" />
-              LinkedIn에 포스트
-            </Button>
-          </div>
-        </div>
-        <Textarea
-          value={linkedinContent}
-          onChange={(e) => setLinkedinContent(e.target.value)}
-          placeholder="LinkedIn 콘텐츠..."
-          className={`${snsContentHeight} resize-none transition-all duration-200`}
-          disabled={isPublishing || isAILoading}
-        />
-        <p className="text-xs text-muted-foreground text-right">{linkedinContent.length}/3000</p>
+      <div className="sns-tabs flex border-b">
+        <button
+          type="button"
+          onClick={() => setSnsTab("linkedin")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+            snsTab === "linkedin"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <LinkedInIcon />
+          LinkedIn
+        </button>
+        <button
+          type="button"
+          onClick={() => setSnsTab("threads")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+            snsTab === "threads"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <ThreadsIcon />
+          Threads
+        </button>
       </div>
 
-      <div className="threads-section space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium flex items-center gap-2">
-            <ThreadsIcon />
-            Threads ({threadsContent.length}개 포스트)
-          </Label>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => handleAIImprove("threads")}
-              disabled={isAILoading}
-              className="h-7 px-2 text-xs gap-1"
-            >
-              <Sparkles className="h-3 w-3" />
-              AI로 개선하기
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => handleCopyContent("threads")}
-              className="h-7 px-2 text-xs gap-1"
-            >
-              <Copy className="h-3 w-3" />
-              복사
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => handleOpenSns("threads")}
-              className="h-7 px-2 text-xs gap-1"
-            >
-              <ExternalLink className="h-3 w-3" />
-              Threads에 포스트
-            </Button>
-          </div>
-        </div>
-        <div className="threads-posts space-y-3 max-h-[300px] overflow-y-auto">
-          {threadsContent.map((threadPost, index) => (
-            <div key={index} className="thread-post-item space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">포스트 {index + 1}</span>
-                {threadsContent.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveThreadsPost(index)}
-                    className="h-6 px-2 text-xs text-destructive hover:text-destructive"
-                  >
-                    삭제
-                  </Button>
-                )}
-              </div>
-              <Textarea
-                value={threadPost}
-                onChange={(e) => handleThreadsContentChange(index, e.target.value)}
-                placeholder={`Threads 포스트 ${index + 1}...`}
-                className={`${snsContentHeight} resize-none transition-all duration-200`}
-                disabled={isPublishing || isAILoading}
-              />
-              <p
-                className={`text-xs text-right ${threadPost.length > THREADS_CHAR_LIMIT ? "text-destructive" : "text-muted-foreground"}`}
-              >
-                {threadPost.length}/{THREADS_CHAR_LIMIT}
-              </p>
-            </div>
-          ))}
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleAddThreadsPost}
-          className="w-full"
-          disabled={isPublishing}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          포스트 추가
-        </Button>
-      </div>
+      {snsTab === "linkedin" ? linkedinTab : threadsTab}
 
       {error && <p className="text-sm text-destructive text-center">{error}</p>}
     </div>
@@ -675,7 +728,7 @@ export function PublishModal({
 
   const footerButtons = step === 1 ? step1FooterButtons : step2FooterButtons;
 
-  if (isMobile) {
+  if (isMobile || isFullView) {
     return (
       <AnimatePresence>
         {open && (
@@ -686,20 +739,20 @@ export function PublishModal({
               animate={{ opacity: 1 - dragY / 300 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              onClick={() => !isPublishing && onOpenChange(false)}
+              onClick={() => !isPublishing && !isFullView && onOpenChange(false)}
             />
             <motion.div
               className="publish-modal-mobile fixed inset-0 z-50 flex flex-col bg-background"
               style={{ height: "100dvh", width: "100dvw" }}
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
+              initial={{ y: isMobile ? "100%" : 0, opacity: isMobile ? 1 : 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: isMobile ? "100%" : 0, opacity: isMobile ? 1 : 0 }}
               transition={{
                 type: "spring",
                 damping: 30,
                 stiffness: 300,
               }}
-              drag="y"
+              drag={isMobile && !isFullView ? "y" : false}
               dragConstraints={{ top: 0, bottom: 0 }}
               dragElastic={{ top: 0, bottom: 0.5 }}
               onDrag={handleDrag}
@@ -707,12 +760,19 @@ export function PublishModal({
             >
               <header className="publish-modal-mobile-header flex items-center justify-between px-4 py-4 border-b safe-area-top">
                 <div className="w-10" />
-                <div className="publish-modal-drag-handle mx-auto">
-                  <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
-                </div>
+                {isMobile && !isFullView && (
+                  <div className="publish-modal-drag-handle mx-auto">
+                    <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+                  </div>
+                )}
+                {isFullView && (
+                  <h2 className="text-lg font-semibold flex-1 text-center">
+                    {step === 1 ? "포스트 미리보기" : "SNS 포맷 편집"}
+                  </h2>
+                )}
                 <button
                   type="button"
-                  onClick={() => onOpenChange(false)}
+                  onClick={() => (isFullView ? setIsFullView(false) : onOpenChange(false))}
                   className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
                   disabled={isPublishing}
                 >
@@ -720,9 +780,11 @@ export function PublishModal({
                 </button>
               </header>
 
-              <div className="publish-modal-mobile-title px-4 pt-4 pb-2">
-                <h2 className="text-lg font-semibold">{step === 1 ? "포스트 미리보기" : "SNS 포맷 편집"}</h2>
-              </div>
+              {isMobile && !isFullView && (
+                <div className="publish-modal-mobile-title px-4 pt-4 pb-2">
+                  <h2 className="text-lg font-semibold">{step === 1 ? "포스트 미리보기" : "SNS 포맷 편집"}</h2>
+                </div>
+              )}
 
               <main className="publish-modal-mobile-content flex-1 overflow-y-auto px-4 pb-24">
                 <div className="space-y-6 py-4">{modalContent}</div>
