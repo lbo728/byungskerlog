@@ -32,6 +32,10 @@ export interface Post {
   series?: Series | null;
   totalViews?: number;
   dailyViews?: number;
+  linkedinUrl?: string | null;
+  threadsUrl?: string | null;
+  linkedinContent?: string | null;
+  threadsContent?: string[];
 }
 
 /**
@@ -67,6 +71,10 @@ export interface ShortPost {
   tags: string[];
   createdAt: Date | string;
   series?: Series | null;
+  linkedinUrl?: string | null;
+  threadsUrl?: string | null;
+  linkedinContent?: string | null;
+  threadsContent?: string[];
 }
 
 /**

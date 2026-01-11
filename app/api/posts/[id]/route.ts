@@ -65,7 +65,22 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { id } = await params;
     const body = await request.json();
-    const { title, slug, subSlug, excerpt, content, tags, published, thumbnail, seriesId, type } = body;
+    const {
+      title,
+      slug,
+      subSlug,
+      excerpt,
+      content,
+      tags,
+      published,
+      thumbnail,
+      seriesId,
+      type,
+      linkedinUrl,
+      threadsUrl,
+      linkedinContent,
+      threadsContent,
+    } = body;
 
     const post = await prisma.post.update({
       where: { id },
@@ -80,6 +95,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         ...(published !== undefined && { published }),
         ...(thumbnail !== undefined && { thumbnail }),
         ...(seriesId !== undefined && { seriesId }),
+        ...(linkedinUrl !== undefined && { linkedinUrl: linkedinUrl || null }),
+        ...(threadsUrl !== undefined && { threadsUrl: threadsUrl || null }),
+        ...(linkedinContent !== undefined && { linkedinContent: linkedinContent || null }),
+        ...(threadsContent !== undefined && { threadsContent }),
       },
     });
 
