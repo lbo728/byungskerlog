@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
 import { Input } from "@/components/ui/Input";
 import { PublishModal } from "@/components/modals/PublishModal";
+
 import { RecoveryModal } from "@/components/modals/RecoveryModal";
 import { ExitConfirmModal } from "@/components/modals/ExitConfirmModal";
 import { ClearConfirmModal } from "@/components/modals/ClearConfirmModal";
@@ -62,6 +63,8 @@ export default function WritePage() {
   const [modalExcerpt, setModalExcerpt] = useState<string>("");
   const [modalSlug, setModalSlug] = useState<string>("");
   const [modalSubSlug, setModalSubSlug] = useState<string>("");
+  const [modalLinkedinContent, setModalLinkedinContent] = useState<string | null>(null);
+  const [modalThreadsContent, setModalThreadsContent] = useState<string[]>([]);
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [isExcerptInitialized, setIsExcerptInitialized] = useState(false);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
@@ -266,6 +269,8 @@ export default function WritePage() {
         setModalExcerpt(postData.excerpt || "");
         setModalSlug(postData.slug || "");
         setModalSubSlug(postData.subSlug || "");
+        setModalLinkedinContent(postData.linkedinContent || null);
+        setModalThreadsContent(postData.threadsContent || []);
         setIsExcerptInitialized(true);
         setIsFormInitialized(true);
       });
@@ -434,6 +439,7 @@ export default function WritePage() {
       toast.warning("내용을 입력해주세요.");
       return;
     }
+
     if (!isExcerptInitialized) {
       setModalExcerpt(generateExcerpt(content, 150));
       setIsExcerptInitialized(true);
@@ -566,6 +572,8 @@ export default function WritePage() {
         onSlugChange={handleSlugChange}
         subSlug={modalSubSlug}
         onSubSlugChange={setModalSubSlug}
+        initialLinkedinContent={modalLinkedinContent}
+        initialThreadsContent={modalThreadsContent}
       />
 
       <LinkModal
