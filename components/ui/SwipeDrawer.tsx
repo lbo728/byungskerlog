@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useState, useRef } from "react";
+import { useEffect, useCallback, useState, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion, useSpring, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,10 @@ const springConfig = {
   mass: 1,
 };
 
+const emptySubscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 interface SwipeDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -25,22 +29,21 @@ interface SwipeDrawerProps {
 }
 
 export function SwipeDrawer({ open, onOpenChange, onDraggingChange, children, className }: SwipeDrawerProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(emptySubscribe, getSnapshot, getServerSnapshot);
   const [isDragging, setIsDraggingState] = useState(false);
 
-  const setIsDragging = (value: boolean) => {
-    setIsDraggingState(value);
-    onDraggingChange?.(value);
-  };
+  const setIsDragging = useCallback(
+    (value: boolean) => {
+      setIsDraggingState(value);
+      onDraggingChange?.(value);
+    },
+    [onDraggingChange]
+  );
   const drawerX = useSpring(DRAWER_WIDTH, springConfig);
   const overlayOpacity = useTransform(drawerX, [0, DRAWER_WIDTH], [0.5, 0]);
 
   const touchStartRef = useRef<{ x: number; y: number; isEdge: boolean } | null>(null);
   const lastVelocityRef = useRef(0);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (open) {
@@ -69,7 +72,7 @@ export function SwipeDrawer({ open, onOpenChange, onDraggingChange, children, cl
         }
       }
     },
-    [open]
+    [open, setIsDragging]
   );
 
   const handleTouchMove = useCallback(
@@ -102,7 +105,7 @@ export function SwipeDrawer({ open, onOpenChange, onDraggingChange, children, cl
         }
       }
     },
-    [open, isDragging, drawerX]
+    [open, isDragging, drawerX, setIsDragging]
   );
 
   const handleTouchEnd = useCallback(
@@ -136,7 +139,7 @@ export function SwipeDrawer({ open, onOpenChange, onDraggingChange, children, cl
       setIsDragging(false);
       lastVelocityRef.current = 0;
     },
-    [open, isDragging, drawerX, onOpenChange]
+    [open, isDragging, drawerX, onOpenChange, setIsDragging]
   );
 
   useEffect(() => {
@@ -173,8 +176,6 @@ export function SwipeDrawer({ open, onOpenChange, onDraggingChange, children, cl
 
   if (!mounted) return null;
 
-  const showDrawer = open || isDragging || drawerX.get() < DRAWER_WIDTH;
-
   return createPortal(
     <>
       <motion.div
@@ -207,9 +208,7 @@ interface SwipeDrawerHeaderProps {
 }
 
 export function SwipeDrawerHeader({ children, className }: SwipeDrawerHeaderProps) {
-  return (
-    <div className={cn("swipe-drawer-header flex flex-col gap-1.5 p-4", className)}>{children}</div>
-  );
+  return <div className={cn("swipe-drawer-header flex flex-col gap-1.5 p-4", className)}>{children}</div>;
 }
 
 interface SwipeDrawerContentProps {
@@ -218,7 +217,5 @@ interface SwipeDrawerContentProps {
 }
 
 export function SwipeDrawerContent({ children, className }: SwipeDrawerContentProps) {
-  return (
-    <div className={cn("swipe-drawer-body flex-1 min-h-0 overflow-y-auto", className)}>{children}</div>
-  );
+  return <div className={cn("swipe-drawer-body flex-1 min-h-0 overflow-y-auto", className)}>{children}</div>;
 }

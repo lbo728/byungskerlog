@@ -59,8 +59,6 @@ export function KnowledgePresetsTab() {
   const [deleteRefDialogOpen, setDeleteRefDialogOpen] = useState(false);
   const [refToDelete, setRefToDelete] = useState<{ presetId: string; ref: AIKnowledgeReference } | null>(null);
 
-  const selectedPreset = presets.find((p) => p.id === selectedPresetId);
-
   const handleCreatePreset = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPresetName.trim() || !newPresetInstruction.trim()) return;
