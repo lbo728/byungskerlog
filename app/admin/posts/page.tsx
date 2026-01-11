@@ -27,6 +27,7 @@ import {
   Type,
   ExternalLink,
   FileText,
+  Brain,
 } from "lucide-react";
 
 import {
@@ -59,6 +60,7 @@ import { useCategoryAnalytics, useViewsAnalytics, useCountAnalytics } from "@/ho
 import { useSnippets, useCreateSnippet, useUpdateSnippet, useDeleteSnippet } from "@/hooks/useSnippets";
 import { ShortcutInput } from "@/components/editor/ShortcutInput";
 import type { CustomSnippet } from "@/lib/types/snippet";
+import { KnowledgePresetsTab } from "@/components/admin/KnowledgePresetsTab";
 
 type BulkAction = "delete" | "publish" | "unpublish";
 
@@ -436,6 +438,13 @@ export default function AdminPostsPage() {
               >
                 <Type className="h-4 w-4 mr-2" />
                 스니펫
+              </TabsTrigger>
+              <TabsTrigger
+                value="knowledge"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4"
+              >
+                <Brain className="h-4 w-4 mr-2" />
+                사전 지식
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -1078,6 +1087,8 @@ export default function AdminPostsPage() {
           )}
         </div>
       )}
+
+      {activeTab === "knowledge" && <KnowledgePresetsTab />}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

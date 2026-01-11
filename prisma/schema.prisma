@@ -9,25 +9,25 @@ datasource db {
 }
 
 model Post {
-  id          String     @id @default(cuid())
-  slug        String     @unique
-  title       String
-  content     String
-  excerpt     String?
-  tags        String[]   @default([])
-  published   Boolean    @default(false)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  seriesId    String?
-  thumbnail   String?
-  subSlug     String?    @unique
-  type            PostType   @default(LONG)
-  linkedinUrl     String?
-  threadsUrl      String?
-  linkedinContent String?
-  threadsContent  String[]   @default([])
-  series          Series?    @relation(fields: [seriesId], references: [id])
-  views       PostView[]
+  id                    String     @id @default(cuid())
+  slug                  String     @unique
+  title                 String
+  content               String
+  excerpt               String?
+  tags                  String[]   @default([])
+  published             Boolean    @default(false)
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  seriesId              String?
+  thumbnail             String?
+  subSlug               String?    @unique
+  type                  PostType   @default(LONG)
+  linkedinUrl           String?
+  threadsUrl            String?
+  linkedinContent       String?
+  threadsContent        String[]   @default([])
+  series                Series?    @relation(fields: [seriesId], references: [id])
+  views                 PostView[]
 
   @@index([seriesId])
   @@index([type])
@@ -89,4 +89,26 @@ model CustomSnippet {
 enum PostType {
   LONG
   SHORT
+}
+
+model AIKnowledgePreset {
+  id          String   @id @default(cuid())
+  name        String
+  instruction String   @db.Text
+  lastUsedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  references  AIKnowledgeReference[]
+}
+
+model AIKnowledgeReference {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  presetId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  preset    AIKnowledgePreset @relation(fields: [presetId], references: [id], onDelete: Cascade)
+
+  @@index([presetId])
 }

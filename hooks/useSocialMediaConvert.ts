@@ -5,6 +5,7 @@ interface ConvertRequest {
   content: string;
   title: string;
   platform: "linkedin" | "threads";
+  presetId: string;
 }
 
 interface ConvertResponse {
