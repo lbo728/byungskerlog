@@ -123,15 +123,19 @@ export function PostDetail({
                       ))}
                     </div>
                   )}
-                  {post.type === "SHORT" && (post.linkedinUrl || post.threadsUrl) && (
-                    <SocialMediaLinks
-                      linkedinUrl={post.linkedinUrl}
-                      threadsUrl={post.threadsUrl}
-                      postId={post.id}
-                      linkedinContent={post.linkedinContent}
-                      threadsContent={post.threadsContent}
-                    />
-                  )}
+                  {post.type === "SHORT" &&
+                    (post.linkedinUrl ||
+                      post.threadsUrl ||
+                      post.linkedinContent ||
+                      (post.threadsContent && post.threadsContent.length > 0)) && (
+                      <SocialMediaLinks
+                        linkedinUrl={post.linkedinUrl}
+                        threadsUrl={post.threadsUrl}
+                        postId={post.id}
+                        linkedinContent={post.linkedinContent}
+                        threadsContent={post.threadsContent}
+                      />
+                    )}
                 </div>
               </header>
 

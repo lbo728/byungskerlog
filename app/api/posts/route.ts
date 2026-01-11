@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
         type: type || "LONG",
         published: published ?? false,
         thumbnail: thumbnail || null,
-        seriesId: seriesId || null,
+        series: seriesId ? { connect: { id: seriesId } } : undefined,
         linkedinContent: linkedinContent || null,
         threadsContent: threadsContent || [],
       },

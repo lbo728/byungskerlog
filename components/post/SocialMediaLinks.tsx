@@ -37,7 +37,10 @@ export function SocialMediaLinks({
   const [linkedinModalOpen, setLinkedinModalOpen] = useState(false);
   const [threadsModalOpen, setThreadsModalOpen] = useState(false);
 
-  if (!linkedinUrl && !threadsUrl) {
+  const hasLinkedinData = linkedinUrl || linkedinContent;
+  const hasThreadsData = threadsUrl || (threadsContent && threadsContent.length > 0 && threadsContent[0]);
+
+  if (!hasLinkedinData && !hasThreadsData) {
     return null;
   }
 
@@ -73,7 +76,7 @@ export function SocialMediaLinks({
   return (
     <>
       <div className="social-media-links flex items-center gap-3">
-        {linkedinUrl && (
+        {hasLinkedinData && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="text-muted-foreground hover:text-[#0A66C2] transition-colors" title="LinkedIn 옵션">
@@ -81,12 +84,14 @@ export function SocialMediaLinks({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuItem asChild>
-                <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  포스트 보러가기
-                </a>
-              </DropdownMenuItem>
+              {linkedinUrl && (
+                <DropdownMenuItem asChild>
+                  <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    포스트 보러가기
+                  </a>
+                </DropdownMenuItem>
+              )}
               {postId && (
                 <DropdownMenuItem onClick={() => setLinkedinModalOpen(true)} className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
@@ -96,7 +101,7 @@ export function SocialMediaLinks({
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-        {threadsUrl && (
+        {hasThreadsData && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="text-muted-foreground hover:text-foreground transition-colors" title="Threads 옵션">
@@ -104,12 +109,14 @@ export function SocialMediaLinks({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuItem asChild>
-                <a href={threadsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  포스트 보러가기
-                </a>
-              </DropdownMenuItem>
+              {threadsUrl && (
+                <DropdownMenuItem asChild>
+                  <a href={threadsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    포스트 보러가기
+                  </a>
+                </DropdownMenuItem>
+              )}
               {postId && (
                 <DropdownMenuItem onClick={() => setThreadsModalOpen(true)} className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />

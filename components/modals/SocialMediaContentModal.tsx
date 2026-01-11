@@ -180,13 +180,28 @@ export function SocialMediaContentModal({
           </Button>
         </div>
       </div>
-      <Textarea
-        value={linkedinContent}
-        onChange={(e) => handleLinkedinChange(e.target.value)}
-        placeholder="LinkedIn 콘텐츠가 없습니다."
-        className={cn("resize-none transition-all duration-200", isFullView ? "h-[calc(100dvh-280px)]" : "h-[300px]")}
-        disabled={updatePostMutation.isPending}
-      />
+      <div className="relative">
+        <Textarea
+          value={linkedinContent}
+          onChange={(e) => handleLinkedinChange(e.target.value)}
+          placeholder="LinkedIn 콘텐츠가 없습니다."
+          className={cn(
+            "resize-none transition-all duration-200 pr-10",
+            isFullView ? "h-[calc(100dvh-280px)]" : "h-[300px]"
+          )}
+          disabled={updatePostMutation.isPending}
+        />
+        {!isMobile && (
+          <button
+            type="button"
+            onClick={() => setIsFullView(!isFullView)}
+            className="absolute bottom-2 right-2 p-1.5 rounded-md bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            title={isFullView ? "축소" : "전체보기"}
+          >
+            {isFullView ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
+        )}
+      </div>
       <p
         className={cn(
           "text-xs text-right",
@@ -237,13 +252,25 @@ export function SocialMediaContentModal({
                   복사
                 </Button>
               </div>
-              <Textarea
-                value={threadPost}
-                onChange={(e) => handleThreadsChange(index, e.target.value)}
-                placeholder={`Threads 포스트 ${index + 1}...`}
-                className="h-[120px] resize-none"
-                disabled={updatePostMutation.isPending}
-              />
+              <div className="relative">
+                <Textarea
+                  value={threadPost}
+                  onChange={(e) => handleThreadsChange(index, e.target.value)}
+                  placeholder={`Threads 포스트 ${index + 1}...`}
+                  className={cn("resize-none pr-10", isFullView ? "h-[calc(100dvh-400px)]" : "h-[120px]")}
+                  disabled={updatePostMutation.isPending}
+                />
+                {!isMobile && (
+                  <button
+                    type="button"
+                    onClick={() => setIsFullView(!isFullView)}
+                    className="absolute bottom-2 right-2 p-1.5 rounded-md bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    title={isFullView ? "축소" : "전체보기"}
+                  >
+                    {isFullView ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  </button>
+                )}
+              </div>
               <p
                 className={cn(
                   "text-xs text-right",
@@ -363,7 +390,7 @@ export function SocialMediaContentModal({
 
         <div className="space-y-4">{modalContent}</div>
 
-        <DialogFooter>{footerButtons}</DialogFooter>
+        <DialogFooter className="flex justify-end gap-2">{footerButtons}</DialogFooter>
       </DialogContent>
     </Dialog>
   );
