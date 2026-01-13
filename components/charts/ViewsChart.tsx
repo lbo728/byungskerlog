@@ -1,10 +1,24 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from "recharts";
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface ViewsChartProps {
   data: { title: string; slug: string; views: number }[];
   isLoading?: boolean;
+}
+
+const chartConfig = {
+  views: {
+    label: "조회수",
+    color: "hsl(var(--chart-2))",
+  },
+} satisfies ChartConfig;
+
+function truncateTitle(title: string, maxLen = 8): string {
+  const withoutPrefix = title.replace(/^\[[\w-]+\]\s*/i, "");
+  if (withoutPrefix.length <= maxLen) return withoutPrefix;
+  return withoutPrefix.slice(0, maxLen) + "...";
 }
 
 export function ViewsChart({ data, isLoading }: ViewsChartProps) {
@@ -24,24 +38,54 @@ export function ViewsChart({ data, isLoading }: ViewsChartProps) {
     );
   }
 
+  const chartData = data.map((item) => ({
+    ...item,
+    displayTitle: truncateTitle(item.title),
+  }));
+
   return (
-    <div className="views-chart h-[400px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ top: 20, right: 30, left: 120, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-          <XAxis type="number" className="text-xs" />
-          <YAxis type="category" dataKey="title" className="text-xs" width={120} />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--card))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "8px",
-            }}
-            formatter={(value) => [`${value}회`, "조회수"]}
+    <ChartContainer config={chartConfig} className="views-chart h-[400px] w-full">
+      <BarChart data={chartData} layout="vertical" margin={{ top: 20, right: 50, left: 80, bottom: 20 }}>
+        <defs>
+          <linearGradient id="viewsBarGradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#a8a8a8" />
+            <stop offset="100%" stopColor="#686868" />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
+        <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+        <YAxis
+          type="category"
+          dataKey="displayTitle"
+          width={80}
+          tickLine={false}
+          axisLine={false}
+          tick={{ fontSize: 12 }}
+        />
+        <ChartTooltip
+          cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.3 }}
+          content={
+            <ChartTooltipContent
+              hideLabel
+              formatter={(value, name, props) => (
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-medium">{props.payload?.title}</span>
+                  <span className="text-muted-foreground">{value}회 조회</span>
+                </div>
+              )}
+            />
+          }
+        />
+        <Bar dataKey="views" fill="url(#viewsBarGradient)" radius={[0, 4, 4, 0]}>
+          <LabelList
+            dataKey="views"
+            position="right"
+            formatter={(value: number) => `${value}회`}
+            className="fill-foreground text-[11px] font-medium"
+            offset={8}
           />
-          <Bar dataKey="views" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+        </Bar>
+      </BarChart>
+    </ChartContainer>
   );
 }
