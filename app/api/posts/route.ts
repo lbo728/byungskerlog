@@ -223,11 +223,54 @@ export async function GET(request: NextRequest) {
       {} as Record<string, { totalViews: number; dailyViews: number }>
     );
 
-    const postsWithViews = posts.map((post) => ({
-      ...post,
-      totalViews: viewStats[post.id]?.totalViews || 0,
-      dailyViews: viewStats[post.id]?.dailyViews || 0,
-    }));
+    const longPostIds = posts.filter((p) => p.type === "LONG").map((p) => p.id);
+    let readingStats: Record<string, { sessions: number; totalDepth: number; completed: number }> = {};
+
+    try {
+      const readingSessions =
+        longPostIds.length > 0
+          ? await prisma.readingSession.findMany({
+              where: { postId: { in: longPostIds } },
+              select: {
+                postId: true,
+                maxScrollDepth: true,
+                completed: true,
+              },
+            })
+          : [];
+
+      readingStats = readingSessions.reduce(
+        (acc, session) => {
+          if (!acc[session.postId]) {
+            acc[session.postId] = { sessions: 0, totalDepth: 0, completed: 0 };
+          }
+          acc[session.postId].sessions++;
+          acc[session.postId].totalDepth += session.maxScrollDepth;
+          if (session.completed) {
+            acc[session.postId].completed++;
+          }
+          return acc;
+        },
+        {} as Record<string, { sessions: number; totalDepth: number; completed: number }>
+      );
+    } catch (readingError) {
+      console.error("Error fetching reading sessions:", readingError);
+    }
+
+    const postsWithViews = posts.map((post) => {
+      const reading = readingStats[post.id];
+      const avgScrollDepth = reading ? Math.round(reading.totalDepth / reading.sessions) : null;
+      const completionRate = reading ? Math.round((reading.completed / reading.sessions) * 100) : null;
+
+      return {
+        ...post,
+        totalViews: viewStats[post.id]?.totalViews || 0,
+        dailyViews: viewStats[post.id]?.dailyViews || 0,
+        readingSessions: reading?.sessions || null,
+        avgScrollDepth,
+        completionRate,
+      };
+    });
 
     const sortedPosts =
       sortBy === "popular" ? postsWithViews.sort((a, b) => b.totalViews - a.totalViews) : postsWithViews;
