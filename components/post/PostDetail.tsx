@@ -6,6 +6,7 @@ import { TableOfContents } from "./Toc";
 import { MobileToc } from "./MobileToc";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { ViewTracker } from "@/components/analytics/ViewTracker";
+import { ReadingTracker } from "@/components/analytics/ReadingTracker";
 import { PostActions } from "./PostActions";
 import { ReadingProgress } from "./ReadingProgress";
 import { AdSense } from "@/components/seo/Adsense";
@@ -67,6 +68,7 @@ export function PostDetail({
         }}
       />
       <ViewTracker slug={slug} />
+      <ReadingTracker slug={slug} postType={post.type} />
       <div className="post-detail-layout relative py-12">
         <div className="post-content-center flex justify-center px-4 sm:px-6 lg:px-8">
           <div className="post-main-content max-w-3xl w-full">
