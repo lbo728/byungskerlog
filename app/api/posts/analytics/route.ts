@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { ApiError, handleApiError } from "@/lib/api/errors";
 
-type StatType = "category" | "views" | "count";
+type StatType = "category" | "views" | "count" | "reading";
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type");
     const statType = searchParams.get("statType") as StatType | null;
 
-    if (!statType || !["category", "views", "count"].includes(statType)) {
-      throw ApiError.validationError("Invalid statType. Must be 'category', 'views', or 'count'");
+    if (!statType || !["category", "views", "count", "reading"].includes(statType)) {
+      throw ApiError.validationError("Invalid statType. Must be 'category', 'views', 'count', or 'reading'");
     }
 
     type WhereClause = {
@@ -60,6 +60,9 @@ export async function GET(request: NextRequest) {
         break;
       case "count":
         data = await getCountStats(where);
+        break;
+      case "reading":
+        data = await getReadingStats(where);
         break;
     }
 
@@ -146,4 +149,63 @@ async function getCountStats(where: {
   return Object.entries(dateCounts)
     .map(([date, count]) => ({ date, count }))
     .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+async function getReadingStats(where: {
+  published?: boolean;
+  type?: "LONG" | "SHORT";
+  createdAt?: { gte?: Date; lt?: Date };
+}) {
+  const longWhere = { ...where, type: "LONG" as const };
+
+  const posts = await prisma.post.findMany({
+    where: longWhere,
+    select: { id: true, title: true, slug: true },
+  });
+
+  const postIds = posts.map((p) => p.id);
+
+  if (postIds.length === 0) {
+    return [];
+  }
+
+  const sessions = await prisma.readingSession.groupBy({
+    by: ["postId"],
+    where: { postId: { in: postIds } },
+    _count: { id: true },
+    _avg: { maxScrollDepth: true },
+  });
+
+  const completedCounts = await prisma.readingSession.groupBy({
+    by: ["postId"],
+    where: {
+      postId: { in: postIds },
+      completed: true,
+    },
+    _count: { id: true },
+  });
+
+  const sessionMap = new Map<string, { total: number; avgDepth: number }>(
+    sessions.map((s) => [s.postId, { total: s._count.id, avgDepth: s._avg.maxScrollDepth || 0 }])
+  );
+
+  const completedMap = new Map<string, number>(completedCounts.map((c) => [c.postId, c._count.id]));
+
+  return posts
+    .map((post) => {
+      const stats = sessionMap.get(post.id) || { total: 0, avgDepth: 0 };
+      const completed = completedMap.get(post.id) || 0;
+      const completionRate = stats.total > 0 ? (completed / stats.total) * 100 : 0;
+
+      return {
+        title: post.title.length > 25 ? post.title.slice(0, 25) + "..." : post.title,
+        slug: post.slug,
+        sessions: stats.total,
+        avgDepth: Math.round(stats.avgDepth),
+        completionRate: Math.round(completionRate),
+      };
+    })
+    .filter((p) => p.sessions > 0)
+    .sort((a, b) => b.sessions - a.sessions)
+    .slice(0, 10);
 }

@@ -36,6 +36,9 @@ export interface Post {
   threadsUrl?: string | null;
   linkedinContent?: string | null;
   threadsContent?: string[];
+  readingSessions?: number | null;
+  avgScrollDepth?: number | null;
+  completionRate?: number | null;
 }
 
 /**

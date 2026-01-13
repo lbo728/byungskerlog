@@ -56,7 +56,13 @@ import type { AdminPostsFilters } from "@/lib/queryKeys";
 import { CategoryChart } from "@/components/charts/CategoryChart";
 import { ViewsChart } from "@/components/charts/ViewsChart";
 import { CountChart } from "@/components/charts/CountChart";
-import { useCategoryAnalytics, useViewsAnalytics, useCountAnalytics } from "@/hooks/usePostAnalytics";
+import { ReadingChart } from "@/components/charts/ReadingChart";
+import {
+  useCategoryAnalytics,
+  useViewsAnalytics,
+  useCountAnalytics,
+  useReadingAnalytics,
+} from "@/hooks/usePostAnalytics";
 import { useSnippets, useCreateSnippet, useUpdateSnippet, useDeleteSnippet } from "@/hooks/useSnippets";
 import { ShortcutInput } from "@/components/editor/ShortcutInput";
 import type { CustomSnippet } from "@/lib/types/snippet";
@@ -99,7 +105,7 @@ export default function AdminPostsPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const [analyticsTab, setAnalyticsTab] = useState<"category" | "views" | "count">("category");
+  const [analyticsTab, setAnalyticsTab] = useState<"category" | "views" | "count" | "reading">("category");
   const [analyticsStartDate, setAnalyticsStartDate] = useState<string>(() => {
     const d = new Date();
     d.setMonth(d.getMonth() - 1);
@@ -155,6 +161,7 @@ export default function AdminPostsPage() {
   const { data: categoryData = [], isLoading: isLoadingCategory } = useCategoryAnalytics(analyticsOptions);
   const { data: viewsData = [], isLoading: isLoadingViews } = useViewsAnalytics(analyticsOptions);
   const { data: countData = [], isLoading: isLoadingCount } = useCountAnalytics(analyticsOptions);
+  const { data: readingData = [], isLoading: isLoadingReading } = useReadingAnalytics(analyticsOptions);
 
   const { data: snippets = [], isLoading: isLoadingSnippets } = useSnippets();
   const createSnippetMutation = useCreateSnippet();
@@ -645,6 +652,11 @@ export default function AdminPostsPage() {
                             <span className="px-2 py-0.5 bg-muted rounded whitespace-nowrap">
                               일간 {post.dailyViews || 0} / 총 {post.totalViews || 0}
                             </span>
+                            {post.type === "LONG" && post.completionRate !== null && (
+                              <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded whitespace-nowrap">
+                                완독 {post.completionRate}% ({post.readingSessions}명)
+                              </span>
+                            )}
                           </div>
                           <div className="post-card-slugs flex flex-wrap items-center gap-2 mt-2 text-xs">
                             <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded font-mono">
@@ -923,6 +935,15 @@ export default function AdminPostsPage() {
               <TrendingUp className="h-4 w-4" />
               글쓰기 추이
             </Button>
+            <Button
+              variant={analyticsTab === "reading" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAnalyticsTab("reading")}
+              className="gap-2"
+            >
+              <BookOpen className="h-4 w-4" />
+              완독률
+            </Button>
           </div>
 
           <div className="analytics-chart-display border border-border rounded-lg p-6 mb-6">
@@ -930,10 +951,12 @@ export default function AdminPostsPage() {
               {analyticsTab === "category" && "태그별 포스트 수"}
               {analyticsTab === "views" && "조회수 TOP 10"}
               {analyticsTab === "count" && "기간별 글쓰기 추이"}
+              {analyticsTab === "reading" && "완독률 TOP 10 (Long 포스트)"}
             </h2>
             {analyticsTab === "category" && <CategoryChart data={categoryData} isLoading={isLoadingCategory} />}
             {analyticsTab === "views" && <ViewsChart data={viewsData} isLoading={isLoadingViews} />}
             {analyticsTab === "count" && <CountChart data={countData} isLoading={isLoadingCount} />}
+            {analyticsTab === "reading" && <ReadingChart data={readingData} isLoading={isLoadingReading} />}
           </div>
 
           <section className="analytics-summary">

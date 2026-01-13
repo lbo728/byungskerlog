@@ -1,11 +1,19 @@
 "use client";
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface CountChartProps {
   data: { date: string; count: number }[];
   isLoading?: boolean;
 }
+
+const chartConfig = {
+  count: {
+    label: "작성된 글",
+    color: "hsl(var(--chart-1))",
+  },
+} satisfies ChartConfig;
 
 export function CountChart({ data, isLoading }: CountChartProps) {
   if (isLoading) {
@@ -30,30 +38,23 @@ export function CountChart({ data, isLoading }: CountChartProps) {
   }));
 
   return (
-    <div className="count-chart h-[400px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={formattedData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-          <XAxis dataKey="displayDate" className="text-xs" />
-          <YAxis className="text-xs" allowDecimals={false} />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--card))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "8px",
-            }}
-            labelFormatter={(label) => String(label)}
-            formatter={(value) => [`${value}개`, "작성된 글"]}
-          />
-          <Area
-            type="monotone"
-            dataKey="count"
-            stroke="hsl(var(--primary))"
-            fill="hsl(var(--primary) / 0.2)"
-            strokeWidth={2}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
+    <ChartContainer config={chartConfig} className="count-chart h-[400px] w-full">
+      <AreaChart data={formattedData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+        <defs>
+          <linearGradient id="countAreaGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#a8a8a8" stopOpacity={0.5} />
+            <stop offset="100%" stopColor="#686868" stopOpacity={0.1} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
+        <XAxis dataKey="displayDate" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+        <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent labelKey="displayDate" formatter={(value) => <span>{value}개</span>} />}
+        />
+        <Area type="monotone" dataKey="count" stroke="#888888" fill="url(#countAreaGradient)" strokeWidth={2} />
+      </AreaChart>
+    </ChartContainer>
   );
 }

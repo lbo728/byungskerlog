@@ -9,25 +9,26 @@ datasource db {
 }
 
 model Post {
-  id                    String     @id @default(cuid())
-  slug                  String     @unique
+  id                    String           @id @default(cuid())
+  slug                  String           @unique
   title                 String
   content               String
   excerpt               String?
-  tags                  String[]   @default([])
-  published             Boolean    @default(false)
-  createdAt             DateTime   @default(now())
-  updatedAt             DateTime   @updatedAt
+  tags                  String[]         @default([])
+  published             Boolean          @default(false)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
   seriesId              String?
   thumbnail             String?
-  subSlug               String?    @unique
-  type                  PostType   @default(LONG)
+  subSlug               String?          @unique
+  type                  PostType         @default(LONG)
   linkedinUrl           String?
   threadsUrl            String?
   linkedinContent       String?
-  threadsContent        String[]   @default([])
-  series                Series?    @relation(fields: [seriesId], references: [id])
+  threadsContent        String[]         @default([])
+  series                Series?          @relation(fields: [seriesId], references: [id])
   views                 PostView[]
+  readingSessions       ReadingSession[]
 
   @@index([seriesId])
   @@index([type])
@@ -53,6 +54,22 @@ model PostView {
 
   @@index([postId])
   @@index([viewedAt])
+}
+
+model ReadingSession {
+  id             String   @id @default(cuid())
+  postId         String
+  sessionId      String
+  maxScrollDepth Float    @default(0)
+  readingTime    Int      @default(0)
+  completed      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  post           Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, sessionId])
+  @@index([postId])
+  @@index([createdAt])
 }
 
 model Page {

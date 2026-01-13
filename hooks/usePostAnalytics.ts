@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
 
-type StatType = "category" | "views" | "count";
+type StatType = "category" | "views" | "count" | "reading";
 
 interface CategoryStat {
   tag: string;
@@ -19,6 +19,14 @@ interface ViewsStat {
 interface CountStat {
   date: string;
   count: number;
+}
+
+interface ReadingStat {
+  title: string;
+  slug: string;
+  sessions: number;
+  avgDepth: number;
+  completionRate: number;
 }
 
 interface UsePostAnalyticsOptions {
@@ -56,4 +64,8 @@ export function useViewsAnalytics(options: Omit<UsePostAnalyticsOptions, "statTy
 
 export function useCountAnalytics(options: Omit<UsePostAnalyticsOptions, "statType">) {
   return usePostAnalytics<CountStat[]>({ ...options, statType: "count" });
+}
+
+export function useReadingAnalytics(options: Omit<UsePostAnalyticsOptions, "statType">) {
+  return usePostAnalytics<ReadingStat[]>({ ...options, statType: "reading" });
 }
