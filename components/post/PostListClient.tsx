@@ -65,7 +65,7 @@ export function PostListClient({ initialData }: PostListClientProps) {
 
   if (!posts || posts.length === 0) {
     if (isPending) {
-      return <PostListSkeleton />;
+      return <PostListSkeleton viewMode={viewMode} />;
     }
     return (
       <div className="text-center py-20">

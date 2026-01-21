@@ -68,13 +68,5 @@ const getPosts = (page: number) =>
 export async function PostsPageLoader({ page }: PostsPageLoaderProps) {
   const data = await getPosts(page);
 
-  return (
-    <>
-      <div className="posts-header flex items-baseline gap-3 mb-8">
-        <h1 className="text-4xl font-bold">All Posts</h1>
-        <span className="text-xl text-muted-foreground">{data.pagination.total}</span>
-      </div>
-      <PostsPageClient initialData={data} currentPage={page} />
-    </>
-  );
+  return <PostsPageClient initialData={data} currentPage={page} />;
 }

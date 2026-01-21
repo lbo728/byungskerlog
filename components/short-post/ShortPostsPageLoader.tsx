@@ -67,13 +67,5 @@ const getShortPosts = (page: number) =>
 export async function ShortPostsPageLoader({ page }: ShortPostsPageLoaderProps) {
   const data = await getShortPosts(page);
 
-  return (
-    <>
-      <div className="short-posts-header flex items-baseline gap-3 mb-8">
-        <h1 className="text-4xl font-bold">Short Posts</h1>
-        <span className="text-xl text-muted-foreground">{data.pagination.total}</span>
-      </div>
-      <ShortPostsPageClient initialData={data} currentPage={page} />
-    </>
-  );
+  return <ShortPostsPageClient initialData={data} currentPage={page} />;
 }
