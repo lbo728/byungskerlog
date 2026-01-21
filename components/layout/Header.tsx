@@ -52,7 +52,7 @@ export function Header() {
       )}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="max-w-4xl mx-auto flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Image
               src="/logo-byungsker.png"
@@ -181,7 +181,7 @@ export function Header() {
       {isAuthorized && isAdminMenuOpen && (
         <div className="admin-sub-gnb hidden md:block border-t border-border/40 bg-muted/50">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex h-12 items-center gap-4">
+            <div className="max-w-4xl mx-auto flex h-12 items-center gap-4">
               <Button asChild variant="ghost" size="sm" onClick={() => setIsAdminMenuOpen(false)}>
                 <Link href="/admin/write" className="gap-2">
                   <PenSquare className="h-4 w-4" />

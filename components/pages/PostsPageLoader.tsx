@@ -4,6 +4,7 @@ import { PostsPageClient } from "./PostsPageClient";
 
 interface PostsPageLoaderProps {
   page: number;
+  countOnly?: boolean;
 }
 
 const getPosts = (page: number) =>
@@ -65,8 +66,12 @@ const getPosts = (page: number) =>
     { revalidate: 3600, tags: ["posts"] }
   )();
 
-export async function PostsPageLoader({ page }: PostsPageLoaderProps) {
+export async function PostsPageLoader({ page, countOnly }: PostsPageLoaderProps) {
   const data = await getPosts(page);
+
+  if (countOnly) {
+    return <span className="text-xl text-muted-foreground">{data.pagination.total}</span>;
+  }
 
   return <PostsPageClient initialData={data} currentPage={page} />;
 }

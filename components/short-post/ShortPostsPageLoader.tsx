@@ -4,6 +4,7 @@ import { ShortPostsPageClient } from "./ShortPostsPageClient";
 
 interface ShortPostsPageLoaderProps {
   page: number;
+  countOnly?: boolean;
 }
 
 const getShortPosts = (page: number) =>
@@ -64,8 +65,12 @@ const getShortPosts = (page: number) =>
     { revalidate: 3600, tags: ["posts", "short-posts"] }
   )();
 
-export async function ShortPostsPageLoader({ page }: ShortPostsPageLoaderProps) {
+export async function ShortPostsPageLoader({ page, countOnly }: ShortPostsPageLoaderProps) {
   const data = await getShortPosts(page);
+
+  if (countOnly) {
+    return <span className="text-xl text-muted-foreground">{data.pagination.total}</span>;
+  }
 
   return <ShortPostsPageClient initialData={data} currentPage={page} />;
 }
