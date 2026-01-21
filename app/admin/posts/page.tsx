@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
@@ -87,10 +87,17 @@ export default function AdminPostsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState(() => {
-    const validTabs = ["posts", "series", "analytics", "snippets", "knowledge"];
-    return tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "posts";
-  });
+  const validTabs = ["posts", "series", "analytics", "snippets", "knowledge"];
+  const activeTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "posts";
+
+  const setActiveTab = useCallback(
+    (tab: string) => {
+      const params = new URLSearchParams(window.location.search);
+      params.set("tab", tab);
+      router.replace(`?${params.toString()}`);
+    },
+    [router]
+  );
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const [slugEditModalOpen, setSlugEditModalOpen] = useState(false);
@@ -138,13 +145,6 @@ export default function AdminPostsPage() {
   const [snsModalOpen, setSnsModalOpen] = useState(false);
   const [snsModalPost, setSnsModalPost] = useState<Post | null>(null);
   const [snsModalPlatform, setSnsModalPlatform] = useState<"linkedin" | "threads">("linkedin");
-
-  useEffect(() => {
-    const validTabs = ["posts", "series", "analytics", "snippets", "knowledge"];
-    if (tabFromUrl && validTabs.includes(tabFromUrl)) {
-      setActiveTab(tabFromUrl);
-    }
-  }, [tabFromUrl]);
 
   const filters: AdminPostsFilters = useMemo(
     () => ({

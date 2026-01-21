@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
@@ -29,14 +29,15 @@ export function PostListClient({ initialData }: PostListClientProps) {
   const user = useUser();
   const router = useRouter();
   const [sortType, setSortType] = useState<SortType>("latest");
-  const [viewMode, setViewMode] = useState<ViewMode>("card");
-
-  useEffect(() => {
-    const saved = localStorage.getItem(VIEW_MODE_KEY);
-    if (saved === "card" || saved === "list") {
-      setViewMode(saved);
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(VIEW_MODE_KEY);
+      if (saved === "card" || saved === "list") {
+        return saved;
+      }
     }
-  }, []);
+    return "card";
+  });
 
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
