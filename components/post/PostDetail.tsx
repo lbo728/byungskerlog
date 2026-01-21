@@ -71,7 +71,7 @@ export function PostDetail({
       <ReadingTracker slug={slug} postType={post.type} />
       <div className="post-detail-layout relative py-12">
         <div className="post-content-center flex justify-center px-4 sm:px-6 lg:px-8">
-          <div className="post-main-content max-w-4xl w-full">
+          <div className="post-main-content max-w-5xl w-full">
             <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_TOP || ""} className="mb-8" />
 
             <Link

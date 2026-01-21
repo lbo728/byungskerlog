@@ -80,7 +80,7 @@ export default async function SeriesDetailPage({ params }: SeriesDetailPageProps
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <nav className="series-nav mb-6">
           <Button variant="ghost" size="sm" asChild className="gap-2">
             <Link href="/series">
