@@ -31,8 +31,8 @@ export function Header() {
   const isAuthorized = user && user.primaryEmail && ALLOWED_EMAILS.includes(user.primaryEmail);
 
   const navItems = [
-    { label: "Post", href: "/posts" },
-    { label: "Short", href: "/short-posts" },
+    { label: "Posts", href: "/posts" },
+    { label: "Shorts", href: "/short-posts" },
     { label: "Series", href: "/series" },
     { label: "Tags", href: "/tags" },
     { label: "Product", href: "/products" },

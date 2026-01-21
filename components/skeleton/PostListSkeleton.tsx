@@ -65,9 +65,6 @@ export function PostListSkeleton({ viewMode = "card" }: PostListSkeletonProps) {
                     <Skeleton className="h-5 w-10 rounded" />
                   </div>
                 </div>
-                <div className="post-item-thumbnail flex-shrink-0 self-start">
-                  <Skeleton className="w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-lg" />
-                </div>
               </div>
             </article>
           ))}
