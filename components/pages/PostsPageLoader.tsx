@@ -15,7 +15,7 @@ const getPosts = (page: number) =>
       try {
         const [posts, total] = await Promise.all([
           prisma.post.findMany({
-            where: { published: true },
+            where: { published: true, type: "LONG" },
             orderBy: { createdAt: "desc" },
             skip,
             take: limit,
@@ -37,7 +37,7 @@ const getPosts = (page: number) =>
               },
             },
           }),
-          prisma.post.count({ where: { published: true } }),
+          prisma.post.count({ where: { published: true, type: "LONG" } }),
         ]);
 
         return {
