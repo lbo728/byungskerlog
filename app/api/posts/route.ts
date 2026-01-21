@@ -75,12 +75,17 @@ export async function POST(request: NextRequest) {
 
     if (type === "LONG" && createShortPost && shortPostContent) {
       const shortSlug = await generateUniqueSlug(shortPostSlug || `${slug}-short`);
+      const shortExcerpt = shortPostContent
+        .replace(/[#*`\[\]()>\-]/g, "")
+        .replace(/\n+/g, " ")
+        .trim()
+        .substring(0, 200);
 
       const shortPost = await prisma.post.create({
         data: {
           title,
           slug: shortSlug,
-          excerpt: excerpt || null,
+          excerpt: shortExcerpt || null,
           content: shortPostContent,
           tags: tags || [],
           type: "SHORT",
