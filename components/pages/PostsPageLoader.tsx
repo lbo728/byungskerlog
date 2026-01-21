@@ -14,7 +14,7 @@ const getPosts = (page: number) =>
       const skip = (page - 1) * limit;
 
       try {
-        const [posts, total] = await Promise.all([
+        const [postsRaw, total] = await Promise.all([
           prisma.post.findMany({
             where: { published: true, type: "LONG" },
             orderBy: { createdAt: "desc" },
@@ -27,7 +27,7 @@ const getPosts = (page: number) =>
               excerpt: true,
               content: true,
               thumbnail: true,
-              tags: true,
+              tags: { select: { name: true } },
               createdAt: true,
               series: {
                 select: {
@@ -40,6 +40,11 @@ const getPosts = (page: number) =>
           }),
           prisma.post.count({ where: { published: true, type: "LONG" } }),
         ]);
+
+        const posts = postsRaw.map((p) => ({
+          ...p,
+          tags: p.tags.map((t) => t.name),
+        }));
 
         return {
           posts,

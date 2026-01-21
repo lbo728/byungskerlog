@@ -35,18 +35,22 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
-  const post = await prisma.post.findFirst({
+  const postData = await prisma.post.findFirst({
     where: {
       OR: [{ slug: decodedSlug }, { subSlug: decodedSlug }],
     },
+    include: {
+      tags: { select: { name: true } },
+    },
   });
 
-  if (!post) {
+  if (!postData) {
     return {
       title: "포스트를 찾을 수 없습니다",
     };
   }
 
+  const post = { ...postData, tags: postData.tags.map((t) => t.name) };
   const canonicalUrl = `${siteUrl}/posts/${post.slug}`;
   const ogImageUrl = `${siteUrl}/posts/${encodeURIComponent(post.slug)}/opengraph-image`;
   const description = post.excerpt || post.content.replace(/[#*`\n]/g, "").substring(0, 200) + "...";
@@ -54,7 +58,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${post.title} written by Byungsker`,
     description,
-    keywords: post.tags || [],
+    keywords: post.tags,
     authors: [{ name: "이병우 (Byungsker)" }],
     openGraph: {
       type: "article",
