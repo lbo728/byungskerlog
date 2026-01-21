@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import Link from "next/link";
 import { Separator } from "@/components/ui/Separator";
+import { cn } from "@/lib/utils";
 import { TableOfContents } from "./Toc";
 import { MobileToc } from "./MobileToc";
 import { MarkdownRenderer } from "./MarkdownRenderer";
@@ -71,7 +72,7 @@ export function PostDetail({
       <ReadingTracker slug={slug} postType={post.type} />
       <div className="post-detail-layout relative py-12">
         <div className="post-content-center flex justify-center px-4 sm:px-6 lg:px-8">
-          <div className="post-main-content max-w-5xl w-full">
+          <div className={cn("post-main-content max-w-5xl w-full", post.type !== "SHORT" && "xl:pr-24")}>
             <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_TOP || ""} className="mb-8" />
 
             <Link

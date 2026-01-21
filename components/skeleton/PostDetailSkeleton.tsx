@@ -28,8 +28,6 @@ export function PostDetailSkeleton() {
 
               <Separator className="my-8" />
 
-              <Skeleton className="w-full aspect-video mb-8 rounded-lg" />
-
               <div className="prose-skeleton space-y-4">
                 <Skeleton className="h-6 w-1/3" />
                 <Skeleton className="h-4 w-full" />
