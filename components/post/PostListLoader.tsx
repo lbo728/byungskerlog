@@ -5,7 +5,7 @@ import { PostListClient } from "./PostListClient";
 const getPosts = unstable_cache(
   async () => {
     try {
-      const posts = await prisma.post.findMany({
+      const postsRaw = await prisma.post.findMany({
         where: { published: true },
         orderBy: { createdAt: "desc" },
         select: {
@@ -15,7 +15,7 @@ const getPosts = unstable_cache(
           excerpt: true,
           content: true,
           thumbnail: true,
-          tags: true,
+          tags: { select: { name: true } },
           type: true,
           createdAt: true,
           updatedAt: true,
@@ -28,7 +28,10 @@ const getPosts = unstable_cache(
           },
         },
       });
-      return posts;
+      return postsRaw.map((p) => ({
+        ...p,
+        tags: p.tags.map((t) => t.name),
+      }));
     } catch {
       return [];
     }

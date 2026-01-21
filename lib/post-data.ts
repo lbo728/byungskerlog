@@ -2,12 +2,13 @@ import { prisma } from "@/lib/prisma";
 
 export async function getPost(slug: string) {
   const decodedSlug = decodeURIComponent(slug);
-  const post = await prisma.post.findFirst({
+  const postData = await prisma.post.findFirst({
     where: {
       OR: [{ slug: decodedSlug }, { subSlug: decodedSlug }],
     },
     include: {
       series: true,
+      tags: { select: { name: true } },
       linkedShortPost: {
         select: { slug: true, title: true },
       },
@@ -17,8 +18,11 @@ export async function getPost(slug: string) {
     },
   });
 
-  if (!post) return null;
-  return post;
+  if (!postData) return null;
+  return {
+    ...postData,
+    tags: postData.tags.map((t) => t.name),
+  };
 }
 
 export async function getSeriesPosts(seriesId: string | null) {
@@ -100,11 +104,11 @@ export async function getRelatedPosts(tags: string[], currentSlug: string, filte
 
   const typeFilter = filterByShortType ? { type: "SHORT" as const } : {};
 
-  const posts = await prisma.post.findMany({
+  const postsData = await prisma.post.findMany({
     where: {
       published: true,
       slug: { not: currentSlug },
-      tags: { hasSome: tags },
+      tags: { some: { name: { in: tags } } },
       ...typeFilter,
     },
     select: {
@@ -112,13 +116,16 @@ export async function getRelatedPosts(tags: string[], currentSlug: string, filte
       title: true,
       excerpt: true,
       createdAt: true,
-      tags: true,
+      tags: { select: { name: true } },
     },
     take: 5,
     orderBy: { createdAt: "desc" },
   });
 
-  return posts;
+  return postsData.map((post) => ({
+    ...post,
+    tags: post.tags.map((t) => t.name),
+  }));
 }
 
 export async function getShortPostsNav(createdAt: Date, currentSlug: string, postType: string) {

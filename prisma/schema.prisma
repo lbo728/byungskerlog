@@ -14,7 +14,6 @@ model Post {
   title                 String
   content               String
   excerpt               String?
-  tags                  String[]         @default([])
   published             Boolean          @default(false)
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
@@ -29,8 +28,8 @@ model Post {
   series                Series?          @relation(fields: [seriesId], references: [id])
   views                 PostView[]
   readingSessions       ReadingSession[]
+  tags                  Tag[]
 
-  // Long ↔ Short 1:1 연결
   linkedShortPostId     String?          @unique
   linkedShortPost       Post?            @relation("LongToShort", fields: [linkedShortPostId], references: [id], onDelete: SetNull)
   linkedLongPost        Post?            @relation("LongToShort")
@@ -90,10 +89,10 @@ model Draft {
   id        String   @id @default(cuid())
   title     String   @default("")
   content   String   @default("")
-  tags      String[] @default([])
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  tags      Tag[]
 
   @@index([authorId])
 }
@@ -111,6 +110,19 @@ model CustomSnippet {
 enum PostType {
   LONG
   SHORT
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+  drafts    Draft[]
+
+  @@index([name])
+  @@index([slug])
 }
 
 model AIKnowledgePreset {

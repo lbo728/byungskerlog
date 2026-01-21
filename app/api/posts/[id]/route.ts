@@ -90,7 +90,25 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         ...(subSlug !== undefined && { subSlug: subSlug || null }),
         ...(excerpt !== undefined && { excerpt }),
         ...(content !== undefined && { content }),
-        ...(tags !== undefined && { tags }),
+        ...(tags !== undefined && {
+          tags: {
+            set: [],
+            connectOrCreate: tags.map((tagName: string) => ({
+              where: { name: tagName },
+              create: {
+                name: tagName,
+                slug:
+                  tagName
+                    .toLowerCase()
+                    .trim()
+                    .replace(/[^a-z0-9가-힣\s-]/g, "")
+                    .replace(/\s+/g, "-")
+                    .replace(/-+/g, "-")
+                    .replace(/^-|-$/g, "") || "tag",
+              },
+            })),
+          },
+        }),
         ...(type !== undefined && { type }),
         ...(published !== undefined && { published }),
         ...(thumbnail !== undefined && { thumbnail }),
