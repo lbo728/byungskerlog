@@ -20,6 +20,7 @@ import { useKnowledgePresets } from "@/hooks/useKnowledgePresets";
 import { cn } from "@/lib/utils";
 
 type ShortTab = "settings" | "linkedin" | "threads";
+type LongTab = "settings" | "short" | "linkedin" | "threads";
 
 const MAX_THUMBNAIL_SIZE = 500 * 1024;
 const DRAG_CLOSE_THRESHOLD = 100;
@@ -137,9 +138,14 @@ export function PublishModal({
   const [threadsContent, setThreadsContent] = useState<string[]>([""]);
   const [isFullView, setIsFullView] = useState(false);
   const [shortTab, setShortTab] = useState<ShortTab>("settings");
+  const [longTab, setLongTab] = useState<LongTab>("settings");
   const [expandedLinkedin, setExpandedLinkedin] = useState(false);
   const [expandedThreadsIndex, setExpandedThreadsIndex] = useState<number | null>(null);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+
+  const [createShortPost, setCreateShortPost] = useState(false);
+  const [shortPostContent, setShortPostContent] = useState("");
+  const [shortPostSlug, setShortPostSlug] = useState("");
 
   const { mutate: convertWithAI, isPending: isAILoading } = useSocialMediaConvert();
   const { data: presets } = useKnowledgePresets();
@@ -148,8 +154,12 @@ export function PublishModal({
     if (open) {
       setIsFullView(false);
       setShortTab("settings");
+      setLongTab("settings");
       setExpandedLinkedin(false);
       setExpandedThreadsIndex(null);
+      setCreateShortPost(false);
+      setShortPostContent(formatSnsContent(title, content));
+      setShortPostSlug("");
 
       if (isEditMode && postType === "SHORT") {
         if (initialLinkedinContent) {
@@ -233,6 +243,27 @@ export function PublishModal({
     );
   };
 
+  const handleAIShorten = () => {
+    if (!selectedPresetId) {
+      toast.error("사전 지식을 선택해주세요. 등록된 사전 지식이 없다면 관리 페이지에서 추가해주세요.");
+      return;
+    }
+    convertWithAI(
+      { title, content, platform: "shorten", presetId: selectedPresetId },
+      {
+        onSuccess: (response) => {
+          if (response.data.shorten) {
+            setShortPostContent(response.data.shorten);
+          }
+          toast.success("AI가 Short Post 콘텐츠를 줄였습니다.");
+        },
+        onError: () => {
+          toast.error("AI 변환에 실패했습니다. 다시 시도해주세요.");
+        },
+      }
+    );
+  };
+
   const handleCopyLinkedin = () => {
     navigator.clipboard.writeText(linkedinContent);
     toast.success("LinkedIn 콘텐츠가 복사되었습니다.");
@@ -305,6 +336,11 @@ export function PublishModal({
       return;
     }
 
+    if (postType === "LONG" && createShortPost && !shortPostContent.trim()) {
+      setError("Short Post 본문을 입력해주세요.");
+      return;
+    }
+
     setIsPublishing(true);
     setError(null);
 
@@ -328,6 +364,14 @@ export function PublishModal({
           linkedinContent: linkedinContent || null,
           threadsContent: threadsContent.filter((t) => t.trim()),
         }),
+        ...(postType === "LONG" &&
+          createShortPost && {
+            createShortPost: true,
+            shortPostContent: shortPostContent.trim(),
+            shortPostSlug: shortPostSlug.trim() || null,
+            linkedinContent: linkedinContent || null,
+            threadsContent: threadsContent.filter((t) => t.trim()),
+          }),
       };
 
       let response: Response;
@@ -392,6 +436,9 @@ export function PublishModal({
     subSlug,
     linkedinContent,
     threadsContent,
+    createShortPost,
+    shortPostContent,
+    shortPostSlug,
   ]);
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -791,7 +838,7 @@ export function PublishModal({
     </div>
   );
 
-  const longPostContent = (
+  const longPostSettingsContent = (
     <div className="publish-modal-grid grid gap-6 sm:grid-cols-2 min-h-[280px]">
       <div className="thumbnail-section">
         <ThumbnailUploader
@@ -806,6 +853,154 @@ export function PublishModal({
       </div>
 
       {settingsContent}
+    </div>
+  );
+
+  const shortTabContent = (
+    <div className="short-tab-content space-y-4">
+      <div className="create-short-post-toggle flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="create-short-post"
+          checked={createShortPost}
+          onChange={(e) => setCreateShortPost(e.target.checked)}
+          disabled={isPublishing}
+          className="h-4 w-4 rounded border-gray-300"
+        />
+        <Label htmlFor="create-short-post" className="cursor-pointer text-sm font-medium">
+          Short Post 함께 발행
+        </Label>
+      </div>
+
+      <div className={cn("short-post-fields space-y-4", !createShortPost && "opacity-60")}>
+        <div className="short-post-content-field space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">Short Post 본문</Label>
+            <div className="flex items-center gap-2">
+              {presetSelector}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => handleAIShorten()}
+                disabled={isAILoading || !createShortPost}
+                className="h-8 px-3 text-xs gap-1.5"
+              >
+                {isAILoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                AI로 줄이기
+              </Button>
+            </div>
+          </div>
+          <div className="relative">
+            {isAILoading && (
+              <div className="ai-loading-overlay absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">AI가 콘텐츠를 줄이고 있습니다...</p>
+                </div>
+              </div>
+            )}
+            <Textarea
+              value={shortPostContent}
+              onChange={(e) => setShortPostContent(e.target.value)}
+              placeholder="Short Post 본문을 입력하세요..."
+              className={cn("resize-none", isFullView ? "h-[calc(100dvh-350px)]" : "h-[300px]")}
+              disabled={isPublishing || !createShortPost}
+            />
+          </div>
+        </div>
+
+        <div className="short-post-slug-field space-y-2">
+          <Label className="text-sm font-medium">Slug</Label>
+          <div className="text-xs text-muted-foreground mb-1">
+            /short-posts/<span className="text-foreground font-medium">{shortPostSlug || `${slug}-short`}</span>
+          </div>
+          <Input
+            placeholder={`${slug || "your-slug"}-short`}
+            value={shortPostSlug}
+            onChange={(e) => setShortPostSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+            disabled={isPublishing || !createShortPost}
+            className="font-mono"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const FileTextIcon = ({ className }: { className?: string }) => (
+    <svg className={cn("h-4 w-4", className)} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+  );
+
+  const longPostContent = (
+    <div className="long-post-tabs space-y-4">
+      <div className="tabs-header flex border-b">
+        <button
+          type="button"
+          onClick={() => setLongTab("settings")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+            longTab === "settings"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Info className="h-4 w-4" />
+          개요
+        </button>
+        <button
+          type="button"
+          onClick={() => setLongTab("short")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+            longTab === "short"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <FileTextIcon />
+          Short
+        </button>
+        <button
+          type="button"
+          onClick={() => setLongTab("linkedin")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+            longTab === "linkedin"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <LinkedInIcon />
+          LinkedIn
+        </button>
+        <button
+          type="button"
+          onClick={() => setLongTab("threads")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+            longTab === "threads"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <ThreadsIcon />
+          Threads
+        </button>
+      </div>
+
+      <div className="tab-content min-h-[400px]">
+        {longTab === "settings" && longPostSettingsContent}
+        {longTab === "short" && shortTabContent}
+        {longTab === "linkedin" && linkedinTabContent}
+        {longTab === "threads" && threadsTabContent}
+      </div>
     </div>
   );
 
@@ -881,37 +1076,50 @@ export function PublishModal({
               onDrag={handleDrag}
               onDragEnd={handleDragEnd}
             >
-              <header className="publish-modal-mobile-header flex items-center justify-between px-4 py-4 border-b safe-area-top">
-                <div className="w-10">
-                  {postType === "SHORT" && !isMobile && (
-                    <Button
+              <header className={cn("publish-modal-mobile-header border-b ", isFullView ? "py-6 px-4" : "px-4 py-4")}>
+                {isMobile && !isFullView ? (
+                  <div className="flex items-center justify-between">
+                    <div className="w-10" />
+                    <div className="publish-modal-drag-handle mx-auto">
+                      <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+                    </div>
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsFullView(!isFullView)}
-                      className="h-8 w-8 p-0"
-                      title={isFullView ? "닫기" : "전체보기"}
+                      onClick={() => onOpenChange(false)}
+                      className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+                      disabled={isPublishing}
                     >
-                      {isFullView ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                    </Button>
-                  )}
-                </div>
-                {isMobile && !isFullView && (
-                  <div className="publish-modal-drag-handle mx-auto">
-                    <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between max-w-3xl mx-auto">
+                    <h2 className="text-lg font-semibold">포스트 미리보기</h2>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsFullView(false)}
+                        className="gap-1.5 h-8"
+                      >
+                        <Minimize2 className="h-4 w-4" />
+                        축소
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onOpenChange(false)}
+                        className="gap-1.5 h-8"
+                        disabled={isPublishing}
+                      >
+                        <X className="h-4 w-4" />
+                        닫기
+                      </Button>
+                    </div>
                   </div>
                 )}
-                {(isFullView || !isMobile) && (
-                  <h2 className="text-lg font-semibold flex-1 text-center">포스트 미리보기</h2>
-                )}
-                <button
-                  type="button"
-                  onClick={() => (isFullView ? setIsFullView(false) : onOpenChange(false))}
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
-                  disabled={isPublishing}
-                >
-                  <X className="h-5 w-5" />
-                </button>
               </header>
 
               {isMobile && !isFullView && (
@@ -921,11 +1129,13 @@ export function PublishModal({
               )}
 
               <main className="publish-modal-mobile-content flex-1 overflow-y-auto px-4 pb-24">
-                <div className="space-y-6 py-4">{modalContent}</div>
+                <div className="space-y-6 py-4 max-w-3xl mx-auto">{modalContent}</div>
               </main>
 
-              <footer className="publish-modal-mobile-footer fixed bottom-0 left-0 right-0 flex gap-2 p-4 pb-6 bg-background border-t safe-area-bottom">
-                {footerButtons}
+              <footer className="publish-modal-mobile-footer fixed bottom-0 left-0 right-0  bg-background border-t safe-area-bottom p-4 pb-6">
+                <div className={cn("flex gap-2", isFullView && "max-w-3xl mx-auto justify-end w-full")}>
+                  {footerButtons}
+                </div>
               </footer>
             </motion.div>
           </>
@@ -936,21 +1146,26 @@ export function PublishModal({
 
   return (
     <Dialog open={open} onOpenChange={(open) => !isPublishing && onOpenChange(open)}>
-      <DialogContent className="publish-modal sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="publish-modal sm:max-w-[800px] max-h-[90vh] overflow-y-auto" showCloseButton={false}>
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>포스트 미리보기</DialogTitle>
-          {postType === "SHORT" && (
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setIsFullView(true)} className="gap-1.5 h-8">
+              <Maximize2 className="h-4 w-4" />
+              전체 보기
+            </Button>
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => setIsFullView(!isFullView)}
+              onClick={() => onOpenChange(false)}
               className="gap-1.5 h-8"
+              disabled={isPublishing}
             >
-              {isFullView ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-              {isFullView ? "닫기" : "전체보기"}
+              <X className="h-4 w-4" />
+              닫기
             </Button>
-          )}
+          </div>
         </DialogHeader>
 
         <div className="publish-modal-content grid gap-6 py-4">{modalContent}</div>

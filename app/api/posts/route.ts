@@ -44,6 +44,9 @@ export async function POST(request: NextRequest) {
       type,
       linkedinContent,
       threadsContent,
+      createShortPost,
+      shortPostContent,
+      shortPostSlug,
     } = body;
 
     if (!title || !requestedSlug || !content) {
@@ -69,6 +72,33 @@ export async function POST(request: NextRequest) {
         threadsContent: threadsContent || [],
       },
     });
+
+    if (type === "LONG" && createShortPost && shortPostContent) {
+      const shortSlug = await generateUniqueSlug(shortPostSlug || `${slug}-short`);
+
+      const shortPost = await prisma.post.create({
+        data: {
+          title,
+          slug: shortSlug,
+          excerpt: excerpt || null,
+          content: shortPostContent,
+          tags: tags || [],
+          type: "SHORT",
+          published: true,
+          thumbnail: thumbnail || null,
+          series: seriesId ? { connect: { id: seriesId } } : undefined,
+          linkedinContent: linkedinContent || null,
+          threadsContent: threadsContent || [],
+        },
+      });
+
+      await prisma.post.update({
+        where: { id: post.id },
+        data: { linkedShortPostId: shortPost.id },
+      });
+
+      revalidatePath(`/short-posts/${shortSlug}`);
+    }
 
     revalidatePath("/");
     revalidatePath("/posts");

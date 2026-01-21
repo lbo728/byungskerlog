@@ -30,6 +30,11 @@ model Post {
   views                 PostView[]
   readingSessions       ReadingSession[]
 
+  // Long ↔ Short 1:1 연결
+  linkedShortPostId     String?          @unique
+  linkedShortPost       Post?            @relation("LongToShort", fields: [linkedShortPostId], references: [id], onDelete: SetNull)
+  linkedLongPost        Post?            @relation("LongToShort")
+
   @@index([seriesId])
   @@index([type])
 }

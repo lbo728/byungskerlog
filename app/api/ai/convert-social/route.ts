@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       throw ApiError.validationError("제목과 내용이 필요합니다.");
     }
 
-    if (platform !== "linkedin" && platform !== "threads") {
+    if (platform !== "linkedin" && platform !== "threads" && platform !== "shorten") {
       throw ApiError.validationError("유효하지 않은 플랫폼입니다.");
     }
 
@@ -108,7 +108,7 @@ ${content}`,
           linkedin: result.text.substring(0, LINKEDIN_CHAR_LIMIT),
         },
       });
-    } else {
+    } else if (platform === "threads") {
       const systemPrompt = `${preset.instruction}
 
 기본 규칙:${baseThreadsRules}${referenceContext}`;
@@ -138,6 +138,37 @@ ${content}
         success: true,
         data: {
           threads: threadsArray,
+        },
+      });
+    } else {
+      const baseShortenRules = `
+- 원문의 핵심 내용을 유지하면서 간결하게 요약
+- 블로그 글의 주요 포인트를 명확하게 전달
+- 가독성을 위해 적절히 단락 구분
+- 제목 형식(<제목>) 유지
+- 핵심 인사이트와 결론 포함`;
+
+      const systemPrompt = `${preset.instruction}
+
+기본 규칙:${baseShortenRules}${referenceContext}`;
+
+      const result = await generateText({
+        model: openai("gpt-4o-mini"),
+        system: systemPrompt,
+        prompt: `다음 블로그 글을 Short Post용으로 간결하게 요약해주세요.
+
+제목: ${title}
+
+내용:
+${content}`,
+        maxOutputTokens: 1500,
+        temperature: 0.7,
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          shorten: result.text,
         },
       });
     }

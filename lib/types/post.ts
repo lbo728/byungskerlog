@@ -39,6 +39,10 @@ export interface Post {
   readingSessions?: number | null;
   avgScrollDepth?: number | null;
   completionRate?: number | null;
+  // Long ↔ Short 1:1 연결
+  linkedShortPostId?: string | null;
+  linkedShortPost?: Post | null;
+  linkedLongPost?: Post | null;
 }
 
 /**
