@@ -23,7 +23,7 @@ function getOrCreateSessionId(): string {
 export function ReadingTracker({ slug, postType }: ReadingTrackerProps) {
   const maxScrollDepthRef = useRef(0);
   const readingTimeRef = useRef(0);
-  const lastSaveTimeRef = useRef(Date.now());
+  const lastSaveTimeRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isCompletedRef = useRef(false);
 
@@ -34,7 +34,7 @@ export function ReadingTracker({ slug, postType }: ReadingTrackerProps) {
     if (!sessionId) return;
 
     const now = Date.now();
-    const elapsedSeconds = Math.floor((now - lastSaveTimeRef.current) / 1000);
+    const elapsedSeconds = lastSaveTimeRef.current !== null ? Math.floor((now - lastSaveTimeRef.current) / 1000) : 0;
     lastSaveTimeRef.current = now;
 
     try {
@@ -55,6 +55,9 @@ export function ReadingTracker({ slug, postType }: ReadingTrackerProps) {
 
   useEffect(() => {
     if (postType !== "LONG") return;
+
+    // Initialize lastSaveTimeRef in effect to avoid impure function call during render
+    lastSaveTimeRef.current = Date.now();
 
     const calculateScrollDepth = () => {
       const article = document.querySelector("article");
@@ -99,7 +102,7 @@ export function ReadingTracker({ slug, postType }: ReadingTrackerProps) {
       if (!sessionId) return;
 
       const now = Date.now();
-      const elapsedSeconds = Math.floor((now - lastSaveTimeRef.current) / 1000);
+      const elapsedSeconds = lastSaveTimeRef.current !== null ? Math.floor((now - lastSaveTimeRef.current) / 1000) : 0;
 
       navigator.sendBeacon(
         `/api/posts-by-slug/${slug}/reading-session`,
