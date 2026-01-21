@@ -8,6 +8,12 @@ export async function getPost(slug: string) {
     },
     include: {
       series: true,
+      linkedShortPost: {
+        select: { slug: true, title: true },
+      },
+      linkedLongPost: {
+        select: { slug: true, title: true },
+      },
     },
   });
 
@@ -89,11 +95,7 @@ export async function getPrevNextPosts(
   return { prevPost, nextPost };
 }
 
-export async function getRelatedPosts(
-  tags: string[],
-  currentSlug: string,
-  filterByShortType: boolean
-) {
+export async function getRelatedPosts(tags: string[], currentSlug: string, filterByShortType: boolean) {
   if (!tags || tags.length === 0) return [];
 
   const typeFilter = filterByShortType ? { type: "SHORT" as const } : {};
@@ -119,11 +121,7 @@ export async function getRelatedPosts(
   return posts;
 }
 
-export async function getShortPostsNav(
-  createdAt: Date,
-  currentSlug: string,
-  postType: string
-) {
+export async function getShortPostsNav(createdAt: Date, currentSlug: string, postType: string) {
   if (postType !== "SHORT") return { prevShortPost: null, nextShortPost: null };
 
   const [prevShortPost, nextShortPost] = await Promise.all([

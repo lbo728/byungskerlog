@@ -4,7 +4,7 @@ import { apiClient } from "@/lib/api/client";
 interface ConvertRequest {
   content: string;
   title: string;
-  platform: "linkedin" | "threads";
+  platform: "linkedin" | "threads" | "shorten";
   presetId: string;
 }
 
@@ -13,6 +13,7 @@ interface ConvertResponse {
   data: {
     linkedin?: string;
     threads?: string[];
+    shorten?: string;
   };
 }
 
