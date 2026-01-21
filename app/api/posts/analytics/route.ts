@@ -79,13 +79,17 @@ async function getCategoryStats(where: {
 }) {
   const posts = await prisma.post.findMany({
     where,
-    select: { tags: true },
+    select: {
+      tags: {
+        select: { name: true },
+      },
+    },
   });
 
   const tagCounts: Record<string, number> = {};
   posts.forEach((post) => {
     post.tags.forEach((tag) => {
-      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      tagCounts[tag.name] = (tagCounts[tag.name] || 0) + 1;
     });
   });
 

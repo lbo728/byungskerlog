@@ -4,6 +4,7 @@ import { PostsPageClient } from "./PostsPageClient";
 
 interface PostsPageLoaderProps {
   page: number;
+  countOnly?: boolean;
 }
 
 const getPosts = (page: number) =>
@@ -13,9 +14,9 @@ const getPosts = (page: number) =>
       const skip = (page - 1) * limit;
 
       try {
-        const [posts, total] = await Promise.all([
+        const [postsRaw, total] = await Promise.all([
           prisma.post.findMany({
-            where: { published: true },
+            where: { published: true, type: "LONG" },
             orderBy: { createdAt: "desc" },
             skip,
             take: limit,
@@ -26,7 +27,7 @@ const getPosts = (page: number) =>
               excerpt: true,
               content: true,
               thumbnail: true,
-              tags: true,
+              tags: { select: { name: true } },
               createdAt: true,
               series: {
                 select: {
@@ -37,8 +38,13 @@ const getPosts = (page: number) =>
               },
             },
           }),
-          prisma.post.count({ where: { published: true } }),
+          prisma.post.count({ where: { published: true, type: "LONG" } }),
         ]);
+
+        const posts = postsRaw.map((p) => ({
+          ...p,
+          tags: p.tags.map((t) => t.name),
+        }));
 
         return {
           posts,
@@ -65,16 +71,12 @@ const getPosts = (page: number) =>
     { revalidate: 3600, tags: ["posts"] }
   )();
 
-export async function PostsPageLoader({ page }: PostsPageLoaderProps) {
+export async function PostsPageLoader({ page, countOnly }: PostsPageLoaderProps) {
   const data = await getPosts(page);
 
-  return (
-    <>
-      <div className="posts-header flex items-baseline gap-3 mb-8">
-        <h1 className="text-4xl font-bold">All Posts</h1>
-        <span className="text-xl text-muted-foreground">{data.pagination.total}</span>
-      </div>
-      <PostsPageClient initialData={data} currentPage={page} />
-    </>
-  );
+  if (countOnly) {
+    return <span className="text-xl text-muted-foreground">{data.pagination.total}</span>;
+  }
+
+  return <PostsPageClient initialData={data} currentPage={page} />;
 }

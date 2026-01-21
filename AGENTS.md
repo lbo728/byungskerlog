@@ -6,6 +6,36 @@ Instructions for AI coding agents working in this repository.
 
 Next.js 16 personal blog with Neon PostgreSQL (Prisma), Stack Auth, TipTap editor, deployed on Vercel.
 
+## Database Environment (CRITICAL)
+
+### Development: Always Use `.env.local`
+
+During local development, the app reads from `.env.local` which overrides `.env`.
+
+**NEVER run Prisma commands without loading `.env.local` variables:**
+
+```bash
+# CORRECT: Load .env.local first for Prisma commands
+export $(grep -E "^DATABASE_URL" .env.local | xargs) && npx prisma db push
+
+# WRONG: This pushes to wrong database (.env)
+npx prisma db push
+```
+
+| Environment  | Database                                    | Usage                            |
+| ------------ | ------------------------------------------- | -------------------------------- |
+| `.env.local` | `ep-wandering-tree-a11ymokd` (supabase-dev) | Local development, `npm run dev` |
+| `.env`       | `ep-old-poetry-a16nvu2i`                    | CI/Production only               |
+
+### Migration Rules
+
+1. **During Development**: Schema changes go to `.env.local` database only
+2. **On PR to Main**: If PR includes `prisma/schema.prisma` changes, migrate production DB
+3. **Migration Command** (when merging to main with schema changes):
+   ```bash
+   npx prisma db push --accept-data-loss
+   ```
+
 ## Build/Lint/Test Commands
 
 ```bash
@@ -24,8 +54,10 @@ npx vitest run __tests__/hooks/usePost.test.tsx
 # Run tests matching pattern
 npx vitest run -t "로딩 상태"
 
-# Prisma
-npx prisma generate && npx prisma db push && npx prisma studio
+# Prisma (MUST load .env.local first!)
+export $(grep -E "^DATABASE_URL" .env.local | xargs) && npx prisma db push
+npx prisma generate
+npx prisma studio
 ```
 
 ## Code Style Guidelines

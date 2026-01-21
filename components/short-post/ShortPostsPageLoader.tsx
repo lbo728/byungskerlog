@@ -4,6 +4,7 @@ import { ShortPostsPageClient } from "./ShortPostsPageClient";
 
 interface ShortPostsPageLoaderProps {
   page: number;
+  countOnly?: boolean;
 }
 
 const getShortPosts = (page: number) =>
@@ -13,7 +14,7 @@ const getShortPosts = (page: number) =>
       const skip = (page - 1) * limit;
 
       try {
-        const [posts, total] = await Promise.all([
+        const [postsRaw, total] = await Promise.all([
           prisma.post.findMany({
             where: { published: true, type: "SHORT" },
             orderBy: { createdAt: "desc" },
@@ -25,7 +26,7 @@ const getShortPosts = (page: number) =>
               title: true,
               excerpt: true,
               content: true,
-              tags: true,
+              tags: { select: { name: true } },
               createdAt: true,
               series: {
                 select: {
@@ -38,6 +39,11 @@ const getShortPosts = (page: number) =>
           }),
           prisma.post.count({ where: { published: true, type: "SHORT" } }),
         ]);
+
+        const posts = postsRaw.map((p) => ({
+          ...p,
+          tags: p.tags.map((t) => t.name),
+        }));
 
         return {
           posts,
@@ -64,16 +70,12 @@ const getShortPosts = (page: number) =>
     { revalidate: 3600, tags: ["posts", "short-posts"] }
   )();
 
-export async function ShortPostsPageLoader({ page }: ShortPostsPageLoaderProps) {
+export async function ShortPostsPageLoader({ page, countOnly }: ShortPostsPageLoaderProps) {
   const data = await getShortPosts(page);
 
-  return (
-    <>
-      <div className="short-posts-header flex items-baseline gap-3 mb-8">
-        <h1 className="text-4xl font-bold">Short Posts</h1>
-        <span className="text-xl text-muted-foreground">{data.pagination.total}</span>
-      </div>
-      <ShortPostsPageClient initialData={data} currentPage={page} />
-    </>
-  );
+  if (countOnly) {
+    return <span className="text-xl text-muted-foreground">{data.pagination.total}</span>;
+  }
+
+  return <ShortPostsPageClient initialData={data} currentPage={page} />;
 }

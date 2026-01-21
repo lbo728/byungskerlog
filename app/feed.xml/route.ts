@@ -6,7 +6,7 @@ export async function GET() {
   let posts: { slug: string; title: string; excerpt: string | null; createdAt: Date; tags: string[] }[] = [];
 
   try {
-    posts = await prisma.post.findMany({
+    const rawPosts = await prisma.post.findMany({
       where: { published: true },
       orderBy: { createdAt: "desc" },
       take: 20,
@@ -15,11 +15,15 @@ export async function GET() {
         title: true,
         excerpt: true,
         createdAt: true,
-        tags: true,
+        tags: { select: { name: true } },
       },
     });
+    posts = rawPosts.map((p) => ({
+      ...p,
+      tags: p.tags.map((t) => t.name),
+    }));
   } catch {
-    // DB 연결 실패 시 빈 배열 유지
+    /* intentionally empty - posts defaults to [] */
   }
 
   const rssItems = posts

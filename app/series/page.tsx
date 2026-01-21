@@ -58,7 +58,7 @@ export default async function SeriesPage() {
   if (seriesList.length === 0) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <h1 className="text-4xl font-bold mb-8">Series</h1>
           <p className="text-muted-foreground text-center py-20">아직 등록된 시리즈가 없습니다.</p>
         </div>
@@ -68,7 +68,7 @@ export default async function SeriesPage() {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <header className="series-header mb-8">
           <h1 className="text-4xl font-bold">Series</h1>
           <p className="text-muted-foreground mt-2">

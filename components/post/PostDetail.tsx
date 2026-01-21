@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import Link from "next/link";
 import { Separator } from "@/components/ui/Separator";
+import { cn } from "@/lib/utils";
 import { TableOfContents } from "./Toc";
 import { MobileToc } from "./MobileToc";
 import { MarkdownRenderer } from "./MarkdownRenderer";
@@ -11,7 +12,7 @@ import { PostActions } from "./PostActions";
 import { ReadingProgress } from "./ReadingProgress";
 import { AdSense } from "@/components/seo/Adsense";
 import { Comments } from "./Comments";
-import { ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, FileText, Zap } from "lucide-react";
 import { ShortPostsNav } from "@/components/short-post/ShortPostsNav";
 import { SocialMediaLinks } from "./SocialMediaLinks";
 import Image from "next/image";
@@ -71,7 +72,7 @@ export function PostDetail({
       <ReadingTracker slug={slug} postType={post.type} />
       <div className="post-detail-layout relative py-12">
         <div className="post-content-center flex justify-center px-4 sm:px-6 lg:px-8">
-          <div className="post-main-content max-w-3xl w-full">
+          <div className={cn("post-main-content max-w-5xl w-full", post.type !== "SHORT" && "xl:pr-24")}>
             <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_TOP || ""} className="mb-8" />
 
             <Link
@@ -193,6 +194,46 @@ export function PostDetail({
                       </ul>
                     </CardContent>
                   </Card>
+                </section>
+              </>
+            )}
+
+            {(post.linkedShortPost || post.linkedLongPost) && (
+              <>
+                <Separator className="my-12" />
+                <section className="linked-post-section">
+                  {post.type === "LONG" && post.linkedShortPost && (
+                    <Link href={`/short/${post.linkedShortPost.slug}`} className="group block">
+                      <Card className="transition-colors hover:border-primary bg-gradient-to-r from-amber-500/5 to-orange-500/5 border-amber-500/20">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 mb-2">
+                            <Zap className="h-4 w-4" />
+                            <span className="font-medium">Short 버전으로 읽기</span>
+                          </div>
+                          <CardTitle className="text-base group-hover:text-primary transition-colors">
+                            {post.linkedShortPost.title}
+                          </CardTitle>
+                          <CardDescription>이 글의 핵심 내용을 빠르게 확인하세요</CardDescription>
+                        </CardHeader>
+                      </Card>
+                    </Link>
+                  )}
+                  {post.type === "SHORT" && post.linkedLongPost && (
+                    <Link href={`/posts/${post.linkedLongPost.slug}`} className="group block">
+                      <Card className="transition-colors hover:border-primary bg-gradient-to-r from-blue-500/5 to-indigo-500/5 border-blue-500/20">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 mb-2">
+                            <FileText className="h-4 w-4" />
+                            <span className="font-medium">전체 글 보기</span>
+                          </div>
+                          <CardTitle className="text-base group-hover:text-primary transition-colors">
+                            {post.linkedLongPost.title}
+                          </CardTitle>
+                          <CardDescription>더 자세한 내용을 확인하세요</CardDescription>
+                        </CardHeader>
+                      </Card>
+                    </Link>
+                  )}
                 </section>
               </>
             )}

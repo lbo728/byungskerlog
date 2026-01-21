@@ -44,6 +44,9 @@ export async function POST(request: NextRequest) {
       type,
       linkedinContent,
       threadsContent,
+      createShortPost,
+      shortPostContent,
+      shortPostSlug,
     } = body;
 
     if (!title || !requestedSlug || !content) {
@@ -60,7 +63,24 @@ export async function POST(request: NextRequest) {
         slug,
         excerpt: excerpt || null,
         content,
-        tags: tags || [],
+        tags: tags?.length
+          ? {
+              connectOrCreate: tags.map((tagName: string) => ({
+                where: { name: tagName },
+                create: {
+                  name: tagName,
+                  slug:
+                    tagName
+                      .toLowerCase()
+                      .trim()
+                      .replace(/[^a-z0-9가-힣\s-]/g, "")
+                      .replace(/\s+/g, "-")
+                      .replace(/-+/g, "-")
+                      .replace(/^-|-$/g, "") || "tag",
+                },
+              })),
+            }
+          : undefined,
         type: type || "LONG",
         published: published ?? false,
         thumbnail: thumbnail || null,
@@ -69,6 +89,55 @@ export async function POST(request: NextRequest) {
         threadsContent: threadsContent || [],
       },
     });
+
+    if (type === "LONG" && createShortPost && shortPostContent) {
+      const shortSlug = await generateUniqueSlug(shortPostSlug || `${slug}-short`);
+      const shortExcerpt = shortPostContent
+        .replace(/[#*`\[\]()>\-]/g, "")
+        .replace(/\n+/g, " ")
+        .trim()
+        .substring(0, 200);
+
+      const shortPost = await prisma.post.create({
+        data: {
+          title,
+          slug: shortSlug,
+          excerpt: shortExcerpt || null,
+          content: shortPostContent,
+          tags: tags?.length
+            ? {
+                connectOrCreate: tags.map((tagName: string) => ({
+                  where: { name: tagName },
+                  create: {
+                    name: tagName,
+                    slug:
+                      tagName
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[^a-z0-9가-힣\s-]/g, "")
+                        .replace(/\s+/g, "-")
+                        .replace(/-+/g, "-")
+                        .replace(/^-|-$/g, "") || "tag",
+                  },
+                })),
+              }
+            : undefined,
+          type: "SHORT",
+          published: true,
+          thumbnail: thumbnail || null,
+          series: seriesId ? { connect: { id: seriesId } } : undefined,
+          linkedinContent: linkedinContent || null,
+          threadsContent: threadsContent || [],
+        },
+      });
+
+      await prisma.post.update({
+        where: { id: post.id },
+        data: { linkedShortPostId: shortPost.id },
+      });
+
+      revalidatePath(`/short-posts/${shortSlug}`);
+    }
 
     revalidatePath("/");
     revalidatePath("/posts");
@@ -102,7 +171,7 @@ export async function GET(request: NextRequest) {
 
     type WhereClause = {
       published?: boolean;
-      tags?: { has: string };
+      tags?: { some: { name: string } };
       type?: "LONG" | "SHORT";
       createdAt?: {
         gte?: Date;
@@ -110,7 +179,7 @@ export async function GET(request: NextRequest) {
       };
       OR?: Array<{
         title?: { contains: string; mode: "insensitive" };
-        tags?: { has: string };
+        tags?: { some: { name: string } };
         series?: { name: { contains: string; mode: "insensitive" } };
         createdAt?: { gte: Date; lt: Date };
       }>;
@@ -123,7 +192,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (tag) {
-      where.tags = { has: tag };
+      where.tags = { some: { name: tag } };
     }
 
     if (type && (type === "LONG" || type === "SHORT")) {
@@ -146,7 +215,7 @@ export async function GET(request: NextRequest) {
       const searchTerm = search.trim();
       const orConditions: WhereClause["OR"] = [
         { title: { contains: searchTerm, mode: "insensitive" } },
-        { tags: { has: searchTerm } },
+        { tags: { some: { name: searchTerm } } },
         { series: { name: { contains: searchTerm, mode: "insensitive" } } },
       ];
 
@@ -167,7 +236,7 @@ export async function GET(request: NextRequest) {
 
     const total = await prisma.post.count({ where });
 
-    const posts = await prisma.post.findMany({
+    const postsRaw = await prisma.post.findMany({
       where,
       orderBy: { createdAt: sortBy === "asc" ? "asc" : "desc" },
       skip,
@@ -180,7 +249,9 @@ export async function GET(request: NextRequest) {
         excerpt: true,
         content: true,
         thumbnail: true,
-        tags: true,
+        tags: {
+          select: { name: true },
+        },
         type: true,
         published: true,
         createdAt: true,
@@ -194,6 +265,11 @@ export async function GET(request: NextRequest) {
         },
       },
     });
+
+    const posts = postsRaw.map((post) => ({
+      ...post,
+      tags: post.tags.map((t) => t.name),
+    }));
 
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const postIds = posts.map((post) => post.id);
