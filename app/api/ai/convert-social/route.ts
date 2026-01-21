@@ -141,25 +141,36 @@ ${content}
         },
       });
     } else {
-      const baseShortenRules = `
-- 원문의 핵심 내용을 유지하면서 간결하게 요약
-- 블로그 글의 주요 포인트를 명확하게 전달
-- 가독성을 위해 적절히 단락 구분
-- 제목 형식(<제목>) 유지
-- 핵심 인사이트와 결론 포함`;
+      const referenceInstructions =
+        preset.references.length > 0
+          ? `\n\n## 참고 컨텐츠 (문체 학습용)
+아래 참고 컨텐츠의 문체, 어투, 표현 방식을 분석하고 동일한 스타일로 작성하세요.
+${preset.references.map((ref) => `[${ref.title}]\n${ref.content}`).join("\n\n---\n\n")}`
+          : "";
 
-      const systemPrompt = `${preset.instruction}
+      const systemPrompt = `당신은 블로그 글을 Short Post 형식으로 변환하는 전문가입니다.
+${referenceInstructions}
 
-기본 규칙:${baseShortenRules}${referenceContext}`;
+## 사용자 변환 지침 (최우선 적용)
+${preset.instruction}
+
+## 필수 출력 규칙 (반드시 지켜야 함)
+- 제목을 출력하지 마세요. 본문만 출력하세요.
+- 마크다운 문법을 절대 사용하지 마세요:
+  - # ## ### 등 헤딩 금지
+  - ** __ 등 굵은 글씨 금지
+  - \`\`\` \` 등 코드 블록/인라인 코드 금지
+  - [텍스트](url) 형식 링크 금지
+  - 이미지 링크 금지
+- 불릿 포인트(-)와 넘버링(1. 2. 3.)은 허용
+- plain text로만 작성하세요`;
 
       const result = await generateText({
         model: openai("gpt-4o-mini"),
         system: systemPrompt,
-        prompt: `다음 블로그 글을 Short Post용으로 간결하게 요약해주세요.
+        prompt: `다음 블로그 글의 본문만 Short Post 형식으로 변환해주세요. 제목은 출력하지 마세요.
 
-제목: ${title}
-
-내용:
+원본 내용:
 ${content}`,
         maxOutputTokens: 1500,
         temperature: 0.7,

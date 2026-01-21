@@ -601,7 +601,7 @@ export function PublishModal({
           placeholder="LinkedIn 콘텐츠..."
           className={cn(
             "resize-none transition-all duration-200 pr-10",
-            expandedLinkedin ? "h-[calc(100dvh-350px)]" : isFullView ? "h-[calc(100dvh-280px)]" : "h-[320px]"
+            expandedLinkedin ? "h-[calc(100dvh-350px)]" : isFullView ? "h-[calc(100dvh-380px)]" : "h-[320px]"
           )}
           disabled={isPublishing || isAILoading}
         />
@@ -655,7 +655,7 @@ export function PublishModal({
       <div
         className={cn(
           "threads-posts space-y-4 overflow-y-auto",
-          isFullView ? "max-h-[calc(100dvh-320px)]" : "max-h-[320px]"
+          isFullView ? "max-h-[calc(100dvh-420px)]" : "max-h-[320px]"
         )}
       >
         {threadsContent.map((threadPost, index) => (
@@ -846,7 +846,7 @@ export function PublishModal({
               value={shortPostContent}
               onChange={(e) => setShortPostContent(e.target.value)}
               placeholder="Short Post 본문을 입력하세요..."
-              className={cn("resize-none", isFullView ? "h-[calc(100dvh-350px)]" : "h-[240px]")}
+              className={cn("resize-none", isFullView ? "h-[calc(100dvh-480px)]" : "h-[240px]")}
               disabled={isPublishing || !createShortPost}
             />
           </div>
@@ -1073,7 +1073,12 @@ export function PublishModal({
                 </div>
               )}
 
-              <main className="publish-modal-mobile-content flex-1 overflow-y-auto px-4 pb-24">
+              <main
+                className={cn(
+                  "publish-modal-mobile-content flex-1 px-4 pb-24",
+                  isFullView ? "overflow-hidden" : "overflow-y-auto"
+                )}
+              >
                 <div className="space-y-6 py-4 max-w-3xl mx-auto">{modalContent}</div>
               </main>
 
