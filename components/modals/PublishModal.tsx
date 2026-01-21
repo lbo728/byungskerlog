@@ -10,13 +10,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { ThumbnailUploader } from "@/components/editor/ThumbnailUploader";
 import { SeriesSelect } from "@/components/editor/SeriesSelect";
 import { optimizeImage } from "@/lib/image-optimizer";
-import { X, Plus, Copy, Sparkles, Maximize2, Minimize2, ExternalLink, Info, Loader2 } from "lucide-react";
+import { X, Plus, Copy, Maximize2, Minimize2, ExternalLink, Info, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { generateSlug } from "@/lib/utils/slug";
 import { toast } from "sonner";
 import { useSocialMediaConvert } from "@/hooks/useSocialMediaConvert";
 import { useKnowledgePresets } from "@/hooks/useKnowledgePresets";
+import { AIButtonWithPreset } from "@/components/editor/AIButtonWithPreset";
 import { cn } from "@/lib/utils";
 
 type ShortTab = "settings" | "linkedin" | "threads";
@@ -560,87 +560,39 @@ export function PublishModal({
     </div>
   );
 
-  const presetSelector = (
-    <div className="preset-selector flex items-center gap-2">
-      {presets && presets.length > 0 ? (
-        <>
-          <Select value={selectedPresetId || ""} onValueChange={setSelectedPresetId}>
-            <SelectTrigger className="w-[180px] h-8 text-xs">
-              <SelectValue placeholder="사전 지식 선택" />
-            </SelectTrigger>
-            <SelectContent>
-              {presets.map((preset) => (
-                <SelectItem key={preset.id} value={preset.id}>
-                  {preset.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => window.open("/admin/posts?tab=knowledge", "_blank")}
-            className="h-8 px-3 text-xs"
-          >
-            관리
-          </Button>
-        </>
-      ) : (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">등록된 사전 지식이 없습니다</span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => window.open("/admin/posts?tab=knowledge", "_blank")}
-            className="h-8 px-3 text-xs"
-          >
-            관리
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-
   const linkedinTabContent = (
     <div className="linkedin-tab-content space-y-4 relative">
       {aiLoadingOverlay}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        {presetSelector}
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => handleAIImprove("linkedin")}
-            disabled={isAILoading}
-            className="h-8 px-3 text-xs gap-1.5"
-          >
-            {isAILoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            AI로 개선하기
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleCopyLinkedin}
-            className="h-8 px-3 text-xs gap-1.5"
-          >
-            <Copy className="h-3.5 w-3.5" />
-            복사
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleOpenLinkedin}
-            className="h-8 px-3 text-xs gap-1.5"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            LinkedIn에 포스트
-          </Button>
-        </div>
+      <div className="flex items-center justify-end flex-wrap gap-2">
+        <AIButtonWithPreset
+          label="AI로 개선하기"
+          presets={presets}
+          selectedPresetId={selectedPresetId}
+          onPresetSelect={setSelectedPresetId}
+          onAction={() => handleAIImprove("linkedin")}
+          isLoading={isAILoading}
+          disabled={isPublishing}
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={handleCopyLinkedin}
+          className="h-8 px-3 text-xs gap-1.5"
+        >
+          <Copy className="h-3.5 w-3.5" />
+          복사
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={handleOpenLinkedin}
+          className="h-8 px-3 text-xs gap-1.5"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          LinkedIn에 포스트
+        </Button>
       </div>
       <div className="relative">
         <Textarea
@@ -649,7 +601,7 @@ export function PublishModal({
           placeholder="LinkedIn 콘텐츠..."
           className={cn(
             "resize-none transition-all duration-200 pr-10",
-            expandedLinkedin ? "h-[calc(100dvh-350px)]" : isFullView ? "h-[calc(100dvh-280px)]" : "h-[300px]"
+            expandedLinkedin ? "h-[calc(100dvh-350px)]" : isFullView ? "h-[calc(100dvh-280px)]" : "h-[320px]"
           )}
           disabled={isPublishing || isAILoading}
         />
@@ -678,37 +630,32 @@ export function PublishModal({
   const threadsTabContent = (
     <div className="threads-tab-content space-y-4 relative">
       {aiLoadingOverlay}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        {presetSelector}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{threadsContent.length}개 포스트</span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => handleAIImprove("threads")}
-            disabled={isAILoading}
-            className="h-8 px-3 text-xs gap-1.5"
-          >
-            {isAILoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            AI로 개선하기
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleOpenThreads}
-            className="h-8 px-3 text-xs gap-1.5"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            Threads에 포스트
-          </Button>
-        </div>
+      <div className="flex items-center justify-end flex-wrap gap-2">
+        <span className="text-sm text-muted-foreground mr-auto">{threadsContent.length}개 포스트</span>
+        <AIButtonWithPreset
+          label="AI로 개선하기"
+          presets={presets}
+          selectedPresetId={selectedPresetId}
+          onPresetSelect={setSelectedPresetId}
+          onAction={() => handleAIImprove("threads")}
+          isLoading={isAILoading}
+          disabled={isPublishing}
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={handleOpenThreads}
+          className="h-8 px-3 text-xs gap-1.5"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          Threads에 포스트
+        </Button>
       </div>
       <div
         className={cn(
           "threads-posts space-y-4 overflow-y-auto",
-          isFullView ? "max-h-[calc(100dvh-320px)]" : "max-h-[400px]"
+          isFullView ? "max-h-[calc(100dvh-320px)]" : "max-h-[320px]"
         )}
       >
         {threadsContent.map((threadPost, index) => (
@@ -830,7 +777,7 @@ export function PublishModal({
         </button>
       </div>
 
-      <div className="tab-content min-h-[400px]">
+      <div className="tab-content h-[420px]">
         {shortTab === "settings" && settingsContent}
         {shortTab === "linkedin" && linkedinTabContent}
         {shortTab === "threads" && threadsTabContent}
@@ -839,7 +786,7 @@ export function PublishModal({
   );
 
   const longPostSettingsContent = (
-    <div className="publish-modal-grid grid gap-6 sm:grid-cols-2 min-h-[280px]">
+    <div className="publish-modal-grid grid gap-6 sm:grid-cols-2 h-[420px]">
       <div className="thumbnail-section">
         <ThumbnailUploader
           previewUrl={thumbnailUrl}
@@ -876,20 +823,15 @@ export function PublishModal({
         <div className="short-post-content-field space-y-2">
           <div className="flex items-center justify-between">
             <Label className="text-sm font-medium">Short Post 본문</Label>
-            <div className="flex items-center gap-2">
-              {presetSelector}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleAIShorten()}
-                disabled={isAILoading || !createShortPost}
-                className="h-8 px-3 text-xs gap-1.5"
-              >
-                {isAILoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                AI로 줄이기
-              </Button>
-            </div>
+            <AIButtonWithPreset
+              label="AI로 줄이기"
+              presets={presets}
+              selectedPresetId={selectedPresetId}
+              onPresetSelect={setSelectedPresetId}
+              onAction={handleAIShorten}
+              isLoading={isAILoading}
+              disabled={isPublishing || !createShortPost}
+            />
           </div>
           <div className="relative">
             {isAILoading && (
@@ -904,7 +846,7 @@ export function PublishModal({
               value={shortPostContent}
               onChange={(e) => setShortPostContent(e.target.value)}
               placeholder="Short Post 본문을 입력하세요..."
-              className={cn("resize-none", isFullView ? "h-[calc(100dvh-350px)]" : "h-[300px]")}
+              className={cn("resize-none", isFullView ? "h-[calc(100dvh-350px)]" : "h-[240px]")}
               disabled={isPublishing || !createShortPost}
             />
           </div>
@@ -913,10 +855,13 @@ export function PublishModal({
         <div className="short-post-slug-field space-y-2">
           <Label className="text-sm font-medium">Slug</Label>
           <div className="text-xs text-muted-foreground mb-1">
-            /short-posts/<span className="text-foreground font-medium">{shortPostSlug || `${slug}-short`}</span>
+            /short-posts/
+            <span className="text-foreground font-medium">
+              {shortPostSlug || `${slug || generateSlug(title)}-short`}
+            </span>
           </div>
           <Input
-            placeholder={`${slug || "your-slug"}-short`}
+            placeholder={`${slug || generateSlug(title) || "your-slug"}-short`}
             value={shortPostSlug}
             onChange={(e) => setShortPostSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
             disabled={isPublishing || !createShortPost}
@@ -995,7 +940,7 @@ export function PublishModal({
         </button>
       </div>
 
-      <div className="tab-content min-h-[400px]">
+      <div className="tab-content h-[420px]">
         {longTab === "settings" && longPostSettingsContent}
         {longTab === "short" && shortTabContent}
         {longTab === "linkedin" && linkedinTabContent}
@@ -1146,7 +1091,7 @@ export function PublishModal({
 
   return (
     <Dialog open={open} onOpenChange={(open) => !isPublishing && onOpenChange(open)}>
-      <DialogContent className="publish-modal sm:max-w-[800px] max-h-[90vh] overflow-y-auto" showCloseButton={false}>
+      <DialogContent className="publish-modal sm:max-w-[800px]" showCloseButton={false}>
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>포스트 미리보기</DialogTitle>
           <div className="flex items-center gap-2">
