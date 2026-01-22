@@ -21,7 +21,7 @@ interface ChartExportWrapperProps {
   filename: string;
   title: string;
   showExportButton?: boolean;
-  onExportAll?: () => void;
+  onExportAll?: (scale: ExportScale, aspectRatio: ExportAspectRatio) => void;
   isExportingAll?: boolean;
 }
 
@@ -155,6 +155,7 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const [isExporting, setIsExporting] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
     const [selectedScale, setSelectedScale] = useState<ExportScale>(2);
     const [selectedAspectRatio, setSelectedAspectRatio] = useState<ExportAspectRatio>("horizontal");
     const { theme } = useTheme();
@@ -213,6 +214,15 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
       setIsModalOpen(true);
     }, []);
 
+    const openBatchExportModal = useCallback(() => {
+      setIsBatchModalOpen(true);
+    }, []);
+
+    const handleBatchExport = useCallback(() => {
+      setIsBatchModalOpen(false);
+      onExportAll?.(selectedScale, selectedAspectRatio);
+    }, [onExportAll, selectedScale, selectedAspectRatio]);
+
     useImperativeHandle(ref, () => ({
       exportChart,
     }));
@@ -247,7 +257,7 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
                     이미지 저장
                   </DropdownMenuItem>
                   {onExportAll && (
-                    <DropdownMenuItem onClick={onExportAll} disabled={isAnyExporting}>
+                    <DropdownMenuItem onClick={openBatchExportModal} disabled={isAnyExporting}>
                       <Download className="h-4 w-4 mr-2" />
                       전체 저장
                     </DropdownMenuItem>
@@ -315,6 +325,69 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
                   <>
                     <Download className="h-4 w-4 mr-2" />
                     저장
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isBatchModalOpen} onOpenChange={setIsBatchModalOpen}>
+          <DialogContent className="max-w-[340px] sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>전체 차트 저장 옵션</DialogTitle>
+            </DialogHeader>
+            <div className="batch-export-options-form grid gap-4 py-4">
+              <div className="batch-export-option-scale">
+                <label className="text-sm font-medium mb-2 block">해상도</label>
+                <Select
+                  value={selectedScale.toString()}
+                  onValueChange={(v) => setSelectedScale(Number(v) as ExportScale)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">표준 (1x)</SelectItem>
+                    <SelectItem value="2">고화질 (2x)</SelectItem>
+                    <SelectItem value="3">초고화질 (3x)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="batch-export-option-aspect-ratio">
+                <label className="text-sm font-medium mb-2 block">비율</label>
+                <Select
+                  value={selectedAspectRatio}
+                  onValueChange={(v) => setSelectedAspectRatio(v as ExportAspectRatio)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="horizontal">가로 (16:9)</SelectItem>
+                    <SelectItem value="vertical">세로 (9:16)</SelectItem>
+                    <SelectItem value="square">정방 (1:1)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                4개의 차트(카테고리별, 조회수 TOP, 글쓰기 추이, 완독률)를 ZIP 파일로 저장합니다.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsBatchModalOpen(false)}>
+                취소
+              </Button>
+              <Button onClick={handleBatchExport} disabled={isExportingAll}>
+                {isExportingAll ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    저장 중...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    전체 저장
                   </>
                 )}
               </Button>

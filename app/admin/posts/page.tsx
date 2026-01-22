@@ -59,7 +59,12 @@ import { CategoryChart } from "@/components/charts/CategoryChart";
 import { ViewsChart } from "@/components/charts/ViewsChart";
 import { CountChart } from "@/components/charts/CountChart";
 import { ReadingChart } from "@/components/charts/ReadingChart";
-import { ChartExportWrapper, type ChartExportHandle } from "@/components/charts/ChartExportWrapper";
+import {
+  ChartExportWrapper,
+  type ChartExportHandle,
+  type ExportScale,
+  type ExportAspectRatio,
+} from "@/components/charts/ChartExportWrapper";
 import { useBatchChartExport } from "@/hooks/useBatchChartExport";
 import {
   useCategoryAnalytics,
@@ -162,14 +167,21 @@ export default function AdminPostsPage() {
     setAnalyticsEndDate(now.toISOString().split("T")[0]);
   }, [periodPreset]);
 
-  const handleExportAllCharts = useCallback(() => {
-    exportAllChartsAsZip([
-      { name: "category-chart", ref: categoryChartRef },
-      { name: "views-chart", ref: viewsChartRef },
-      { name: "count-chart", ref: countChartRef },
-      { name: "reading-chart", ref: readingChartRef },
-    ]);
-  }, [exportAllChartsAsZip]);
+  const handleExportAllCharts = useCallback(
+    (scale: ExportScale, aspectRatio: ExportAspectRatio) => {
+      exportAllChartsAsZip(
+        [
+          { name: "category-chart", ref: categoryChartRef },
+          { name: "views-chart", ref: viewsChartRef },
+          { name: "count-chart", ref: countChartRef },
+          { name: "reading-chart", ref: readingChartRef },
+        ],
+        scale,
+        aspectRatio
+      );
+    },
+    [exportAllChartsAsZip]
+  );
 
   const [selectedPostIds, setSelectedPostIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<BulkAction | null>(null);
