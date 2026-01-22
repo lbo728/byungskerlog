@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDarkCustom } from "@/lib/syntax-theme";
@@ -19,6 +20,21 @@ function generateHeadingId(text: string): string {
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^\w가-힣-]/g, "");
+}
+
+// 잘못된 마크다운 볼드/이탤릭 패턴 수정
+// ** text ** → **text** (공백 문제로 파싱되지 않는 볼드 수정)
+function fixBoldItalicMarkdown(content: string): string {
+  return (
+    content
+      // **text ** → **text** (닫는 ** 앞 공백 제거, 시작은 공백 아닌 문자)
+      .replace(/\*\*(\S[^*]*?)\s+\*\*/g, "**$1**")
+      // ** text** → **text** (여는 ** 뒤 공백 제거, 끝은 공백 아닌 문자)
+      .replace(/\*\*\s+([^*]*?\S)\*\*/g, "**$1**")
+      // *text * → *text* (이탤릭도 동일하게)
+      .replace(/\*(\S[^*]*?)\s+\*/g, "*$1*")
+      .replace(/\*\s+([^*]*?\S)\*/g, "*$1*")
+  );
 }
 
 // 마크다운 헤딩을 HTML 태그로 변환 (고유 ID 포함)
@@ -91,8 +107,11 @@ function CodeBlock({ code, language }: { code: string; language: string }) {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  // 헤딩을 HTML로 전처리 (고유 ID 포함)
-  const processedContent = useMemo(() => preprocessHeadings(content), [content]);
+  // 마크다운 전처리: 볼드/이탤릭 수정 + 헤딩 ID 추가
+  const processedContent = useMemo(() => {
+    const fixedBold = fixBoldItalicMarkdown(content);
+    return preprocessHeadings(fixedBold);
+  }, [content]);
 
   const segments = useMemo(() => {
     const lines = processedContent.split("\n");
@@ -197,7 +216,12 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         segment.type === "url" ? (
           <LinkCard key={index} url={segment.content} />
         ) : (
-          <ReactMarkdown key={index} remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={components}>
+          <ReactMarkdown
+            key={index}
+            remarkPlugins={[remarkGfm, remarkBreaks]}
+            rehypePlugins={[rehypeRaw]}
+            components={components}
+          >
             {segment.content}
           </ReactMarkdown>
         )
