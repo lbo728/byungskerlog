@@ -1,10 +1,8 @@
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { PostDetailLoader } from "@/components/post/PostDetailLoader";
 import { PostDetailSkeleton } from "@/components/skeleton/PostDetailSkeleton";
-import { getPost } from "@/lib/post-data";
 
 export const revalidate = 3600;
 
@@ -96,11 +94,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = await getPost(slug);
-
-  if (!post) {
-    notFound();
-  }
 
   return (
     <Suspense fallback={<PostDetailSkeleton />}>

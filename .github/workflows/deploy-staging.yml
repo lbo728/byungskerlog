@@ -3,7 +3,7 @@ name: Deploy to Staging
 on:
   push:
     branches: [dev]
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch: # Manual trigger
 
 jobs:
   deploy-staging:
@@ -27,13 +27,14 @@ jobs:
         run: npx prisma generate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_DEV }}
 
       - name: Check migration status
         id: migration_check
         run: |
           STATUS=$(npx prisma migrate status 2>&1 || true)
           echo "$STATUS"
-          
+
           if echo "$STATUS" | grep -q "Database schema is up to date"; then
             echo "migrations_needed=false" >> $GITHUB_OUTPUT
             echo "✅ Staging DB is up to date"
@@ -45,6 +46,7 @@ jobs:
           fi
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_DEV }}
 
       - name: Apply migrations to staging
         if: steps.migration_check.outputs.migrations_needed == 'true'
@@ -54,6 +56,7 @@ jobs:
           echo "✅ Staging migrations complete"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_DEV }}
 
       - name: Verify staging migration
         if: steps.migration_check.outputs.migrations_needed == 'true'
@@ -67,11 +70,13 @@ jobs:
           fi
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_DEV }}
 
       - name: Build application (staging)
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_DEV }}
 
       - name: Run tests (optional)
         run: npm run test:run || echo "No tests configured"

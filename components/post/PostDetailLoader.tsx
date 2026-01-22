@@ -1,11 +1,6 @@
+import { notFound } from "next/navigation";
 import { PostDetail } from "./PostDetail";
-import {
-  getPost,
-  getSeriesPosts,
-  getPrevNextPosts,
-  getRelatedPosts,
-  getShortPostsNav,
-} from "@/lib/post-data";
+import { getPost, getSeriesPosts, getPrevNextPosts, getRelatedPosts, getShortPostsNav } from "@/lib/post-data";
 
 interface PostDetailLoaderProps {
   slug: string;
@@ -16,16 +11,15 @@ export async function PostDetailLoader({ slug, isFromShort = false }: PostDetail
   const post = await getPost(slug);
 
   if (!post) {
-    return null;
+    notFound();
   }
 
-  const [seriesPosts, { prevPost, nextPost }, relatedPosts, { prevShortPost, nextShortPost }] =
-    await Promise.all([
-      getSeriesPosts(post.seriesId),
-      getPrevNextPosts(post.createdAt, post.seriesId, post.slug, isFromShort),
-      getRelatedPosts(post.tags || [], post.slug, isFromShort),
-      getShortPostsNav(post.createdAt, post.slug, post.type),
-    ]);
+  const [seriesPosts, { prevPost, nextPost }, relatedPosts, { prevShortPost, nextShortPost }] = await Promise.all([
+    getSeriesPosts(post.seriesId),
+    getPrevNextPosts(post.createdAt, post.seriesId, post.slug, isFromShort),
+    getRelatedPosts(post.tags || [], post.slug, isFromShort),
+    getShortPostsNav(post.createdAt, post.slug, post.type),
+  ]);
 
   return (
     <PostDetail

@@ -46,3 +46,4 @@ next-env.d.ts
 *.db-journal
 firebase-debug.log
 .claude/settings.local.json
+AGENTS.local.md
