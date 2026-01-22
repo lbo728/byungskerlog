@@ -178,7 +178,7 @@ export function PublishModal({
     return () => {
       document.body.style.overflow = "";
     };
-  }, [open, isEditMode, postType, initialLinkedinContent, initialThreadsContent]);
+  }, [open, isEditMode, postType, initialLinkedinContent, initialThreadsContent, title, content]);
 
   useEffect(() => {
     if (presets && presets.length > 0 && !selectedPresetId) {
