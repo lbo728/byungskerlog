@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useCallback, useState, forwardRef, useImperativeHandle } from "react";
-import { toPng } from "html-to-image";
 import FileSaver from "file-saver";
 import { Button } from "@/components/ui/Button";
 import { Download, Loader2, ChevronDown } from "lucide-react";
@@ -26,50 +25,111 @@ interface ChartExportWrapperProps {
   isExportingAll?: boolean;
 }
 
-const ASPECT_RATIOS: Record<ExportAspectRatio, number> = {
-  horizontal: 16 / 9,
-  vertical: 9 / 16,
-  square: 1,
+const EXPORT_DIMENSIONS: Record<ExportAspectRatio, { width: number; height: number }> = {
+  horizontal: { width: 1200, height: 675 },
+  vertical: { width: 675, height: 1200 },
+  square: { width: 1080, height: 1080 },
 };
 
-function fitToAspectRatio(dataUrl: string, aspectRatio: ExportAspectRatio, backgroundColor: string): Promise<Blob> {
+const TITLE_HEIGHT = 60;
+const PADDING = 32;
+
+function exportSvgToBlob(
+  svgElement: SVGSVGElement,
+  title: string,
+  aspectRatio: ExportAspectRatio,
+  scale: ExportScale,
+  backgroundColor: string,
+  textColor: string
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
+    const dimensions = EXPORT_DIMENSIONS[aspectRatio];
+    const canvasWidth = dimensions.width * scale;
+    const canvasHeight = dimensions.height * scale;
+
+    const chartAreaWidth = dimensions.width - PADDING * 2;
+    const chartAreaHeight = dimensions.height - TITLE_HEIGHT - PADDING * 2;
+
+    const svgClone = svgElement.cloneNode(true) as SVGSVGElement;
+
+    const originalWidth = svgElement.clientWidth || svgElement.getBoundingClientRect().width;
+    const originalHeight = svgElement.clientHeight || svgElement.getBoundingClientRect().height;
+
+    const scaleX = chartAreaWidth / originalWidth;
+    const scaleY = chartAreaHeight / originalHeight;
+    const fitScale = Math.min(scaleX, scaleY);
+
+    const scaledWidth = originalWidth * fitScale;
+    const scaledHeight = originalHeight * fitScale;
+
+    const offsetX = PADDING + (chartAreaWidth - scaledWidth) / 2;
+    const offsetY = TITLE_HEIGHT + PADDING + (chartAreaHeight - scaledHeight) / 2;
+
+    const wrapperSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    wrapperSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    wrapperSvg.setAttribute("width", dimensions.width.toString());
+    wrapperSvg.setAttribute("height", dimensions.height.toString());
+    wrapperSvg.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
+
+    const bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bgRect.setAttribute("width", "100%");
+    bgRect.setAttribute("height", "100%");
+    bgRect.setAttribute("fill", backgroundColor);
+    wrapperSvg.appendChild(bgRect);
+
+    const titleText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    titleText.setAttribute("x", PADDING.toString());
+    titleText.setAttribute("y", (PADDING + 28).toString());
+    titleText.setAttribute("font-size", "24");
+    titleText.setAttribute("font-weight", "600");
+    titleText.setAttribute("font-family", "system-ui, -apple-system, sans-serif");
+    titleText.setAttribute("fill", textColor);
+    titleText.textContent = title;
+    wrapperSvg.appendChild(titleText);
+
+    const chartGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    chartGroup.setAttribute("transform", `translate(${offsetX}, ${offsetY}) scale(${fitScale})`);
+
+    svgClone.removeAttribute("width");
+    svgClone.removeAttribute("height");
+    svgClone.setAttribute("width", originalWidth.toString());
+    svgClone.setAttribute("height", originalHeight.toString());
+
+    while (svgClone.firstChild) {
+      chartGroup.appendChild(svgClone.firstChild);
+    }
+
+    const defs = svgClone.querySelector("defs");
+    if (defs) {
+      wrapperSvg.appendChild(defs.cloneNode(true));
+    }
+
+    wrapperSvg.appendChild(chartGroup);
+
+    const svgData = new XMLSerializer().serializeToString(wrapperSvg);
+    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+
     const img = new Image();
     img.onload = () => {
-      const targetRatio = ASPECT_RATIOS[aspectRatio];
-      const imgRatio = img.width / img.height;
-
-      let canvasWidth: number;
-      let canvasHeight: number;
-      let offsetX = 0;
-      let offsetY = 0;
-
-      if (imgRatio > targetRatio) {
-        canvasWidth = img.width;
-        canvasHeight = img.width / targetRatio;
-        offsetY = (canvasHeight - img.height) / 2;
-      } else {
-        canvasHeight = img.height;
-        canvasWidth = img.height * targetRatio;
-        offsetX = (canvasWidth - img.width) / 2;
-      }
-
       const canvas = document.createElement("canvas");
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
 
       const ctx = canvas.getContext("2d");
       if (!ctx) {
+        URL.revokeObjectURL(url);
         reject(new Error("Failed to get canvas context"));
         return;
       }
 
       ctx.fillStyle = backgroundColor;
       ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-      ctx.drawImage(img, offsetX, offsetY);
+      ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
 
       canvas.toBlob(
         (blob) => {
+          URL.revokeObjectURL(url);
           if (blob) {
             resolve(blob);
           } else {
@@ -80,14 +140,19 @@ function fitToAspectRatio(dataUrl: string, aspectRatio: ExportAspectRatio, backg
         1.0
       );
     };
-    img.onerror = () => reject(new Error("Failed to load image"));
-    img.src = dataUrl;
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Failed to load SVG image"));
+    };
+
+    img.src = url;
   });
 }
 
 export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapperProps>(
   ({ children, filename, title, showExportButton = true, onExportAll, isExportingAll = false }, ref) => {
-    const captureRef = useRef<HTMLDivElement>(null);
+    const chartContainerRef = useRef<HTMLDivElement>(null);
     const [isExporting, setIsExporting] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedScale, setSelectedScale] = useState<ExportScale>(2);
@@ -95,36 +160,37 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
     const { theme } = useTheme();
 
     const backgroundColor = theme === "dark" ? "#0a0a0a" : "#ffffff";
+    const textColor = theme === "dark" ? "#fafafa" : "#0a0a0a";
 
     const exportChart = useCallback(
       async (
         scale: ExportScale = selectedScale,
         aspectRatio: ExportAspectRatio = selectedAspectRatio
       ): Promise<Blob | null> => {
-        if (!captureRef.current) return null;
+        if (!chartContainerRef.current) return null;
+
+        const svgElement = chartContainerRef.current.querySelector("svg.recharts-surface");
+        if (!svgElement) {
+          console.error("SVG element not found");
+          return null;
+        }
 
         try {
-          const dataUrl = await toPng(captureRef.current, {
-            quality: 1.0,
-            pixelRatio: scale,
-            cacheBust: true,
+          const blob = await exportSvgToBlob(
+            svgElement as SVGSVGElement,
+            title,
+            aspectRatio,
+            scale,
             backgroundColor,
-            filter: (node) => {
-              if (node instanceof Element && node.classList.contains("chart-export-button-group")) {
-                return false;
-              }
-              return true;
-            },
-          });
-
-          const blob = await fitToAspectRatio(dataUrl, aspectRatio, backgroundColor);
+            textColor
+          );
           return blob;
         } catch (error) {
           console.error("Chart export failed:", error);
           return null;
         }
       },
-      [selectedScale, selectedAspectRatio, backgroundColor]
+      [selectedScale, selectedAspectRatio, backgroundColor, textColor, title]
     );
 
     const handleExport = useCallback(async () => {
@@ -155,44 +221,45 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
 
     return (
       <div className="chart-export-wrapper">
-        <div ref={captureRef} className="chart-export-capture bg-background p-4">
-          <div className="chart-export-header flex items-center justify-between mb-3 gap-2">
-            <h2 className="chart-export-title text-base sm:text-lg font-semibold">{title}</h2>
-            {showExportButton && (
-              <div className="chart-export-button-group flex flex-shrink-0 print:hidden">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={openExportModal}
-                  disabled={isAnyExporting}
-                  className="gap-1 rounded-r-none border-r-0"
-                >
-                  {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  <span className="hidden sm:inline">{isExporting ? "저장 중..." : "저장"}</span>
-                </Button>
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={isAnyExporting} className="px-1.5 rounded-l-none">
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="min-w-[120px]">
-                    <DropdownMenuItem onClick={openExportModal} disabled={isAnyExporting}>
+        <div className="chart-export-header flex items-center justify-between p-4 pb-0 gap-2">
+          <h2 className="chart-export-title text-base sm:text-lg font-semibold">{title}</h2>
+          {showExportButton && (
+            <div className="chart-export-button-group flex flex-shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openExportModal}
+                disabled={isAnyExporting}
+                className="gap-1 rounded-r-none border-r-0"
+              >
+                {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                <span className="hidden sm:inline">{isExporting ? "저장 중..." : "저장"}</span>
+              </Button>
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={isAnyExporting} className="px-1.5 rounded-l-none">
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[120px]">
+                  <DropdownMenuItem onClick={openExportModal} disabled={isAnyExporting}>
+                    <Download className="h-4 w-4 mr-2" />
+                    이미지 저장
+                  </DropdownMenuItem>
+                  {onExportAll && (
+                    <DropdownMenuItem onClick={onExportAll} disabled={isAnyExporting}>
                       <Download className="h-4 w-4 mr-2" />
-                      이미지 저장
+                      전체 저장
                     </DropdownMenuItem>
-                    {onExportAll && (
-                      <DropdownMenuItem onClick={onExportAll} disabled={isAnyExporting}>
-                        <Download className="h-4 w-4 mr-2" />
-                        전체 저장
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
-          </div>
-          <div className="chart-export-content">{children}</div>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+        </div>
+
+        <div ref={chartContainerRef} className="chart-export-content p-4 pt-2">
+          {children}
         </div>
 
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
