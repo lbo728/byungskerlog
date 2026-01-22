@@ -59,12 +59,7 @@ import { CategoryChart } from "@/components/charts/CategoryChart";
 import { ViewsChart } from "@/components/charts/ViewsChart";
 import { CountChart } from "@/components/charts/CountChart";
 import { ReadingChart } from "@/components/charts/ReadingChart";
-import {
-  ChartExportWrapper,
-  type ExportScale,
-  type ExportAspectRatio,
-  type ChartExportHandle,
-} from "@/components/charts/ChartExportWrapper";
+import { ChartExportWrapper, type ChartExportHandle } from "@/components/charts/ChartExportWrapper";
 import { useBatchChartExport } from "@/hooks/useBatchChartExport";
 import {
   useCategoryAnalytics,
@@ -131,10 +126,6 @@ export default function AdminPostsPage() {
   const [analyticsStartDate, setAnalyticsStartDate] = useState<string>("");
   const [analyticsEndDate, setAnalyticsEndDate] = useState<string>("");
   const [analyticsType, setAnalyticsType] = useState<"all" | "LONG" | "SHORT">("all");
-  const [exportScale, setExportScale] = useState<ExportScale>(2);
-  const [exportAspectRatio, setExportAspectRatio] = useState<ExportAspectRatio>("horizontal");
-  const [analysisText, setAnalysisText] = useState<string>("");
-  const [showAnalysisInput, setShowAnalysisInput] = useState(false);
 
   const categoryChartRef = useRef<ChartExportHandle>(null);
   const viewsChartRef = useRef<ChartExportHandle>(null);
@@ -479,10 +470,10 @@ export default function AdminPostsPage() {
         </div>
       </header>
 
-      <div className="admin-tabs border-b border-border">
+      <div className="admin-tabs border-b border-border overflow-x-auto">
         <div className="container mx-auto px-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="h-12 bg-transparent border-0 p-0">
+            <TabsList className="h-12 bg-transparent border-0 p-0 flex-nowrap w-max min-w-full">
               <TabsTrigger
                 value="posts"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4"
@@ -944,9 +935,9 @@ export default function AdminPostsPage() {
       )}
 
       {activeTab === "analytics" && (
-        <div className="analytics-content container mx-auto px-4 py-8">
-          <div className="analytics-filters border border-border rounded-lg p-4 mb-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="analytics-content container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+          <div className="analytics-filters border border-border rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium mb-1.5 block">기간</label>
                 <Select value={periodPreset} onValueChange={(v) => setPeriodPreset(v as typeof periodPreset)}>
@@ -976,32 +967,6 @@ export default function AdminPostsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">해상도</label>
-                <Select value={exportScale.toString()} onValueChange={(v) => setExportScale(Number(v) as ExportScale)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">표준 (1x)</SelectItem>
-                    <SelectItem value="2">고화질 (2x)</SelectItem>
-                    <SelectItem value="3">초고화질 (3x)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">비율</label>
-                <Select value={exportAspectRatio} onValueChange={(v) => setExportAspectRatio(v as ExportAspectRatio)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="horizontal">가로 (16:9)</SelectItem>
-                    <SelectItem value="vertical">세로 (9:16)</SelectItem>
-                    <SelectItem value="square">정방 (1:1)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
             {periodPreset === "custom" && (
               <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-border">
@@ -1021,84 +986,56 @@ export default function AdminPostsPage() {
             )}
           </div>
 
-          <div className="analytics-tab-navigation space-y-3 mb-6">
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={analyticsTab === "category" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setAnalyticsTab("category")}
-                className="gap-1.5"
-              >
-                <BarChart3 className="h-4 w-4" />
-                <span className="hidden sm:inline">카테고리별</span>
-                <span className="sm:hidden">카테고리</span>
-              </Button>
-              <Button
-                variant={analyticsTab === "views" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setAnalyticsTab("views")}
-                className="gap-1.5"
-              >
-                <Eye className="h-4 w-4" />
-                <span className="hidden sm:inline">조회수 TOP</span>
-                <span className="sm:hidden">조회수</span>
-              </Button>
-              <Button
-                variant={analyticsTab === "count" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setAnalyticsTab("count")}
-                className="gap-1.5"
-              >
-                <TrendingUp className="h-4 w-4" />
-                <span className="hidden sm:inline">글쓰기 추이</span>
-                <span className="sm:hidden">추이</span>
-              </Button>
-              <Button
-                variant={analyticsTab === "reading" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setAnalyticsTab("reading")}
-                className="gap-1.5"
-              >
-                <BookOpen className="h-4 w-4" />
-                완독률
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAnalysisInput(!showAnalysisInput)}
-                className="gap-1.5"
-              >
-                <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">{showAnalysisInput ? "분석글 숨기기" : "분석글 추가"}</span>
-                <span className="sm:hidden">분석글</span>
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleExportAllCharts}
-                disabled={isBatchExporting}
-                className="gap-1.5"
-              >
-                {isBatchExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                <span className="hidden sm:inline">{isBatchExporting ? "저장 중..." : "전체 차트 저장"}</span>
-                <span className="sm:hidden">{isBatchExporting ? "저장..." : "전체 저장"}</span>
-              </Button>
-            </div>
+          <div className="analytics-tab-navigation flex flex-wrap gap-2 mb-4 sm:mb-6">
+            <Button
+              variant={analyticsTab === "category" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAnalyticsTab("category")}
+              className="gap-1.5"
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">카테고리별</span>
+              <span className="sm:hidden">카테고리</span>
+            </Button>
+            <Button
+              variant={analyticsTab === "views" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAnalyticsTab("views")}
+              className="gap-1.5"
+            >
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline">조회수 TOP</span>
+              <span className="sm:hidden">조회수</span>
+            </Button>
+            <Button
+              variant={analyticsTab === "count" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAnalyticsTab("count")}
+              className="gap-1.5"
+            >
+              <TrendingUp className="h-4 w-4" />
+              <span className="hidden sm:inline">글쓰기 추이</span>
+              <span className="sm:hidden">추이</span>
+            </Button>
+            <Button
+              variant={analyticsTab === "reading" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAnalyticsTab("reading")}
+              className="gap-1.5"
+            >
+              <BookOpen className="h-4 w-4" />
+              완독률
+            </Button>
           </div>
 
-          <div className="analytics-chart-display border border-border rounded-lg p-6 mb-6">
+          <div className="analytics-chart-display border border-border rounded-lg overflow-hidden mb-4 sm:mb-6">
             {analyticsTab === "category" && (
               <ChartExportWrapper
                 ref={categoryChartRef}
                 filename="byungskerlog-category"
                 title="태그별 포스트 수"
-                scale={exportScale}
-                aspectRatio={exportAspectRatio}
-                analysisText={analysisText}
-                onAnalysisTextChange={setAnalysisText}
-                showAnalysisInput={showAnalysisInput}
+                onExportAll={handleExportAllCharts}
+                isExportingAll={isBatchExporting}
               >
                 <CategoryChart data={categoryData} isLoading={isLoadingCategory} />
               </ChartExportWrapper>
@@ -1108,11 +1045,8 @@ export default function AdminPostsPage() {
                 ref={viewsChartRef}
                 filename="byungskerlog-views"
                 title="조회수 TOP 10"
-                scale={exportScale}
-                aspectRatio={exportAspectRatio}
-                analysisText={analysisText}
-                onAnalysisTextChange={setAnalysisText}
-                showAnalysisInput={showAnalysisInput}
+                onExportAll={handleExportAllCharts}
+                isExportingAll={isBatchExporting}
               >
                 <ViewsChart data={viewsData} isLoading={isLoadingViews} />
               </ChartExportWrapper>
@@ -1122,11 +1056,8 @@ export default function AdminPostsPage() {
                 ref={countChartRef}
                 filename="byungskerlog-count"
                 title="기간별 글쓰기 추이"
-                scale={exportScale}
-                aspectRatio={exportAspectRatio}
-                analysisText={analysisText}
-                onAnalysisTextChange={setAnalysisText}
-                showAnalysisInput={showAnalysisInput}
+                onExportAll={handleExportAllCharts}
+                isExportingAll={isBatchExporting}
               >
                 <CountChart data={countData} isLoading={isLoadingCount} />
               </ChartExportWrapper>
@@ -1136,11 +1067,8 @@ export default function AdminPostsPage() {
                 ref={readingChartRef}
                 filename="byungskerlog-reading"
                 title="완독률 TOP 10 (Long 포스트)"
-                scale={exportScale}
-                aspectRatio={exportAspectRatio}
-                analysisText={analysisText}
-                onAnalysisTextChange={setAnalysisText}
-                showAnalysisInput={showAnalysisInput}
+                onExportAll={handleExportAllCharts}
+                isExportingAll={isBatchExporting}
               >
                 <ReadingChart data={readingData} isLoading={isLoadingReading} />
               </ChartExportWrapper>
@@ -1148,27 +1076,29 @@ export default function AdminPostsPage() {
           </div>
 
           <section className="analytics-summary">
-            <h2 className="text-lg font-semibold mb-4">전체 통계</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="stat-card p-4 border border-border rounded-lg text-center">
-                <p className="text-3xl font-bold text-primary">{posts.filter((p) => p.published).length}</p>
-                <p className="text-sm text-muted-foreground">게시된 글</p>
+            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">전체 통계</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+              <div className="stat-card p-3 sm:p-4 border border-border rounded-lg text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-primary">{posts.filter((p) => p.published).length}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">게시된 글</p>
               </div>
-              <div className="stat-card p-4 border border-border rounded-lg text-center">
-                <p className="text-3xl font-bold text-primary">{posts.filter((p) => !p.published).length}</p>
-                <p className="text-sm text-muted-foreground">비공개 글</p>
+              <div className="stat-card p-3 sm:p-4 border border-border rounded-lg text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-primary">
+                  {posts.filter((p) => !p.published).length}
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground">비공개 글</p>
               </div>
-              <div className="stat-card p-4 border border-border rounded-lg text-center">
-                <p className="text-3xl font-bold text-primary">
+              <div className="stat-card p-3 sm:p-4 border border-border rounded-lg text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-primary">
                   {posts.reduce((sum, p) => sum + (p.totalViews || 0), 0).toLocaleString()}
                 </p>
-                <p className="text-sm text-muted-foreground">총 조회수</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">총 조회수</p>
               </div>
-              <div className="stat-card p-4 border border-border rounded-lg text-center">
-                <p className="text-3xl font-bold text-primary">
+              <div className="stat-card p-3 sm:p-4 border border-border rounded-lg text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-primary">
                   {posts.reduce((sum, p) => sum + (p.dailyViews || 0), 0).toLocaleString()}
                 </p>
-                <p className="text-sm text-muted-foreground">오늘 조회수</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">오늘 조회수</p>
               </div>
             </div>
           </section>
