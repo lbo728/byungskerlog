@@ -986,7 +986,7 @@ export function PublishModal({
         취소
       </Button>
       <Button type="button" onClick={handlePublish} disabled={isPublishing}>
-        {isPublishing ? (isEditMode ? "수정 중..." : "발행 중...") : isEditMode ? "수정하기" : "발행하기"}
+        {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : isEditMode ? "수정하기" : "발행하기"}
       </Button>
     </>
   );
