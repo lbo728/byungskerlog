@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
@@ -28,6 +28,8 @@ import {
   ExternalLink,
   FileText,
   Brain,
+  Download,
+  Loader2,
 } from "lucide-react";
 
 import {
@@ -57,6 +59,8 @@ import { CategoryChart } from "@/components/charts/CategoryChart";
 import { ViewsChart } from "@/components/charts/ViewsChart";
 import { CountChart } from "@/components/charts/CountChart";
 import { ReadingChart } from "@/components/charts/ReadingChart";
+import { ChartExportWrapper, type ExportScale, type ChartExportHandle } from "@/components/charts/ChartExportWrapper";
+import { useBatchChartExport } from "@/hooks/useBatchChartExport";
 import {
   useCategoryAnalytics,
   useViewsAnalytics,
@@ -118,15 +122,57 @@ export default function AdminPostsPage() {
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const [analyticsTab, setAnalyticsTab] = useState<"category" | "views" | "count" | "reading">("category");
-  const [analyticsStartDate, setAnalyticsStartDate] = useState<string>(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 1);
-    return d.toISOString().split("T")[0];
-  });
-  const [analyticsEndDate, setAnalyticsEndDate] = useState<string>(() => {
-    return new Date().toISOString().split("T")[0];
-  });
+  const [periodPreset, setPeriodPreset] = useState<"7d" | "30d" | "90d" | "1y" | "all" | "custom">("30d");
+  const [analyticsStartDate, setAnalyticsStartDate] = useState<string>("");
+  const [analyticsEndDate, setAnalyticsEndDate] = useState<string>("");
   const [analyticsType, setAnalyticsType] = useState<"all" | "LONG" | "SHORT">("all");
+  const [exportScale, setExportScale] = useState<ExportScale>(2);
+  const [analysisText, setAnalysisText] = useState<string>("");
+  const [showAnalysisInput, setShowAnalysisInput] = useState(false);
+
+  const categoryChartRef = useRef<ChartExportHandle>(null);
+  const viewsChartRef = useRef<ChartExportHandle>(null);
+  const countChartRef = useRef<ChartExportHandle>(null);
+  const readingChartRef = useRef<ChartExportHandle>(null);
+
+  const { exportAllChartsAsZip, isExporting: isBatchExporting } = useBatchChartExport();
+
+  useEffect(() => {
+    if (periodPreset === "custom") return;
+
+    const now = new Date();
+    let startDate = new Date();
+
+    switch (periodPreset) {
+      case "7d":
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case "30d":
+        startDate.setDate(now.getDate() - 30);
+        break;
+      case "90d":
+        startDate.setDate(now.getDate() - 90);
+        break;
+      case "1y":
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+      case "all":
+        startDate = new Date("2020-01-01");
+        break;
+    }
+
+    setAnalyticsStartDate(startDate.toISOString().split("T")[0]);
+    setAnalyticsEndDate(now.toISOString().split("T")[0]);
+  }, [periodPreset]);
+
+  const handleExportAllCharts = useCallback(() => {
+    exportAllChartsAsZip([
+      { name: "category-chart", ref: categoryChartRef },
+      { name: "views-chart", ref: viewsChartRef },
+      { name: "count-chart", ref: countChartRef },
+      { name: "reading-chart", ref: readingChartRef },
+    ]);
+  }, [exportAllChartsAsZip]);
 
   const [selectedPostIds, setSelectedPostIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<BulkAction | null>(null);
@@ -895,15 +941,39 @@ export default function AdminPostsPage() {
         <div className="analytics-content container mx-auto px-4 py-8">
           <div className="analytics-filters border border-border rounded-lg p-4 mb-6">
             <div className="flex flex-wrap items-end gap-4">
-              <div className="flex-1 min-w-[150px]">
-                <label className="text-sm font-medium mb-2 block">시작일</label>
-                <Input type="date" value={analyticsStartDate} onChange={(e) => setAnalyticsStartDate(e.target.value)} />
+              <div className="flex-1 min-w-[120px]">
+                <label className="text-sm font-medium mb-2 block">기간</label>
+                <Select value={periodPreset} onValueChange={(v) => setPeriodPreset(v as typeof periodPreset)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7d">최근 7일</SelectItem>
+                    <SelectItem value="30d">최근 30일</SelectItem>
+                    <SelectItem value="90d">최근 3개월</SelectItem>
+                    <SelectItem value="1y">최근 1년</SelectItem>
+                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="custom">사용자 정의</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex-1 min-w-[150px]">
-                <label className="text-sm font-medium mb-2 block">종료일</label>
-                <Input type="date" value={analyticsEndDate} onChange={(e) => setAnalyticsEndDate(e.target.value)} />
-              </div>
-              <div className="flex-1 min-w-[150px]">
+              {periodPreset === "custom" && (
+                <>
+                  <div className="flex-1 min-w-[130px]">
+                    <label className="text-sm font-medium mb-2 block">시작일</label>
+                    <Input
+                      type="date"
+                      value={analyticsStartDate}
+                      onChange={(e) => setAnalyticsStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-[130px]">
+                    <label className="text-sm font-medium mb-2 block">종료일</label>
+                    <Input type="date" value={analyticsEndDate} onChange={(e) => setAnalyticsEndDate(e.target.value)} />
+                  </div>
+                </>
+              )}
+              <div className="flex-1 min-w-[100px]">
                 <label className="text-sm font-medium mb-2 block">글 유형</label>
                 <Select value={analyticsType} onValueChange={(v) => setAnalyticsType(v as typeof analyticsType)}>
                   <SelectTrigger>
@@ -916,10 +986,23 @@ export default function AdminPostsPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex-1 min-w-[100px]">
+                <label className="text-sm font-medium mb-2 block">해상도</label>
+                <Select value={exportScale.toString()} onValueChange={(v) => setExportScale(Number(v) as ExportScale)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">표준 (1x)</SelectItem>
+                    <SelectItem value="2">고화질 (2x)</SelectItem>
+                    <SelectItem value="3">초고화질 (3x)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
-          <div className="analytics-tab-navigation flex gap-2 mb-6">
+          <div className="analytics-tab-navigation flex flex-wrap gap-2 mb-6">
             <Button
               variant={analyticsTab === "category" ? "default" : "outline"}
               size="sm"
@@ -956,19 +1039,82 @@ export default function AdminPostsPage() {
               <BookOpen className="h-4 w-4" />
               완독률
             </Button>
+            <div className="ml-auto flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAnalysisInput(!showAnalysisInput)}
+                className="gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                {showAnalysisInput ? "분석글 숨기기" : "분석글 추가"}
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleExportAllCharts}
+                disabled={isBatchExporting}
+                className="gap-2"
+              >
+                {isBatchExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {isBatchExporting ? "저장 중..." : "전체 차트 저장"}
+              </Button>
+            </div>
           </div>
 
           <div className="analytics-chart-display border border-border rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4">
-              {analyticsTab === "category" && "태그별 포스트 수"}
-              {analyticsTab === "views" && "조회수 TOP 10"}
-              {analyticsTab === "count" && "기간별 글쓰기 추이"}
-              {analyticsTab === "reading" && "완독률 TOP 10 (Long 포스트)"}
-            </h2>
-            {analyticsTab === "category" && <CategoryChart data={categoryData} isLoading={isLoadingCategory} />}
-            {analyticsTab === "views" && <ViewsChart data={viewsData} isLoading={isLoadingViews} />}
-            {analyticsTab === "count" && <CountChart data={countData} isLoading={isLoadingCount} />}
-            {analyticsTab === "reading" && <ReadingChart data={readingData} isLoading={isLoadingReading} />}
+            {analyticsTab === "category" && (
+              <ChartExportWrapper
+                ref={categoryChartRef}
+                filename="byungskerlog-category"
+                title="태그별 포스트 수"
+                scale={exportScale}
+                analysisText={analysisText}
+                onAnalysisTextChange={setAnalysisText}
+                showAnalysisInput={showAnalysisInput}
+              >
+                <CategoryChart data={categoryData} isLoading={isLoadingCategory} />
+              </ChartExportWrapper>
+            )}
+            {analyticsTab === "views" && (
+              <ChartExportWrapper
+                ref={viewsChartRef}
+                filename="byungskerlog-views"
+                title="조회수 TOP 10"
+                scale={exportScale}
+                analysisText={analysisText}
+                onAnalysisTextChange={setAnalysisText}
+                showAnalysisInput={showAnalysisInput}
+              >
+                <ViewsChart data={viewsData} isLoading={isLoadingViews} />
+              </ChartExportWrapper>
+            )}
+            {analyticsTab === "count" && (
+              <ChartExportWrapper
+                ref={countChartRef}
+                filename="byungskerlog-count"
+                title="기간별 글쓰기 추이"
+                scale={exportScale}
+                analysisText={analysisText}
+                onAnalysisTextChange={setAnalysisText}
+                showAnalysisInput={showAnalysisInput}
+              >
+                <CountChart data={countData} isLoading={isLoadingCount} />
+              </ChartExportWrapper>
+            )}
+            {analyticsTab === "reading" && (
+              <ChartExportWrapper
+                ref={readingChartRef}
+                filename="byungskerlog-reading"
+                title="완독률 TOP 10 (Long 포스트)"
+                scale={exportScale}
+                analysisText={analysisText}
+                onAnalysisTextChange={setAnalysisText}
+                showAnalysisInput={showAnalysisInput}
+              >
+                <ReadingChart data={readingData} isLoading={isLoadingReading} />
+              </ChartExportWrapper>
+            )}
           </div>
 
           <section className="analytics-summary">
