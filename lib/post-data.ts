@@ -157,42 +157,7 @@ export async function getShortPostsNav(createdAt: Date, currentSlug: string, pos
   return { prevShortPost, nextShortPost };
 }
 
-export async function getPostHeader(slug: string) {
-  const decodedSlug = decodeURIComponent(slug);
-  const postData = await prisma.post.findFirst({
-    where: {
-      OR: [{ slug: decodedSlug }, { subSlug: decodedSlug }],
-    },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      subSlug: true,
-      excerpt: true,
-      type: true,
-      thumbnail: true,
-      createdAt: true,
-      updatedAt: true,
-      content: true,
-      seriesId: true,
-      linkedinUrl: true,
-      threadsUrl: true,
-      linkedinContent: true,
-      threadsContent: true,
-      tags: { select: { name: true } },
-      series: { select: { id: true, name: true } },
-    },
-  });
-
-  if (!postData) return null;
-  return {
-    ...postData,
-    tags: postData.tags.map((t) => t.name),
-  };
-}
-
 export type Post = NonNullable<Awaited<ReturnType<typeof getPost>>>;
-export type PostHeader = NonNullable<Awaited<ReturnType<typeof getPostHeader>>>;
 export type SeriesPost = Awaited<ReturnType<typeof getSeriesPosts>>[number];
 export type RelatedPost = Awaited<ReturnType<typeof getRelatedPosts>>[number];
 export type PrevNextPost = { slug: string; title: string } | null;
