@@ -8,57 +8,208 @@ Next.js 16 personal blog with Neon PostgreSQL (Prisma), Stack Auth, TipTap edito
 
 ## Database Environment (CRITICAL)
 
-### Development: Always Use `.env.local`
+This project uses **Neon PostgreSQL** with branch-based development workflow.
 
-During local development, the app reads from `.env.local` which overrides `.env`.
+### Environment Structure
 
-**NEVER run Prisma commands without loading `.env.local` variables:**
+| Environment | Neon Branch | Database Endpoint | Environment File | Usage |
+|-------------|-------------|-------------------|------------------|-------|
+| **Production** | `main` | `ep-old-poetry-a16nvu2i` | `.env` | Vercel production, CI/CD |
+| **Development** | `dev` | `ep-wandering-tree-a11ymokd` | `.env.local` | Local development |
+
+**Key Point:** `.env.local` overrides `.env` during local development (`npm run dev`).
+
+### Neon Branching Model
+
+Neon branches are **copy-on-write** snapshots of your database:
+- `main` branch: Production data (live)
+- `dev` branch: Development data (snapshot from main + local changes)
+- Each branch has independent data and schema
+
+**Benefits:**
+- ✅ Develop safely without affecting production
+- ✅ Test migrations on real-like data
+- ✅ Instant branch creation (COW snapshot)
+
+### Prisma Migration Strategy (MANDATORY)
+
+This project uses **`prisma migrate`** for all schema changes. **NEVER use `prisma db push` for production.**
+
+| Command | Environment | Purpose |
+|---------|-------------|---------|
+| `npx prisma migrate dev` | Local dev | Create and apply migrations |
+| `npx prisma migrate deploy` | Production/CI | Apply existing migrations only |
+| `npx prisma generate` | All | Regenerate Prisma Client |
+| `npx prisma studio` | All | GUI database browser |
+
+**Why `migrate` over `db push`?**
+- ✅ Migration history tracking (`prisma/migrations/`)
+- ✅ Safe rollback capability
+- ✅ Team collaboration (commit migration files)
+- ✅ Prevents accidental data loss
+- ❌ `db push` has NO history, NO rollback, NOT safe for production
+
+### Local Development Workflow
+
+#### 1. Making Schema Changes
 
 ```bash
-# CORRECT: Load .env.local first for Prisma commands
-export $(grep -E "^DATABASE_URL" .env.local | xargs) && npx prisma db push
+# 1. Ensure you're using dev database
+cat .env.local | grep DATABASE_URL  # Should be ep-wandering-tree-a11ymokd
 
-# WRONG: This pushes to wrong database (.env)
-npx prisma db push
+# 2. Edit prisma/schema.prisma
+# ... make your changes ...
+
+# 3. Create migration (generates SQL + applies to dev DB)
+npx prisma migrate dev --name add_user_profile
+
+# 4. Review generated SQL
+cat prisma/migrations/<timestamp>_add_user_profile/migration.sql
+
+# 5. Test the changes
+npm run dev
 ```
 
-| Environment  | Database                                    | Usage                            |
-| ------------ | ------------------------------------------- | -------------------------------- |
-| `.env.local` | `ep-wandering-tree-a11ymokd` (supabase-dev) | Local development, `npm run dev` |
-| `.env`       | `ep-old-poetry-a16nvu2i`                    | CI/Production only               |
+**CRITICAL:** Migration files are auto-applied to `.env.local` database. NO need to manually load env vars.
 
-### Migration Rules
-
-1. **During Development**: Schema changes go to `.env.local` database only
-2. **On PR to Main**: If PR includes `prisma/schema.prisma` changes, migrate production DB
-3. **Migration Command** (when merging to main with schema changes):
-   ```bash
-   npx prisma db push --accept-data-loss
-   ```
-
-## Build/Lint/Test Commands
+#### 2. Viewing Database
 
 ```bash
-npm run dev              # Dev server (port 3002)
-npm run build            # prisma generate && next build
-npm run lint             # ESLint
-
-# Testing (Vitest + React Testing Library + MSW)
-npm run test             # Watch mode
-npm run test:run         # Single run
-npm run test:coverage    # Coverage report
-
-# Run single test file
-npx vitest run __tests__/hooks/usePost.test.tsx
-
-# Run tests matching pattern
-npx vitest run -t "로딩 상태"
-
-# Prisma (MUST load .env.local first!)
-export $(grep -E "^DATABASE_URL" .env.local | xargs) && npx prisma db push
-npx prisma generate
+# Open Prisma Studio (auto-uses .env.local)
 npx prisma studio
+
+# Or use Neon Console
+# https://console.neon.tech → select 'dev' branch
 ```
+
+#### 3. Resetting Dev Database (if needed)
+
+```bash
+# WARNING: Deletes all data in dev branch
+npx prisma migrate reset
+
+# Or recreate dev branch from Neon Console
+```
+
+### Production Deployment Workflow
+
+#### Automated (via GitHub Actions)
+
+When you merge a PR with migration changes to `main`:
+
+```
+1. PR includes: prisma/schema.prisma + prisma/migrations/**
+2. GitHub Actions detects migration changes
+3. Runs: npx prisma migrate deploy (on Production DB)
+4. Vercel deployment proceeds
+```
+
+**No manual intervention required** if migrations are committed properly.
+
+#### Manual (emergency only)
+
+```bash
+# Load production DATABASE_URL
+export $(grep -E "^DATABASE_URL=" .env | xargs)
+
+# Check migration status
+npx prisma migrate status
+
+# Apply pending migrations
+npx prisma migrate deploy
+```
+
+### Migration Safety Rules (BLOCKING)
+
+⛔ **NEVER:**
+- Use `prisma db push` on production
+- Use `--accept-data-loss` flag
+- Edit migration files after they're committed
+- Skip migration files (always commit them with schema changes)
+- Run `migrate dev` in CI/CD (use `migrate deploy` only)
+
+✅ **ALWAYS:**
+- Create migrations with `migrate dev` locally
+- Review generated SQL before committing
+- Test migrations on dev branch first
+- Commit both `schema.prisma` AND `prisma/migrations/` together
+- Use descriptive migration names (`--name add_user_profile`)
+
+### Common Prisma Commands
+
+```bash
+# Local Development (uses .env.local automatically)
+npx prisma migrate dev --name <description>  # Create + apply migration
+npx prisma migrate reset                     # Reset dev DB to initial state
+npx prisma generate                          # Regenerate Prisma Client
+npx prisma studio                            # Open database GUI
+
+# Production/CI (requires DATABASE_URL env var)
+npx prisma migrate deploy   # Apply pending migrations
+npx prisma migrate status   # Check migration status
+
+# Useful utilities
+npx prisma db pull          # Reverse-engineer schema from existing DB
+npx prisma validate         # Validate schema.prisma syntax
+```
+
+### Environment Variable Management
+
+**Local (`.env.local`):**
+```bash
+# Development Database (Neon dev branch)
+DATABASE_URL="postgresql://neondb_owner:password@ep-wandering-tree-a11ymokd-pooler.region.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL_UNPOOLED="postgresql://neondb_owner:password@ep-wandering-tree-a11ymokd.region.aws.neon.tech/neondb?sslmode=require"
+```
+
+**Production (`.env` - DO NOT MODIFY):**
+```bash
+# Production Database (Neon main branch)
+DATABASE_URL="postgresql://neondb_owner:password@ep-old-poetry-a16nvu2i-pooler.region.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL_UNPOOLED="postgresql://neondb_owner:password@ep-old-poetry-a16nvu2i.region.aws.neon.tech/neondb?sslmode=require"
+```
+
+**Vercel Environment Variables:**
+- Production: Uses `DATABASE_URL` secret (Neon main branch)
+- Preview: Can use dev branch for PR previews (optional)
+
+### Troubleshooting
+
+#### "Migration already applied" error
+```bash
+# Check migration status
+npx prisma migrate status
+
+# Mark migration as applied (if manually run)
+npx prisma migrate resolve --applied <migration_name>
+```
+
+#### Schema drift detected
+```bash
+# Compare schema with database
+npx prisma migrate status
+
+# If dev branch has manual changes, reset it
+npx prisma migrate reset
+```
+
+#### Database connection errors
+```bash
+# Verify DATABASE_URL
+echo $DATABASE_URL
+
+# For local dev, ensure .env.local exists
+cat .env.local | grep DATABASE_URL
+
+# Test connection
+npx prisma db pull
+```
+
+### References
+
+- [Neon Branching Documentation](https://neon.tech/docs/introduction/branching)
+- [Prisma Migrate Documentation](https://www.prisma.io/docs/concepts/components/prisma-migrate)
+- [Production Deployment Guide](./docs/MIGRATION-GUIDE.md)
 
 ## Code Style Guidelines
 
