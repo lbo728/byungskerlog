@@ -25,14 +25,15 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
 
       - name: Check migration status
         id: migration_check
         run: |
           STATUS=$(npx prisma migrate status --schema=prisma/schema.prisma 2>&1 || true)
           echo "$STATUS"
-          
+
           if echo "$STATUS" | grep -q "Database schema is up to date"; then
             echo "migrations_needed=false" >> $GITHUB_OUTPUT
             echo "✅ No migrations needed"
@@ -44,7 +45,8 @@ jobs:
             echo "ℹ️  Migration status unclear, proceeding with caution"
           fi
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
 
       - name: Apply database migrations
         if: steps.migration_check.outputs.migrations_needed == 'true'
@@ -53,7 +55,8 @@ jobs:
           npx prisma migrate deploy
           echo "✅ Migrations applied successfully"
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
 
       - name: Verify migration success
         if: steps.migration_check.outputs.migrations_needed == 'true'
@@ -67,12 +70,14 @@ jobs:
             exit 1
           fi
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
 
       - name: Build application
         run: npm run build
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
 
       - name: Deployment notification
         run: |
