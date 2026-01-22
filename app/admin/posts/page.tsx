@@ -59,7 +59,12 @@ import { CategoryChart } from "@/components/charts/CategoryChart";
 import { ViewsChart } from "@/components/charts/ViewsChart";
 import { CountChart } from "@/components/charts/CountChart";
 import { ReadingChart } from "@/components/charts/ReadingChart";
-import { ChartExportWrapper, type ExportScale, type ChartExportHandle } from "@/components/charts/ChartExportWrapper";
+import {
+  ChartExportWrapper,
+  type ExportScale,
+  type ExportAspectRatio,
+  type ChartExportHandle,
+} from "@/components/charts/ChartExportWrapper";
 import { useBatchChartExport } from "@/hooks/useBatchChartExport";
 import {
   useCategoryAnalytics,
@@ -127,6 +132,7 @@ export default function AdminPostsPage() {
   const [analyticsEndDate, setAnalyticsEndDate] = useState<string>("");
   const [analyticsType, setAnalyticsType] = useState<"all" | "LONG" | "SHORT">("all");
   const [exportScale, setExportScale] = useState<ExportScale>(2);
+  const [exportAspectRatio, setExportAspectRatio] = useState<ExportAspectRatio>("horizontal");
   const [analysisText, setAnalysisText] = useState<string>("");
   const [showAnalysisInput, setShowAnalysisInput] = useState(false);
 
@@ -999,6 +1005,19 @@ export default function AdminPostsPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex-1 min-w-[100px]">
+                <label className="text-sm font-medium mb-2 block">비율</label>
+                <Select value={exportAspectRatio} onValueChange={(v) => setExportAspectRatio(v as ExportAspectRatio)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="horizontal">가로형 (16:9)</SelectItem>
+                    <SelectItem value="vertical">세로형 (9:16)</SelectItem>
+                    <SelectItem value="square">정방형 (1:1)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
@@ -1069,6 +1088,7 @@ export default function AdminPostsPage() {
                 filename="byungskerlog-category"
                 title="태그별 포스트 수"
                 scale={exportScale}
+                aspectRatio={exportAspectRatio}
                 analysisText={analysisText}
                 onAnalysisTextChange={setAnalysisText}
                 showAnalysisInput={showAnalysisInput}
@@ -1082,6 +1102,7 @@ export default function AdminPostsPage() {
                 filename="byungskerlog-views"
                 title="조회수 TOP 10"
                 scale={exportScale}
+                aspectRatio={exportAspectRatio}
                 analysisText={analysisText}
                 onAnalysisTextChange={setAnalysisText}
                 showAnalysisInput={showAnalysisInput}
@@ -1095,6 +1116,7 @@ export default function AdminPostsPage() {
                 filename="byungskerlog-count"
                 title="기간별 글쓰기 추이"
                 scale={exportScale}
+                aspectRatio={exportAspectRatio}
                 analysisText={analysisText}
                 onAnalysisTextChange={setAnalysisText}
                 showAnalysisInput={showAnalysisInput}
@@ -1108,6 +1130,7 @@ export default function AdminPostsPage() {
                 filename="byungskerlog-reading"
                 title="완독률 TOP 10 (Long 포스트)"
                 scale={exportScale}
+                aspectRatio={exportAspectRatio}
                 analysisText={analysisText}
                 onAnalysisTextChange={setAnalysisText}
                 showAnalysisInput={showAnalysisInput}

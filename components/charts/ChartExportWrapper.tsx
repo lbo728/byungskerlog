@@ -6,8 +6,10 @@ import FileSaver from "file-saver";
 import { Button } from "@/components/ui/Button";
 import { Download, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/Textarea";
+import { useTheme } from "@/components/common/ThemeProvider";
 
 export type ExportScale = 1 | 2 | 3;
+export type ExportAspectRatio = "horizontal" | "vertical" | "square";
 
 export interface ChartExportHandle {
   exportChart: () => Promise<Blob | null>;
@@ -18,11 +20,18 @@ interface ChartExportWrapperProps {
   filename: string;
   title: string;
   scale?: ExportScale;
+  aspectRatio?: ExportAspectRatio;
   showExportButton?: boolean;
   analysisText?: string;
   onAnalysisTextChange?: (text: string) => void;
   showAnalysisInput?: boolean;
 }
+
+const ASPECT_RATIO_LABELS: Record<ExportAspectRatio, string> = {
+  horizontal: "가로형 (16:9)",
+  vertical: "세로형 (9:16)",
+  square: "정방형 (1:1)",
+};
 
 export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapperProps>(
   (
@@ -31,6 +40,7 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
       filename,
       title,
       scale = 2,
+      aspectRatio = "horizontal",
       showExportButton = true,
       analysisText = "",
       onAnalysisTextChange,
@@ -40,6 +50,10 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
   ) => {
     const chartRef = useRef<HTMLDivElement>(null);
     const [isExporting, setIsExporting] = useState(false);
+    const { theme } = useTheme();
+
+    const backgroundColor = theme === "dark" ? "#0a0a0a" : "#ffffff";
+    const textColor = theme === "dark" ? "#fafafa" : "#0a0a0a";
 
     const exportChart = useCallback(async (): Promise<Blob | null> => {
       if (!chartRef.current) return null;
@@ -49,7 +63,7 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
           quality: 1.0,
           pixelRatio: scale,
           cacheBust: true,
-          backgroundColor: "#ffffff",
+          backgroundColor,
         });
 
         const response = await fetch(dataUrl);
@@ -58,7 +72,7 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
         console.error("Chart export failed:", error);
         return null;
       }
-    }, [scale]);
+    }, [scale, backgroundColor]);
 
     const handleExport = useCallback(async () => {
       setIsExporting(true);
@@ -66,16 +80,20 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
         const blob = await exportChart();
         if (blob) {
           const timestamp = new Date().toISOString().slice(0, 10);
-          FileSaver.saveAs(blob, `${filename}-${timestamp}.png`);
+          const ratioSuffix = aspectRatio === "horizontal" ? "h" : aspectRatio === "vertical" ? "v" : "sq";
+          FileSaver.saveAs(blob, `${filename}-${ratioSuffix}-${timestamp}.png`);
         }
       } finally {
         setIsExporting(false);
       }
-    }, [exportChart, filename]);
+    }, [exportChart, filename, aspectRatio]);
 
     useImperativeHandle(ref, () => ({
       exportChart,
     }));
+
+    const aspectRatioClass =
+      aspectRatio === "horizontal" ? "aspect-video" : aspectRatio === "vertical" ? "aspect-[9/16]" : "aspect-square";
 
     return (
       <div className="chart-export-wrapper space-y-4">
@@ -89,12 +107,16 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
           )}
         </div>
 
-        <div ref={chartRef} className="chart-export-content bg-white rounded-lg p-4">
-          {children}
+        <div
+          ref={chartRef}
+          className={`chart-export-content rounded-lg p-4 ${aspectRatioClass} flex flex-col justify-center`}
+          style={{ backgroundColor, color: textColor }}
+        >
+          <div className="chart-export-children flex-1 min-h-0">{children}</div>
 
           {showAnalysisInput && analysisText && (
-            <div className="chart-analysis-text mt-4 pt-4 border-t border-border">
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{analysisText}</p>
+            <div className="chart-analysis-text mt-4 pt-4 border-t border-current/20">
+              <p className="text-sm opacity-70 whitespace-pre-wrap">{analysisText}</p>
             </div>
           )}
         </div>
