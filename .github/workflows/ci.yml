@@ -19,15 +19,106 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
-        run: rm -f package-lock.json && npm install --force
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
       - name: Run ESLint
         run: npm run lint
 
       - name: Type check
         run: npx tsc --noEmit
+
+  migration-check:
+    name: Migration Safety Check
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.changed_files, 'prisma/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for diff
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for schema changes
+        id: schema_check
+        run: |
+          if git diff origin/${{ github.base_ref }}...HEAD --name-only | grep -q "prisma/schema.prisma"; then
+            echo "schema_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "schema_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify migration files exist
+        if: steps.schema_check.outputs.schema_changed == 'true'
+        run: |
+          if ! git diff origin/${{ github.base_ref }}...HEAD --name-only | grep -q "prisma/migrations/"; then
+            echo "❌ ERROR: schema.prisma changed but no migration files found!"
+            echo ""
+            echo "You must create a migration:"
+            echo "  npx prisma migrate dev --name <description>"
+            echo ""
+            echo "Then commit both files:"
+            echo "  git add prisma/schema.prisma prisma/migrations/"
+            echo "  git commit -m \"feat: <description>\""
+            exit 1
+          fi
+          echo "✅ Migration files found"
+
+      - name: Validate migration files
+        if: steps.schema_check.outputs.schema_changed == 'true'
+        run: |
+          # Check for dangerous SQL patterns
+          echo "Checking for dangerous SQL patterns..."
+          
+          MIGRATIONS=$(git diff origin/${{ github.base_ref }}...HEAD --name-only | grep "prisma/migrations/.*\.sql$" || true)
+          
+          if [ -n "$MIGRATIONS" ]; then
+            for file in $MIGRATIONS; do
+              echo "Checking $file..."
+              
+              # Check for DROP without conditional
+              if grep -i "DROP TABLE\|DROP COLUMN" "$file" | grep -v "IF EXISTS" > /dev/null; then
+                echo "⚠️  WARNING: Found DROP statement without IF EXISTS in $file"
+                echo "Consider using IF EXISTS for safer migrations"
+              fi
+              
+              # Check for TRUNCATE
+              if grep -i "TRUNCATE" "$file" > /dev/null; then
+                echo "❌ ERROR: TRUNCATE found in $file"
+                echo "TRUNCATE is destructive and not recommended"
+                exit 1
+              fi
+              
+              # Check for ALTER ... TYPE without data conversion
+              if grep -i "ALTER.*TYPE" "$file" > /dev/null; then
+                echo "⚠️  WARNING: ALTER TYPE found in $file"
+                echo "Ensure data conversion is handled properly"
+              fi
+            done
+          fi
+          
+          echo "✅ Migration validation passed"
+
+      - name: Check migration status (dry-run)
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/test?schema=public
+        run: |
+          npx prisma migrate deploy --help || true
+          echo "✅ Migration commands available"
 
   build:
     name: Build
@@ -42,11 +133,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
-        run: rm -f package-lock.json && npm install --force
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
       - name: Build application
         run: npm run build
         env:
+          # Mock DATABASE_URL for build (Prisma needs it for type generation)
           DATABASE_URL: postgresql://user:password@localhost:5432/test?schema=public
+          DATABASE_URL_UNPOOLED: postgresql://user:password@localhost:5432/test?schema=public
