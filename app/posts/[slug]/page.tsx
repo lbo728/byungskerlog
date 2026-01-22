@@ -1,8 +1,11 @@
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { PostDetailLoader } from "@/components/post/PostDetailLoader";
-import { PostDetailSkeleton } from "@/components/skeleton/PostDetailSkeleton";
+import { PostDetailHeader } from "@/components/post/PostDetailHeader";
+import { PostDetailBody } from "@/components/post/PostDetailBody";
+import { PostBodySkeleton } from "@/components/skeleton/PostBodySkeleton";
+import { getPostHeader } from "@/lib/post-data";
 
 export const revalidate = 3600;
 
@@ -94,10 +97,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const post = await getPostHeader(slug);
+
+  if (!post) {
+    notFound();
+  }
 
   return (
-    <Suspense fallback={<PostDetailSkeleton />}>
-      <PostDetailLoader slug={slug} isFromShort={false} />
-    </Suspense>
+    <>
+      <PostDetailHeader post={post} slug={slug} isFromShort={false} />
+      <Suspense fallback={<PostBodySkeleton />}>
+        <PostDetailBody slug={slug} isFromShort={false} />
+      </Suspense>
+    </>
   );
 }
