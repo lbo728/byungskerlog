@@ -946,9 +946,9 @@ export default function AdminPostsPage() {
       {activeTab === "analytics" && (
         <div className="analytics-content container mx-auto px-4 py-8">
           <div className="analytics-filters border border-border rounded-lg p-4 mb-6">
-            <div className="flex flex-wrap items-end gap-4">
-              <div className="flex-1 min-w-[120px]">
-                <label className="text-sm font-medium mb-2 block">기간</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">기간</label>
                 <Select value={periodPreset} onValueChange={(v) => setPeriodPreset(v as typeof periodPreset)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -963,24 +963,8 @@ export default function AdminPostsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              {periodPreset === "custom" && (
-                <>
-                  <div className="flex-1 min-w-[130px]">
-                    <label className="text-sm font-medium mb-2 block">시작일</label>
-                    <Input
-                      type="date"
-                      value={analyticsStartDate}
-                      onChange={(e) => setAnalyticsStartDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-[130px]">
-                    <label className="text-sm font-medium mb-2 block">종료일</label>
-                    <Input type="date" value={analyticsEndDate} onChange={(e) => setAnalyticsEndDate(e.target.value)} />
-                  </div>
-                </>
-              )}
-              <div className="flex-1 min-w-[100px]">
-                <label className="text-sm font-medium mb-2 block">글 유형</label>
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">글 유형</label>
                 <Select value={analyticsType} onValueChange={(v) => setAnalyticsType(v as typeof analyticsType)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -992,8 +976,8 @@ export default function AdminPostsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex-1 min-w-[100px]">
-                <label className="text-sm font-medium mb-2 block">해상도</label>
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">해상도</label>
                 <Select value={exportScale.toString()} onValueChange={(v) => setExportScale(Number(v) as ExportScale)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -1005,78 +989,101 @@ export default function AdminPostsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex-1 min-w-[100px]">
-                <label className="text-sm font-medium mb-2 block">비율</label>
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">비율</label>
                 <Select value={exportAspectRatio} onValueChange={(v) => setExportAspectRatio(v as ExportAspectRatio)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="horizontal">가로형 (16:9)</SelectItem>
-                    <SelectItem value="vertical">세로형 (9:16)</SelectItem>
-                    <SelectItem value="square">정방형 (1:1)</SelectItem>
+                    <SelectItem value="horizontal">가로 (16:9)</SelectItem>
+                    <SelectItem value="vertical">세로 (9:16)</SelectItem>
+                    <SelectItem value="square">정방 (1:1)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
+            {periodPreset === "custom" && (
+              <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-border">
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">시작일</label>
+                  <Input
+                    type="date"
+                    value={analyticsStartDate}
+                    onChange={(e) => setAnalyticsStartDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">종료일</label>
+                  <Input type="date" value={analyticsEndDate} onChange={(e) => setAnalyticsEndDate(e.target.value)} />
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="analytics-tab-navigation flex flex-wrap gap-2 mb-6">
-            <Button
-              variant={analyticsTab === "category" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setAnalyticsTab("category")}
-              className="gap-2"
-            >
-              <BarChart3 className="h-4 w-4" />
-              카테고리별
-            </Button>
-            <Button
-              variant={analyticsTab === "views" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setAnalyticsTab("views")}
-              className="gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              조회수 TOP
-            </Button>
-            <Button
-              variant={analyticsTab === "count" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setAnalyticsTab("count")}
-              className="gap-2"
-            >
-              <TrendingUp className="h-4 w-4" />
-              글쓰기 추이
-            </Button>
-            <Button
-              variant={analyticsTab === "reading" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setAnalyticsTab("reading")}
-              className="gap-2"
-            >
-              <BookOpen className="h-4 w-4" />
-              완독률
-            </Button>
-            <div className="ml-auto flex gap-2">
+          <div className="analytics-tab-navigation space-y-3 mb-6">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={analyticsTab === "category" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setAnalyticsTab("category")}
+                className="gap-1.5"
+              >
+                <BarChart3 className="h-4 w-4" />
+                <span className="hidden sm:inline">카테고리별</span>
+                <span className="sm:hidden">카테고리</span>
+              </Button>
+              <Button
+                variant={analyticsTab === "views" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setAnalyticsTab("views")}
+                className="gap-1.5"
+              >
+                <Eye className="h-4 w-4" />
+                <span className="hidden sm:inline">조회수 TOP</span>
+                <span className="sm:hidden">조회수</span>
+              </Button>
+              <Button
+                variant={analyticsTab === "count" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setAnalyticsTab("count")}
+                className="gap-1.5"
+              >
+                <TrendingUp className="h-4 w-4" />
+                <span className="hidden sm:inline">글쓰기 추이</span>
+                <span className="sm:hidden">추이</span>
+              </Button>
+              <Button
+                variant={analyticsTab === "reading" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setAnalyticsTab("reading")}
+                className="gap-1.5"
+              >
+                <BookOpen className="h-4 w-4" />
+                완독률
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowAnalysisInput(!showAnalysisInput)}
-                className="gap-2"
+                className="gap-1.5"
               >
                 <FileText className="h-4 w-4" />
-                {showAnalysisInput ? "분석글 숨기기" : "분석글 추가"}
+                <span className="hidden sm:inline">{showAnalysisInput ? "분석글 숨기기" : "분석글 추가"}</span>
+                <span className="sm:hidden">분석글</span>
               </Button>
               <Button
                 variant="default"
                 size="sm"
                 onClick={handleExportAllCharts}
                 disabled={isBatchExporting}
-                className="gap-2"
+                className="gap-1.5"
               >
                 {isBatchExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                {isBatchExporting ? "저장 중..." : "전체 차트 저장"}
+                <span className="hidden sm:inline">{isBatchExporting ? "저장 중..." : "전체 차트 저장"}</span>
+                <span className="sm:hidden">{isBatchExporting ? "저장..." : "전체 저장"}</span>
               </Button>
             </div>
           </div>

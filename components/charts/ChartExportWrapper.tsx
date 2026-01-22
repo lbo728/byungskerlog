@@ -27,10 +27,10 @@ interface ChartExportWrapperProps {
   showAnalysisInput?: boolean;
 }
 
-const ASPECT_RATIO_LABELS: Record<ExportAspectRatio, string> = {
-  horizontal: "가로형 (16:9)",
-  vertical: "세로형 (9:16)",
-  square: "정방형 (1:1)",
+const EXPORT_DIMENSIONS: Record<ExportAspectRatio, { width: number; height: number }> = {
+  horizontal: { width: 1200, height: 675 },
+  vertical: { width: 675, height: 1200 },
+  square: { width: 1080, height: 1080 },
 };
 
 export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapperProps>(
@@ -53,17 +53,28 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
     const { theme } = useTheme();
 
     const backgroundColor = theme === "dark" ? "#0a0a0a" : "#ffffff";
-    const textColor = theme === "dark" ? "#fafafa" : "#0a0a0a";
 
     const exportChart = useCallback(async (): Promise<Blob | null> => {
       if (!chartRef.current) return null;
 
       try {
+        const dimensions = EXPORT_DIMENSIONS[aspectRatio];
+
         const dataUrl = await toPng(chartRef.current, {
           quality: 1.0,
           pixelRatio: scale,
           cacheBust: true,
           backgroundColor,
+          width: dimensions.width,
+          height: dimensions.height,
+          style: {
+            width: `${dimensions.width}px`,
+            height: `${dimensions.height}px`,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            padding: "24px",
+          },
         });
 
         const response = await fetch(dataUrl);
@@ -72,7 +83,7 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
         console.error("Chart export failed:", error);
         return null;
       }
-    }, [scale, backgroundColor]);
+    }, [scale, backgroundColor, aspectRatio]);
 
     const handleExport = useCallback(async () => {
       setIsExporting(true);
@@ -92,9 +103,6 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
       exportChart,
     }));
 
-    const aspectRatioClass =
-      aspectRatio === "horizontal" ? "aspect-video" : aspectRatio === "vertical" ? "aspect-[9/16]" : "aspect-square";
-
     return (
       <div className="chart-export-wrapper space-y-4">
         <div className="chart-export-header flex items-center justify-between">
@@ -107,16 +115,12 @@ export const ChartExportWrapper = forwardRef<ChartExportHandle, ChartExportWrapp
           )}
         </div>
 
-        <div
-          ref={chartRef}
-          className={`chart-export-content rounded-lg p-4 ${aspectRatioClass} flex flex-col justify-center`}
-          style={{ backgroundColor, color: textColor }}
-        >
-          <div className="chart-export-children flex-1 min-h-0">{children}</div>
+        <div ref={chartRef} className="chart-export-content rounded-lg p-4 bg-background">
+          {children}
 
           {showAnalysisInput && analysisText && (
-            <div className="chart-analysis-text mt-4 pt-4 border-t border-current/20">
-              <p className="text-sm opacity-70 whitespace-pre-wrap">{analysisText}</p>
+            <div className="chart-analysis-text mt-4 pt-4 border-t border-border">
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{analysisText}</p>
             </div>
           )}
         </div>
