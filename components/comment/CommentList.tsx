@@ -27,34 +27,24 @@ export function CommentList({ postId, isAdmin = false }: CommentListProps) {
   }, []);
 
   const handleCreateComment = async (content: string, identity: AnonymousIdentity) => {
-    try {
-      await createComment.mutateAsync({
-        content,
-        postId,
-        authorName: identity.nickname,
-        authorImage: identity.avatar,
-        anonymousId,
-      });
-      toast.success("댓글이 작성되었습니다.");
-    } catch {
-      toast.error("댓글 작성에 실패했습니다.");
-    }
+    await createComment.mutateAsync({
+      content,
+      postId,
+      authorName: identity.nickname,
+      authorImage: identity.avatar,
+      anonymousId,
+    });
   };
 
   const handleReply = async (parentId: string, content: string, identity: AnonymousIdentity) => {
-    try {
-      await createComment.mutateAsync({
-        content,
-        postId,
-        parentId,
-        authorName: identity.nickname,
-        authorImage: identity.avatar,
-        anonymousId,
-      });
-      toast.success("답글이 작성되었습니다.");
-    } catch {
-      toast.error("답글 작성에 실패했습니다.");
-    }
+    await createComment.mutateAsync({
+      content,
+      postId,
+      parentId,
+      authorName: identity.nickname,
+      authorImage: identity.avatar,
+      anonymousId,
+    });
   };
 
   const handleDelete = async (id: string) => {

@@ -20,6 +20,7 @@ interface CommentFormProps {
   autoFocus?: boolean;
   isSubmitting?: boolean;
   compact?: boolean;
+  forceNewIdentity?: boolean;
 }
 
 export function CommentForm({
@@ -30,6 +31,7 @@ export function CommentForm({
   autoFocus = false,
   isSubmitting = false,
   compact = false,
+  forceNewIdentity = false,
 }: CommentFormProps) {
   const [content, setContent] = useState("");
   const [identity, setIdentity] = useState<AnonymousIdentity>({ nickname: "", avatar: "" });
@@ -37,9 +39,12 @@ export function CommentForm({
   const [isEditingNickname, setIsEditingNickname] = useState(false);
 
   useEffect(() => {
-    const storedIdentity = getOrCreateIdentity();
-    setIdentity(storedIdentity);
-  }, []);
+    if (forceNewIdentity) {
+      setIdentity(getRandomIdentity());
+    } else {
+      setIdentity(getOrCreateIdentity());
+    }
+  }, [forceNewIdentity]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

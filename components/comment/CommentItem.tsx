@@ -129,6 +129,7 @@ export function CommentItem({ comment, postId, isAdmin, onReply, onDelete, onRea
               autoFocus
               isSubmitting={isSubmitting}
               compact
+              forceNewIdentity
             />
           </div>
         )}

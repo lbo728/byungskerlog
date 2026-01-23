@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import { fetchComments, createComment, deleteComment, toggleReaction } from "@/lib/api/comments";
 import type { Comment, CommentsResponse, CreateCommentInput, ReactionType } from "@/lib/types/comment";
@@ -31,12 +32,61 @@ export function useCreateComment() {
 
       const previousData = queryClient.getQueryData<CommentsResponse>(queryKeys.comments.list(newComment.postId));
 
+      const optimisticComment: Comment = {
+        id: `temp_${Date.now()}`,
+        postId: newComment.postId,
+        content: newComment.content,
+        authorId: newComment.anonymousId || "",
+        authorName: newComment.authorName || null,
+        authorImage: newComment.authorImage || null,
+        parentId: newComment.parentId || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        reactions: [],
+        replies: [],
+      };
+
+      if (previousData) {
+        if (newComment.parentId) {
+          const addReplyToComment = (comments: Comment[]): Comment[] => {
+            return comments.map((comment) => {
+              if (comment.id === newComment.parentId) {
+                return {
+                  ...comment,
+                  replies: [...(comment.replies || []), optimisticComment],
+                };
+              }
+              if (comment.replies) {
+                return { ...comment, replies: addReplyToComment(comment.replies) };
+              }
+              return comment;
+            });
+          };
+
+          queryClient.setQueryData<CommentsResponse>(queryKeys.comments.list(newComment.postId), {
+            ...previousData,
+            comments: addReplyToComment(previousData.comments),
+            total: previousData.total + 1,
+          });
+        } else {
+          queryClient.setQueryData<CommentsResponse>(queryKeys.comments.list(newComment.postId), {
+            ...previousData,
+            comments: [...previousData.comments, optimisticComment],
+            total: previousData.total + 1,
+          });
+        }
+      }
+
       return { previousData, postId: newComment.postId };
     },
     onError: (_err, newComment, context) => {
       if (context?.previousData) {
         queryClient.setQueryData(queryKeys.comments.list(newComment.postId), context.previousData);
       }
+      toast.error("댓글 작성에 실패했습니다. 다시 시도해주세요.");
+    },
+    onSuccess: () => {
+      toast.success("댓글이 작성되었습니다.");
     },
     onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.comments.list(variables.postId) });
