@@ -29,6 +29,7 @@ model Post {
   views                 PostView[]
   readingSessions       ReadingSession[]
   tags                  Tag[]
+  comments              Comment[]
 
   linkedShortPostId     String?          @unique
   linkedShortPost       Post?            @relation("LongToShort", fields: [linkedShortPostId], references: [id], onDelete: SetNull)
@@ -145,4 +146,51 @@ model AIKnowledgeReference {
   preset    AIKnowledgePreset @relation(fields: [presetId], references: [id], onDelete: Cascade)
 
   @@index([presetId])
+}
+
+// =====================
+// Comment System Models
+// =====================
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  postId    String
+  authorId  String
+  authorName String?
+  authorImage String?
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+  reactions CommentReaction[]
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt])
+}
+
+model CommentReaction {
+  id        String       @id @default(cuid())
+  commentId String
+  userId    String
+  type      ReactionType
+  createdAt DateTime     @default(now())
+
+  comment   Comment      @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, type])
+  @@index([commentId])
+  @@index([userId])
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  CELEBRATE
+  INSIGHTFUL
 }
