@@ -153,6 +153,14 @@ export function CommentForm({
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+            e.preventDefault();
+            if (content.trim() && identity.nickname && !isSubmitting) {
+              handleSubmit(e);
+            }
+          }
+        }}
         placeholder={placeholder}
         autoFocus={autoFocus}
         className={cn(
@@ -172,6 +180,7 @@ export function CommentForm({
         )}
         <Button type="submit" disabled={!content.trim() || !identity.nickname || isSubmitting} className="px-6">
           {isSubmitting ? "저장 중..." : submitLabel}
+          {!isSubmitting && <span className="ml-2 text-xs opacity-60 hidden sm:inline">⌘↵</span>}
         </Button>
       </div>
     </form>

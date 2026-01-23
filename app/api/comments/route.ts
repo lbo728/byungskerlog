@@ -179,8 +179,8 @@ export async function POST(request: Request) {
 
     const user = await getAuthUser();
     const finalAuthorId = user?.id || anonymousId || `anon_${Date.now()}`;
-    const finalAuthorName = user?.displayName || authorName.trim();
-    const finalAuthorImage = user?.profileImageUrl || authorImage || null;
+    const finalAuthorName = authorName.trim();
+    const finalAuthorImage = authorImage || null;
 
     const comment = await prisma.comment.create({
       data: {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import type { CommentReactionCount, ReactionType } from "@/lib/types/comment";
@@ -64,31 +65,51 @@ interface ReactionPickerProps {
 }
 
 function ReactionPicker({ onSelect, disabled, existingReactions }: ReactionPickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const reactionTypes: ReactionType[] = ["LIKE", "LOVE", "CELEBRATE", "INSIGHTFUL"];
 
+  const handleSelect = (type: ReactionType) => {
+    onSelect(type);
+    setIsOpen(false);
+  };
+
   return (
-    <div className="reaction-picker relative group">
-      <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" disabled={disabled}>
+    <div
+      className="reaction-picker relative"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 px-2 text-muted-foreground"
+        disabled={disabled}
+        onClick={() => setIsOpen(!isOpen)}
+      >
         +
       </Button>
-      <div className="reaction-picker-dropdown absolute left-0 bottom-full mb-1 hidden group-hover:flex bg-background border rounded-lg shadow-lg p-1 gap-1 z-10">
-        {reactionTypes.map((type) => {
-          const existing = existingReactions.find((r) => r.type === type);
-          return (
-            <Button
-              key={type}
-              variant="ghost"
-              size="sm"
-              onClick={() => onSelect(type)}
-              disabled={disabled}
-              className={cn("h-8 w-8 p-0 text-lg hover:bg-muted", existing?.userReacted && "bg-primary/10")}
-              title={REACTION_LABELS[type]}
-            >
-              {REACTION_EMOJI[type]}
-            </Button>
-          );
-        })}
-      </div>
+      {isOpen && (
+        <div className="reaction-picker-dropdown absolute left-0 bottom-full pb-2 z-10">
+          <div className="flex bg-background border rounded-lg shadow-lg p-1 gap-1">
+            {reactionTypes.map((type) => {
+              const existing = existingReactions.find((r) => r.type === type);
+              return (
+                <Button
+                  key={type}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleSelect(type)}
+                  disabled={disabled}
+                  className={cn("h-8 w-8 p-0 text-lg hover:bg-muted", existing?.userReacted && "bg-primary/10")}
+                  title={REACTION_LABELS[type]}
+                >
+                  {REACTION_EMOJI[type]}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
