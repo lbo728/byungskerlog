@@ -599,6 +599,16 @@ img {
   -webkit-touch-callout: none;
 }
 
+/* Prose 내 이미지 - Lightbox 클릭 가능 스타일 */
+.prose img {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.prose img:hover {
+  opacity: 0.9;
+}
+
 /* Contribution Graph 스크롤바 - 스크롤 중에만 표시 */
 .contribution-graph-container {
   scrollbar-width: none;
