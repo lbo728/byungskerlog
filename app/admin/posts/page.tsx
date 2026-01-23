@@ -30,6 +30,7 @@ import {
   Brain,
   Download,
   Loader2,
+  CalendarDays,
 } from "lucide-react";
 
 import {
@@ -76,6 +77,7 @@ import { useSnippets, useCreateSnippet, useUpdateSnippet, useDeleteSnippet } fro
 import { ShortcutInput } from "@/components/editor/ShortcutInput";
 import type { CustomSnippet } from "@/lib/types/snippet";
 import { KnowledgePresetsTab } from "@/components/admin/KnowledgePresetsTab";
+import { AdminCalendar, type CalendarPost } from "@/components/admin/AdminCalendar";
 
 type BulkAction = "delete" | "publish" | "unpublish";
 
@@ -96,7 +98,7 @@ export default function AdminPostsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
-  const validTabs = ["posts", "series", "analytics", "snippets", "knowledge"];
+  const validTabs = ["posts", "series", "analytics", "snippets", "knowledge", "calendar"];
   const activeTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "posts";
 
   const setActiveTab = useCallback(
@@ -136,8 +138,24 @@ export default function AdminPostsPage() {
   const viewsChartRef = useRef<ChartExportHandle>(null);
   const countChartRef = useRef<ChartExportHandle>(null);
   const readingChartRef = useRef<ChartExportHandle>(null);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
 
   const { exportAllChartsAsZip, isExporting: isBatchExporting } = useBatchChartExport();
+
+  useEffect(() => {
+    if (tabsContainerRef.current) {
+      const activeTabElement = tabsContainerRef.current.querySelector(`[data-tab="${activeTab}"]`);
+      if (activeTabElement) {
+        const container = tabsContainerRef.current;
+        const elementRect = activeTabElement.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        if (elementRect.left < containerRect.left || elementRect.right > containerRect.right) {
+          activeTabElement.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+        }
+      }
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (periodPreset === "custom") return;
@@ -482,18 +500,20 @@ export default function AdminPostsPage() {
         </div>
       </header>
 
-      <div className="admin-tabs border-b border-border overflow-x-auto">
+      <div className="admin-tabs border-b border-border overflow-x-auto" ref={tabsContainerRef}>
         <div className="container mx-auto px-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="h-12 bg-transparent border-0 p-0 flex-nowrap w-max min-w-full">
               <TabsTrigger
                 value="posts"
+                data-tab="posts"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4"
               >
                 글 관리
               </TabsTrigger>
               <TabsTrigger
                 value="series"
+                data-tab="series"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4"
               >
                 <BookOpen className="h-4 w-4 mr-2" />
@@ -501,6 +521,7 @@ export default function AdminPostsPage() {
               </TabsTrigger>
               <TabsTrigger
                 value="analytics"
+                data-tab="analytics"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4"
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
@@ -508,6 +529,7 @@ export default function AdminPostsPage() {
               </TabsTrigger>
               <TabsTrigger
                 value="snippets"
+                data-tab="snippets"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4"
               >
                 <Type className="h-4 w-4 mr-2" />
@@ -515,10 +537,19 @@ export default function AdminPostsPage() {
               </TabsTrigger>
               <TabsTrigger
                 value="knowledge"
+                data-tab="knowledge"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4"
               >
                 <Brain className="h-4 w-4 mr-2" />
                 사전 지식
+              </TabsTrigger>
+              <TabsTrigger
+                value="calendar"
+                data-tab="calendar"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4"
+              >
+                <CalendarDays className="h-4 w-4 mr-2" />
+                캘린더
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -1242,6 +1273,30 @@ export default function AdminPostsPage() {
       )}
 
       {activeTab === "knowledge" && <KnowledgePresetsTab />}
+
+      {activeTab === "calendar" && (
+        <div className="calendar-content container mx-auto px-4 py-8">
+          {isLoadingPosts ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">로딩 중...</p>
+            </div>
+          ) : (
+            <AdminCalendar
+              posts={posts.map(
+                (post): CalendarPost => ({
+                  id: post.id,
+                  title: post.title,
+                  slug: post.slug,
+                  type: (post.type ?? "LONG") as "LONG" | "SHORT",
+                  published: post.published ?? false,
+                  createdAt: typeof post.createdAt === "string" ? post.createdAt : post.createdAt.toISOString(),
+                })
+              )}
+              onPostClick={(post) => router.push(`/admin/write?id=${post.id}`)}
+            />
+          )}
+        </div>
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
