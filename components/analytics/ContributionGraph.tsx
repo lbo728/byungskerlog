@@ -1,21 +1,27 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { useMemo, useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
+
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/HoverCard";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/Sheet";
+import type { ContributionPost } from "@/app/about/page";
 
 interface ContributionGraphProps {
-  postDates: string[];
+  posts: ContributionPost[];
 }
 
 interface DayData {
   date: Date;
   count: number;
   level: number;
+  posts: ContributionPost[];
 }
 
-export function ContributionGraph({ postDates }: ContributionGraphProps) {
-  const [hoveredDay, setHoveredDay] = useState<DayData | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+export function ContributionGraph({ posts }: ContributionGraphProps) {
+  const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -27,7 +33,16 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
     }
   }, []);
 
-  const { weeks, streak, monthPositions } = useMemo(() => {
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.matchMedia("(max-width: 767px)").matches);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const { weeks, streak, monthPositions, postsByDateKey } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -37,10 +52,15 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
     startDate.setDate(startDate.getDate() - startDayOfWeek);
 
     const dateCountMap = new Map<string, number>();
-    postDates.forEach((dateStr) => {
-      const date = new Date(dateStr);
+    const postsByDateKey = new Map<string, ContributionPost[]>();
+
+    posts.forEach((post) => {
+      const date = new Date(post.createdAt);
       const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
       dateCountMap.set(key, (dateCountMap.get(key) || 0) + 1);
+
+      const existingPosts = postsByDateKey.get(key) || [];
+      postsByDateKey.set(key, [...existingPosts, post]);
     });
 
     const weeks: DayData[][] = [];
@@ -50,11 +70,13 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
     while (currentDate <= today) {
       const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${currentDate.getDate()}`;
       const count = dateCountMap.get(key) || 0;
+      const dayPosts = postsByDateKey.get(key) || [];
 
       currentWeek.push({
         date: new Date(currentDate),
         count,
         level: count === 0 ? 0 : count === 1 ? 1 : count === 2 ? 2 : count >= 3 ? 3 : 0,
+        posts: dayPosts,
       });
 
       if (currentWeek.length === 7) {
@@ -108,21 +130,19 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
       weeks,
       streak: currentStreak,
       monthPositions,
+      postsByDateKey,
     };
-  }, [postDates]);
+  }, [posts]);
 
-  const handleMouseEnter = (day: DayData, event: React.MouseEvent) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    setHoveredDay(day);
-    setTooltipPosition({
-      x: rect.left + rect.width / 2,
-      y: rect.top - 8,
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setHoveredDay(null);
-  };
+  const handleDayClick = useCallback(
+    (day: DayData) => {
+      if (day.count > 0 && isMobile) {
+        setSelectedDay(day);
+        setIsSheetOpen(true);
+      }
+    },
+    [isMobile]
+  );
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("ko-KR", {
@@ -130,6 +150,10 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
       month: "long",
       day: "numeric",
     });
+  };
+
+  const getPostUrl = (post: ContributionPost) => {
+    return post.type === "SHORT" ? `/short/${post.slug}` : `/posts/${post.slug}`;
   };
 
   const getLevelColor = (level: number) => {
@@ -147,13 +171,69 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
     }
   };
 
-  const totalContributions = postDates.length;
+  const totalContributions = posts.length;
+
+  const renderDesktopCellWithPosts = (day: DayData, dayIndex: number, cellContent: React.ReactNode) => (
+    <HoverCard key={dayIndex} openDelay={200} closeDelay={100}>
+      <HoverCardTrigger asChild>{cellContent}</HoverCardTrigger>
+      <HoverCardContent className="contribution-hovercard w-72 p-3" side="top" align="center">
+        <div className="hovercard-header mb-2">
+          <p className="hovercard-date text-sm font-medium">{formatDate(day.date)}</p>
+          <p className="hovercard-count text-xs text-muted-foreground">{day.count}개의 글 발행</p>
+        </div>
+        <ul className="hovercard-posts-list space-y-1.5">
+          {day.posts.map((post) => (
+            <li key={post.id} className="hovercard-post-item">
+              <Link
+                href={getPostUrl(post)}
+                className="hovercard-post-link flex items-center gap-2 text-sm hover:text-primary transition-colors"
+              >
+                <span className="post-type-badge shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted">
+                  {post.type === "SHORT" ? "Short" : "Post"}
+                </span>
+                <span className="post-title truncate">{post.title}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </HoverCardContent>
+    </HoverCard>
+  );
+
+  const renderDesktopEmptyCell = (day: DayData, dayIndex: number, cellContent: React.ReactNode) => (
+    <HoverCard key={dayIndex} openDelay={200} closeDelay={100}>
+      <HoverCardTrigger asChild>{cellContent}</HoverCardTrigger>
+      <HoverCardContent className="contribution-hovercard-empty w-auto p-2" side="top" align="center">
+        <p className="text-xs text-muted-foreground">{formatDate(day.date)}</p>
+        <p className="text-xs">발행된 글 없음</p>
+      </HoverCardContent>
+    </HoverCard>
+  );
+
+  const renderDayCell = (day: DayData, dayIndex: number) => {
+    const cellContent = (
+      <div
+        className={`day-cell w-[12px] h-[12px] rounded-[2px] transition-all cursor-pointer ${getLevelColor(day.level)}`}
+        onClick={() => handleDayClick(day)}
+      />
+    );
+
+    if (isMobile) {
+      return <div key={dayIndex}>{cellContent}</div>;
+    }
+
+    if (day.count > 0) {
+      return renderDesktopCellWithPosts(day, dayIndex, cellContent);
+    }
+
+    return renderDesktopEmptyCell(day, dayIndex, cellContent);
+  };
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="contribution-graph-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <CardTitle className="text-lg">글 발행 기록</CardTitle>
+    <>
+      <div className="contribution-graph-wrapper">
+        <div className="contribution-graph-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <h3 className="text-lg font-semibold">글 발행 기록</h3>
           {streak > 0 && (
             <div className="streak-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-sm font-medium">
               <span className="text-base">🔥</span>
@@ -161,9 +241,10 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
             </div>
           )}
         </div>
-      </CardHeader>
-      <CardContent>
-        <div ref={scrollContainerRef} className="contribution-graph-container w-full overflow-x-auto">
+        <div
+          ref={scrollContainerRef}
+          className="contribution-graph-container w-full overflow-x-auto scrollbar-hidden hover:scrollbar-visible"
+        >
           <div className="contribution-graph min-w-[700px] sm:min-w-0 sm:w-full">
             <div className="graph-with-labels flex">
               <div className="day-labels flex flex-col text-[10px] text-muted-foreground pr-2 pt-4">
@@ -210,16 +291,7 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
                         gap: "2px",
                       }}
                     >
-                      {week.map((day, dayIndex) => (
-                        <div
-                          key={dayIndex}
-                          className={`day-cell w-[12px] h-[12px] rounded-[2px] transition-all cursor-pointer ${getLevelColor(
-                            day.level
-                          )}`}
-                          onMouseEnter={(e) => handleMouseEnter(day, e)}
-                          onMouseLeave={handleMouseLeave}
-                        />
-                      ))}
+                      {week.map((day, dayIndex) => renderDayCell(day, dayIndex))}
                     </div>
                   ))}
                 </div>
@@ -238,22 +310,44 @@ export function ContributionGraph({ postDates }: ContributionGraphProps) {
             </div>
           </div>
         </div>
+      </div>
 
-        {hoveredDay && (
-          <div
-            className="tooltip-popup fixed z-50 px-2 py-1 text-xs bg-popover text-popover-foreground rounded shadow-lg border pointer-events-none transform -translate-x-1/2 -translate-y-full"
-            style={{
-              left: tooltipPosition.x,
-              top: tooltipPosition.y,
-            }}
-          >
-            <div className="font-medium">
-              {hoveredDay.count > 0 ? `${hoveredDay.count}개의 글 발행` : "발행된 글 없음"}
-            </div>
-            <div className="text-muted-foreground">{formatDate(hoveredDay.date)}</div>
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent side="bottom" className="contribution-sheet h-auto max-h-[60vh]">
+          <SheetHeader className="sheet-header pb-4">
+            <SheetTitle className="sheet-title text-left">
+              {selectedDay && (
+                <>
+                  <span className="sheet-date block">{formatDate(selectedDay.date)}</span>
+                  <span className="sheet-count block text-sm font-normal text-muted-foreground">
+                    {selectedDay.count}개의 글 발행
+                  </span>
+                </>
+              )}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="sheet-posts-container overflow-y-auto">
+            {selectedDay && selectedDay.posts.length > 0 && (
+              <ul className="sheet-posts-list space-y-2">
+                {selectedDay.posts.map((post) => (
+                  <li key={post.id} className="sheet-post-item">
+                    <Link
+                      href={getPostUrl(post)}
+                      className="sheet-post-link flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                      onClick={() => setIsSheetOpen(false)}
+                    >
+                      <span className="post-type-badge shrink-0 px-2 py-1 text-xs font-medium rounded bg-muted-foreground/10">
+                        {post.type === "SHORT" ? "Short" : "Post"}
+                      </span>
+                      <span className="post-title text-sm">{post.title}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

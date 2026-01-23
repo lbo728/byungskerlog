@@ -14,6 +14,11 @@ export interface AdminPostsFilters {
 }
 
 export const queryKeys = {
+  comments: {
+    all: ["comments"] as const,
+    list: (postId: string) => [...queryKeys.comments.all, "list", postId] as const,
+  },
+
   knowledgePresets: {
     all: ["ai-knowledge-presets"] as const,
     lists: () => [...queryKeys.knowledgePresets.all, "list"] as const,
