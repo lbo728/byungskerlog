@@ -21,6 +21,7 @@ interface CommentFormProps {
   isSubmitting?: boolean;
   compact?: boolean;
   forceNewIdentity?: boolean;
+  disabled?: boolean;
 }
 
 export function CommentForm({
@@ -32,6 +33,7 @@ export function CommentForm({
   isSubmitting = false,
   compact = false,
   forceNewIdentity = false,
+  disabled = false,
 }: CommentFormProps) {
   const [content, setContent] = useState("");
   const [identity, setIdentity] = useState<AnonymousIdentity>({ nickname: "", avatar: "" });
@@ -46,9 +48,11 @@ export function CommentForm({
     }
   }, [forceNewIdentity]);
 
+  const isDisabled = disabled || isSubmitting;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() || isSubmitting || !identity.nickname) return;
+    if (!content.trim() || isDisabled || !identity.nickname) return;
 
     await onSubmit(content.trim(), identity);
     setContent("");
@@ -76,16 +80,18 @@ export function CommentForm({
   const avatars = getAllAvatars();
 
   return (
-    <form onSubmit={handleSubmit} className="comment-form space-y-4">
+    <form onSubmit={handleSubmit} className={cn("comment-form space-y-4", isDisabled && "opacity-60")}>
       <div className="comment-identity-row flex items-center gap-3">
         <div className="avatar-selector relative">
           <button
             type="button"
-            onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+            onClick={() => !isDisabled && setShowAvatarPicker(!showAvatarPicker)}
+            disabled={isDisabled}
             className={cn(
               "avatar-button h-12 w-12 rounded-full bg-primary/5 flex items-center justify-center",
               "text-2xl hover:bg-primary/10 transition-colors border-2 border-transparent",
-              "hover:border-primary/30 focus:outline-none focus:border-primary"
+              "hover:border-primary/30 focus:outline-none focus:border-primary",
+              isDisabled && "cursor-not-allowed hover:bg-primary/5 hover:border-transparent"
             )}
             title="아바타 변경"
           >
@@ -114,7 +120,7 @@ export function CommentForm({
         </div>
 
         <div className="nickname-input flex-1 flex items-center gap-2">
-          {isEditingNickname ? (
+          {isEditingNickname && !isDisabled ? (
             <input
               type="text"
               value={identity.nickname}
@@ -132,10 +138,12 @@ export function CommentForm({
           ) : (
             <button
               type="button"
-              onClick={() => setIsEditingNickname(true)}
+              onClick={() => !isDisabled && setIsEditingNickname(true)}
+              disabled={isDisabled}
               className={cn(
                 "flex-1 px-3 py-2 rounded-lg border bg-muted/30 text-left",
-                "hover:bg-muted/50 transition-colors"
+                "hover:bg-muted/50 transition-colors",
+                isDisabled && "cursor-not-allowed hover:bg-muted/30"
               )}
             >
               <span className="font-medium">{identity.nickname || "닉네임을 입력하세요"}</span>
@@ -146,6 +154,7 @@ export function CommentForm({
             variant="outline"
             size="sm"
             onClick={handleRandomize}
+            disabled={isDisabled}
             className="shrink-0"
             title="랜덤 변경"
           >
@@ -161,7 +170,7 @@ export function CommentForm({
         onKeyDown={(e) => {
           if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
             e.preventDefault();
-            if (content.trim() && identity.nickname && !isSubmitting) {
+            if (content.trim() && identity.nickname && !isDisabled) {
               handleSubmit(e);
             }
           }
@@ -174,18 +183,18 @@ export function CommentForm({
           "resize-none transition-colors text-sm",
           compact ? "min-h-[80px]" : "min-h-[120px]"
         )}
-        disabled={isSubmitting}
+        disabled={isDisabled}
       />
 
       <div className="comment-form-actions flex justify-end gap-2">
         {onCancel && (
-          <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={isDisabled}>
             취소
           </Button>
         )}
-        <Button type="submit" disabled={!content.trim() || !identity.nickname || isSubmitting} className="px-6">
+        <Button type="submit" disabled={!content.trim() || !identity.nickname || isDisabled} className="px-6">
           {isSubmitting ? "저장 중..." : submitLabel}
-          {!isSubmitting && <span className="ml-2 text-xs opacity-60 hidden sm:inline">⌘↵</span>}
+          {!isDisabled && <span className="ml-2 text-xs opacity-60 hidden sm:inline">⌘↵</span>}
         </Button>
       </div>
     </form>
