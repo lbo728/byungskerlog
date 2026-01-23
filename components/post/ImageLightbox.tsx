@@ -18,6 +18,8 @@ interface ImageLightboxProps {
 export function ImageLightbox({ images, open, index, onClose }: ImageLightboxProps) {
   if (!open || images.length === 0) return null;
 
+  const isSingleImage = images.length <= 1;
+
   return (
     <Lightbox
       open={open}
@@ -31,10 +33,14 @@ export function ImageLightbox({ images, open, index, onClose }: ImageLightboxPro
         container: { backgroundColor: "rgba(0, 0, 0, 0.9)" },
       }}
       carousel={{
-        finite: images.length <= 1,
+        finite: isSingleImage,
       }}
       controller={{
         closeOnBackdropClick: true,
+      }}
+      render={{
+        buttonPrev: isSingleImage ? () => null : undefined,
+        buttonNext: isSingleImage ? () => null : undefined,
       }}
     />
   );

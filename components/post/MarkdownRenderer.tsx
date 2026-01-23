@@ -117,12 +117,24 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   }, [content]);
 
   const images = useMemo(() => {
-    const imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-    const matches = [...content.matchAll(imgRegex)];
-    return matches.map((m) => ({
-      src: m[2],
-      alt: m[1] || "이미지",
-    })) as ImageData[];
+    const result: ImageData[] = [];
+
+    const markdownImgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+    let match;
+    while ((match = markdownImgRegex.exec(content)) !== null) {
+      result.push({ src: match[2], alt: match[1] || "이미지" });
+    }
+
+    const htmlImgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?[^>]*\/?>/gi;
+    while ((match = htmlImgRegex.exec(content)) !== null) {
+      const src = match[1];
+      const alt = match[2] || "이미지";
+      if (!result.some((img) => img.src === src)) {
+        result.push({ src, alt });
+      }
+    }
+
+    return result;
   }, [content]);
 
   const segments = useMemo(() => {
