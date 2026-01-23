@@ -15,8 +15,8 @@ import { Comments } from "./Comments";
 import { ArrowLeft, ArrowRight, BookOpen, FileText, Zap } from "lucide-react";
 import { ShortPostsNav } from "@/components/short-post/ShortPostsNav";
 import { SocialMediaLinks } from "./SocialMediaLinks";
-import Image from "next/image";
 import { ThumbnailImage } from "./ThumbnailImage";
+import { PostImageGallery } from "./PostImageGallery";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { PostCacheHydrator } from "./PostCacheHydrator";
@@ -145,11 +145,13 @@ export function PostDetail({
 
               <Separator className="my-8" />
 
-              {post.thumbnail && !post.thumbnail.includes("og-image") && (
-                <ThumbnailImage src={post.thumbnail} alt={post.title} />
-              )}
+              <PostImageGallery>
+                {post.thumbnail && !post.thumbnail.includes("og-image") && (
+                  <ThumbnailImage src={post.thumbnail} alt={post.title} />
+                )}
 
-              <MarkdownRenderer content={post.content} />
+                <MarkdownRenderer content={post.content} />
+              </PostImageGallery>
             </article>
 
             <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_MIDDLE || ""} className="my-8" />

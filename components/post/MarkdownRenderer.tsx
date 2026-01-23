@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef, memo } from "react";
+import { useState, useMemo, useCallback, useEffect, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -13,7 +13,29 @@ import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import type { Components } from "react-markdown";
 import type { ReactElement, ReactNode } from "react";
-import { ImageLightbox, type ImageData } from "./ImageLightbox";
+import type { ImageData } from "./ImageLightbox";
+import { useImageLightbox } from "./ImageLightboxContext";
+
+function extractImagesFromContent(content: string): ImageData[] {
+  const result: ImageData[] = [];
+
+  const markdownImgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+  let match;
+  while ((match = markdownImgRegex.exec(content)) !== null) {
+    result.push({ src: match[2], alt: match[1] || "이미지" });
+  }
+
+  const htmlImgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?[^>]*\/?>/gi;
+  while ((match = htmlImgRegex.exec(content)) !== null) {
+    const src = match[1];
+    const alt = match[2] || "이미지";
+    if (!result.some((img) => img.src === src)) {
+      result.push({ src, alt });
+    }
+  }
+
+  return result;
+}
 
 // 헤딩 텍스트를 ID로 변환하는 함수
 function generateHeadingId(text: string): string {
@@ -135,54 +157,29 @@ function CodeBlock({ code, language }: { code: string; language: string }) {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const imagesRef = useRef<ImageData[]>([]);
+  const { registerImages, openLightbox } = useImageLightbox();
 
   const processedContent = useMemo(() => {
     const fixedBold = fixBoldItalicMarkdown(content);
     return preprocessHeadings(fixedBold);
   }, [content]);
 
-  const images = useMemo(() => {
-    const result: ImageData[] = [];
+  const images = useMemo(() => extractImagesFromContent(content), [content]);
 
-    const markdownImgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-    let match;
-    while ((match = markdownImgRegex.exec(content)) !== null) {
-      result.push({ src: match[2], alt: match[1] || "이미지" });
-    }
+  useEffect(() => {
+    registerImages(images, "content");
+  }, [images, registerImages]);
 
-    const htmlImgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?[^>]*\/?>/gi;
-    while ((match = htmlImgRegex.exec(content)) !== null) {
-      const src = match[1];
-      const alt = match[2] || "이미지";
-      if (!result.some((img) => img.src === src)) {
-        result.push({ src, alt });
+  const handleProseClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "IMG") {
+        const imgElement = target as HTMLImageElement;
+        openLightbox(imgElement.src);
       }
-    }
-
-    imagesRef.current = result;
-    return result;
-  }, [content]);
-
-  const handleProseClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName === "IMG") {
-      const imgElement = target as HTMLImageElement;
-      const src = imgElement.src;
-
-      let imageIndex = imagesRef.current.findIndex((img) => img.src === src);
-
-      if (imageIndex === -1) {
-        imagesRef.current = [...imagesRef.current, { src, alt: imgElement.alt || "이미지" }];
-        imageIndex = imagesRef.current.length - 1;
-      }
-
-      setLightboxIndex(imageIndex);
-      setLightboxOpen(true);
-    }
-  }, []);
+    },
+    [openLightbox]
+  );
 
   const segments = useMemo(() => {
     const lines = processedContent.split("\n");
@@ -290,16 +287,5 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
   const memoizedComponents = useMemo(() => components, []);
 
-  return (
-    <>
-      <MarkdownContent segments={segments} components={memoizedComponents} onClick={handleProseClick} />
-
-      <ImageLightbox
-        images={imagesRef.current.length > 0 ? imagesRef.current : images}
-        open={lightboxOpen}
-        index={lightboxIndex}
-        onClose={() => setLightboxOpen(false)}
-      />
-    </>
-  );
+  return <MarkdownContent segments={segments} components={memoizedComponents} onClick={handleProseClick} />;
 }
