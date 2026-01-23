@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useRef, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -67,6 +67,33 @@ interface CodeComponentProps {
 
 const URL_LINE_REGEX = /^(https?:\/\/[^\s]+)$/;
 
+interface MarkdownContentProps {
+  segments: { type: "markdown" | "url"; content: string }[];
+  components: Components;
+  onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
+}
+
+const MarkdownContent = memo(function MarkdownContent({ segments, components, onClick }: MarkdownContentProps) {
+  return (
+    <div className="prose prose-lg dark:prose-invert max-w-none" onClick={onClick}>
+      {segments.map((segment, index) =>
+        segment.type === "url" ? (
+          <LinkCard key={index} url={segment.content} />
+        ) : (
+          <ReactMarkdown
+            key={index}
+            remarkPlugins={[remarkGfm, remarkBreaks]}
+            rehypePlugins={[rehypeRaw]}
+            components={components}
+          >
+            {segment.content}
+          </ReactMarkdown>
+        )
+      )}
+    </div>
+  );
+});
+
 function CodeBlock({ code, language }: { code: string; language: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -110,6 +137,7 @@ function CodeBlock({ code, language }: { code: string; language: string }) {
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const imagesRef = useRef<ImageData[]>([]);
 
   const processedContent = useMemo(() => {
     const fixedBold = fixBoldItalicMarkdown(content);
@@ -134,8 +162,27 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       }
     }
 
+    imagesRef.current = result;
     return result;
   }, [content]);
+
+  const handleProseClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === "IMG") {
+      const imgElement = target as HTMLImageElement;
+      const src = imgElement.src;
+
+      let imageIndex = imagesRef.current.findIndex((img) => img.src === src);
+
+      if (imageIndex === -1) {
+        imagesRef.current = [...imagesRef.current, { src, alt: imgElement.alt || "이미지" }];
+        imageIndex = imagesRef.current.length - 1;
+      }
+
+      setLightboxIndex(imageIndex);
+      setLightboxOpen(true);
+    }
+  }, []);
 
   const segments = useMemo(() => {
     const lines = processedContent.split("\n");
@@ -197,24 +244,14 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     ),
 
     // eslint-disable-next-line @next/next/no-img-element
-    img: ({ src, alt, ...props }) => {
-      const imageIndex = images.findIndex((img) => img.src === src);
-
-      return (
-        <img
-          src={src}
-          alt={alt || ""}
-          className="rounded-lg shadow-md my-6 cursor-pointer hover:opacity-90 transition-opacity"
-          onClick={() => {
-            if (imageIndex >= 0) {
-              setLightboxIndex(imageIndex);
-              setLightboxOpen(true);
-            }
-          }}
-          {...props}
-        />
-      );
-    },
+    img: ({ src, alt, ...props }) => (
+      <img
+        src={src}
+        alt={alt || ""}
+        className="rounded-lg shadow-md my-6 cursor-pointer hover:opacity-90 transition-opacity"
+        {...props}
+      />
+    ),
     blockquote: ({ children, ...props }) => (
       <blockquote
         className="blockquote border-l-4 border-[oklch(0.8_0_0)] dark:border-[oklch(0.4_0_0)] pl-4 italic my-4 text-muted-foreground text-base md:text-lg leading-7 md:leading-9 [&>p]:my-0"
@@ -251,26 +288,18 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     ),
   };
 
+  const memoizedComponents = useMemo(() => components, []);
+
   return (
     <>
-      <div className="prose prose-lg dark:prose-invert max-w-none">
-        {segments.map((segment, index) =>
-          segment.type === "url" ? (
-            <LinkCard key={index} url={segment.content} />
-          ) : (
-            <ReactMarkdown
-              key={index}
-              remarkPlugins={[remarkGfm, remarkBreaks]}
-              rehypePlugins={[rehypeRaw]}
-              components={components}
-            >
-              {segment.content}
-            </ReactMarkdown>
-          )
-        )}
-      </div>
+      <MarkdownContent segments={segments} components={memoizedComponents} onClick={handleProseClick} />
 
-      <ImageLightbox images={images} open={lightboxOpen} index={lightboxIndex} onClose={() => setLightboxOpen(false)} />
+      <ImageLightbox
+        images={imagesRef.current.length > 0 ? imagesRef.current : images}
+        open={lightboxOpen}
+        index={lightboxIndex}
+        onClose={() => setLightboxOpen(false)}
+      />
     </>
   );
 }
