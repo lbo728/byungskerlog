@@ -16,6 +16,7 @@ import { ArrowLeft, ArrowRight, BookOpen, FileText, Zap } from "lucide-react";
 import { ShortPostsNav } from "@/components/short-post/ShortPostsNav";
 import { SocialMediaLinks } from "./SocialMediaLinks";
 import Image from "next/image";
+import { ThumbnailImage } from "./ThumbnailImage";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { PostCacheHydrator } from "./PostCacheHydrator";
@@ -145,16 +146,7 @@ export function PostDetail({
               <Separator className="my-8" />
 
               {post.thumbnail && !post.thumbnail.includes("og-image") && (
-                <div className="post-thumbnail relative w-full aspect-video mb-8 rounded-lg overflow-hidden">
-                  <Image
-                    src={post.thumbnail}
-                    alt={post.title}
-                    fill
-                    className="object-cover"
-                    priority
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
-                  />
-                </div>
+                <ThumbnailImage src={post.thumbnail} alt={post.title} />
               )}
 
               <MarkdownRenderer content={post.content} />
