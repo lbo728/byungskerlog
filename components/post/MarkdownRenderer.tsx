@@ -13,6 +13,7 @@ import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import type { Components } from "react-markdown";
 import type { ReactElement, ReactNode } from "react";
+import { ImageLightbox, type ImageData } from "./ImageLightbox";
 
 // 헤딩 텍스트를 ID로 변환하는 함수
 function generateHeadingId(text: string): string {
@@ -107,10 +108,21 @@ function CodeBlock({ code, language }: { code: string; language: string }) {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  // 마크다운 전처리: 볼드/이탤릭 수정 + 헤딩 ID 추가
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
   const processedContent = useMemo(() => {
     const fixedBold = fixBoldItalicMarkdown(content);
     return preprocessHeadings(fixedBold);
+  }, [content]);
+
+  const images = useMemo(() => {
+    const imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+    const matches = [...content.matchAll(imgRegex)];
+    return matches.map((m) => ({
+      src: m[2],
+      alt: m[1] || "이미지",
+    })) as ImageData[];
   }, [content]);
 
   const segments = useMemo(() => {
@@ -173,7 +185,24 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     ),
 
     // eslint-disable-next-line @next/next/no-img-element
-    img: ({ src, alt, ...props }) => <img src={src} alt={alt || ""} className="rounded-lg shadow-md my-6" {...props} />,
+    img: ({ src, alt, ...props }) => {
+      const imageIndex = images.findIndex((img) => img.src === src);
+
+      return (
+        <img
+          src={src}
+          alt={alt || ""}
+          className="rounded-lg shadow-md my-6 cursor-pointer hover:opacity-90 transition-opacity"
+          onClick={() => {
+            if (imageIndex >= 0) {
+              setLightboxIndex(imageIndex);
+              setLightboxOpen(true);
+            }
+          }}
+          {...props}
+        />
+      );
+    },
     blockquote: ({ children, ...props }) => (
       <blockquote
         className="blockquote border-l-4 border-[oklch(0.8_0_0)] dark:border-[oklch(0.4_0_0)] pl-4 italic my-4 text-muted-foreground text-base md:text-lg leading-7 md:leading-9 [&>p]:my-0"
@@ -211,21 +240,25 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   };
 
   return (
-    <div className="prose prose-lg dark:prose-invert max-w-none">
-      {segments.map((segment, index) =>
-        segment.type === "url" ? (
-          <LinkCard key={index} url={segment.content} />
-        ) : (
-          <ReactMarkdown
-            key={index}
-            remarkPlugins={[remarkGfm, remarkBreaks]}
-            rehypePlugins={[rehypeRaw]}
-            components={components}
-          >
-            {segment.content}
-          </ReactMarkdown>
-        )
-      )}
-    </div>
+    <>
+      <div className="prose prose-lg dark:prose-invert max-w-none">
+        {segments.map((segment, index) =>
+          segment.type === "url" ? (
+            <LinkCard key={index} url={segment.content} />
+          ) : (
+            <ReactMarkdown
+              key={index}
+              remarkPlugins={[remarkGfm, remarkBreaks]}
+              rehypePlugins={[rehypeRaw]}
+              components={components}
+            >
+              {segment.content}
+            </ReactMarkdown>
+          )
+        )}
+      </div>
+
+      <ImageLightbox images={images} open={lightboxOpen} index={lightboxIndex} onClose={() => setLightboxOpen(false)} />
+    </>
   );
 }
