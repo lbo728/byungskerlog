@@ -311,7 +311,7 @@ export function PostDetail({
             )}
 
             <Separator className="my-12" />
-            <Comments slug={slug} />
+            <Comments postId={post.id} />
 
             <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_BOTTOM || ""} className="mt-12" />
           </div>
