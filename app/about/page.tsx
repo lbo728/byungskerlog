@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { MarkdownRenderer } from "@/components/post/MarkdownRenderer";
+import { PostImageGallery } from "@/components/post/PostImageGallery";
 import { AboutPageActions } from "@/components/pages/AboutPageActions";
 import { ContributionGraph } from "@/components/analytics/ContributionGraph";
 
@@ -100,7 +101,9 @@ export default async function AboutPage() {
             <ContributionGraph posts={contributionPosts} />
           </div>
           <div className="prose prose-lg dark:prose-invert max-w-none prose-p:leading-normal prose-li:leading-normal">
-            <MarkdownRenderer content={content} />
+            <PostImageGallery>
+              <MarkdownRenderer content={content} />
+            </PostImageGallery>
           </div>
         </div>
       </div>
