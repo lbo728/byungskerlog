@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${post.title} written by Byungsker`,
     description,
     keywords: post.tags,
-    authors: [{ name: "이병우 (Byungsker)" }],
+    authors: [{ name: "병스커 (Byungsker)" }],
     openGraph: {
       type: "article",
       locale: "ko_KR",
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description,
       publishedTime: post.createdAt.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
-      authors: ["이병우 (Byungsker)"],
+      authors: ["병스커 (Byungsker)"],
       tags: post.tags || [],
       images: [
         {

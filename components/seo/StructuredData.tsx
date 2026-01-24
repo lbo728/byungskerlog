@@ -47,7 +47,7 @@ export function StructuredData({ type, data }: StructuredDataProps) {
       name: "Byungsker Log",
       alternateName: ["byungskerlog", "병스커 블로그", "병스커", "Byungsker"],
       url: siteUrl,
-      description: "제품 주도 개발을 지향하는 개발자, 이병우의 기술 블로그",
+      description: "제품 주도 개발을 지향하는 개발자, 병스커의 기술 블로그",
       publisher: { "@id": `${siteUrl}/#organization` },
       inLanguage: "ko-KR",
       potentialAction: {
@@ -65,7 +65,7 @@ export function StructuredData({ type, data }: StructuredDataProps) {
       "@id": `${siteUrl}/#blog`,
       name: "Byungsker Log",
       url: siteUrl,
-      description: "제품 주도 개발을 지향하는 개발자, 이병우의 기술 블로그",
+      description: "제품 주도 개발을 지향하는 개발자, 병스커의 기술 블로그",
       publisher: { "@id": `${siteUrl}/#organization` },
       isPartOf: { "@id": `${siteUrl}/#website` },
       inLanguage: "ko-KR",
@@ -90,7 +90,7 @@ export function StructuredData({ type, data }: StructuredDataProps) {
         author: {
           "@type": "Person",
           "@id": `${siteUrl}/#author`,
-          name: "이병우 (Byungsker)",
+          name: "병스커 (Byungsker)",
           url: siteUrl,
         },
         publisher: { "@id": `${siteUrl}/#organization` },
