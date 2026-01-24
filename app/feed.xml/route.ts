@@ -47,7 +47,7 @@ export async function GET() {
   <channel>
     <title>Byungsker Log</title>
     <link>${siteUrl}</link>
-    <description>제품 주도 개발을 지향하는 개발자, 이병우의 기술 블로그</description>
+    <description>제품 주도 개발을 지향하는 개발자, 병스커의 기술 블로그</description>
     <language>ko</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="${siteUrl}/feed.xml" rel="self" type="application/rss+xml"/>

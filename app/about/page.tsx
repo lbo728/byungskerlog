@@ -12,13 +12,13 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel
 export const metadata: Metadata = {
   title: "About | Byungsker Log",
   description:
-    "제품 주도 개발을 지향하는 개발자, 이병우(Byungsker)에 대해 알아보세요. 소프트웨어 개발, 제품 개발, 스타트업에 대한 경험과 인사이트를 공유합니다.",
+    "제품 주도 개발을 지향하는 개발자, 병스커(Byungsker)에 대해 알아보세요. 소프트웨어 개발, 제품 개발, 스타트업에 대한 경험과 인사이트를 공유합니다.",
   alternates: {
     canonical: `${siteUrl}/about`,
   },
   openGraph: {
     title: "About | Byungsker Log",
-    description: "제품 주도 개발을 지향하는 개발자, 이병우(Byungsker)에 대해 알아보세요.",
+    description: "제품 주도 개발을 지향하는 개발자, 병스커(Byungsker)에 대해 알아보세요.",
     url: `${siteUrl}/about`,
     type: "profile",
   },
@@ -73,7 +73,7 @@ async function getContributionPosts(): Promise<ContributionPost[]> {
 const personSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
-  name: "이병우 (Byungsker)",
+  name: "병스커 (Byungsker)",
   url: siteUrl,
   jobTitle: "Software Developer",
   description: "제품 주도 개발을 지향하는 소프트웨어 개발자",

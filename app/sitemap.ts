@@ -25,17 +25,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${siteUrl}/short-posts`,
+      lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/series`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    },
+    {
       url: `${siteUrl}/tags`,
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.6,
     },
+    {
+      url: `${siteUrl}/products`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    },
   ];
 
   try {
-    // 게시된 포스트 가져오기
-    const posts = await prisma.post.findMany({
-      where: { published: true },
+    // 게시된 Long 포스트 가져오기
+    const longPosts = await prisma.post.findMany({
+      where: { published: true, type: "LONG" },
       select: {
         slug: true,
         updatedAt: true,
@@ -43,15 +61,50 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       orderBy: { updatedAt: "desc" },
     });
 
-    // 포스트 URL 생성
-    const postUrls = posts.map((post) => ({
+    // Long 포스트 URL 생성
+    const longPostUrls = longPosts.map((post) => ({
       url: `${siteUrl}/posts/${post.slug}`,
       lastModified: post.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.8,
     }));
 
-    return [...staticPages, ...postUrls];
+    // 게시된 Short 포스트 가져오기
+    const shortPosts = await prisma.post.findMany({
+      where: { published: true, type: "SHORT" },
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    // Short 포스트 URL 생성
+    const shortPostUrls = shortPosts.map((post) => ({
+      url: `${siteUrl}/short/${post.slug}`,
+      lastModified: post.updatedAt,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+
+    // 시리즈 가져오기
+    const seriesList = await prisma.series.findMany({
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    // 시리즈 URL 생성
+    const seriesUrls = seriesList.map((series) => ({
+      url: `${siteUrl}/series/${series.slug}`,
+      lastModified: series.updatedAt,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+
+    return [...staticPages, ...longPostUrls, ...shortPostUrls, ...seriesUrls];
   } catch {
     return staticPages;
   }
