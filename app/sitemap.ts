@@ -104,7 +104,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-    return [...staticPages, ...longPostUrls, ...shortPostUrls, ...seriesUrls];
+    // 태그 가져오기 (게시된 포스트가 있는 태그만)
+    const tags = await prisma.tag.findMany({
+      where: {
+        posts: {
+          some: { published: true },
+        },
+      },
+      select: {
+        name: true,
+        updatedAt: true,
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    // 태그 URL 생성
+    const tagUrls = tags.map((tag) => ({
+      url: `${siteUrl}/tags/${encodeURIComponent(tag.name)}`,
+      lastModified: tag.updatedAt,
+      changeFrequency: "weekly" as const,
+      priority: 0.5,
+    }));
+
+    return [...staticPages, ...longPostUrls, ...shortPostUrls, ...seriesUrls, ...tagUrls];
   } catch {
     return staticPages;
   }

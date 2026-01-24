@@ -97,7 +97,13 @@ export function Header() {
             <ThemeToggle />
           </nav>
 
-          <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setIsOpen(true)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="md:hidden"
+            onClick={() => setIsOpen(true)}
+            aria-label="메뉴 열기"
+          >
             <Menu className="h-5 w-5" />
           </Button>
 
