@@ -29,28 +29,36 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Byungsker's Technical Blog",
-    template: "%s",
+    default: "Byungsker Log - 병스커의 기술 블로그",
+    template: "%s | Byungsker Log",
   },
   description:
-    "제품 주도 개발을 지향하는 개발자, 이병우의 기술 블로그. 소프트웨어 개발, 제품 개발, 스타트업에 대한 인사이트를 공유합니다.",
+    "제품 주도 개발을 지향하는 개발자, 병스커의 기술 블로그. 소프트웨어 개발, 제품 개발, 스타트업에 대한 인사이트를 공유합니다.",
   keywords: [
+    "병스커",
+    "Byungsker",
+    "병스커로그",
+    "byungskerlog",
+    "병스커 블로그",
+    "byungsker 블로그",
+    "병로그",
+    "기술블로그",
+    "개발블로그",
+    "기술 블로그",
     "개발 블로그",
     "소프트웨어 개발",
     "제품 주도 개발",
     "Product-Led Development",
-    "이병우",
-    "Byungsker",
-    "병스커",
-    "병스커 블로그",
-    "byungsker 블로그",
-    "byungskerlog",
     "스타트업",
-    "기술 블로그",
+    "프론트엔드",
+    "웹개발",
+    "Next.js",
+    "React",
+    "TypeScript",
   ],
-  authors: [{ name: "이병우 (Byungsker)" }],
-  creator: "이병우 (Byungsker)",
-  publisher: "이병우 (Byungsker)",
+  authors: [{ name: "병스커 (Byungsker)" }],
+  creator: "병스커 (Byungsker)",
+  publisher: "병스커 (Byungsker)",
   formatDetection: {
     email: false,
     address: false,
@@ -64,7 +72,7 @@ export const metadata: Metadata = {
     siteName: "Byungsker Log",
     title: "Byungsker Log",
     description:
-      "제품 주도 개발을 지향하는 개발자, 이병우의 기술 블로그. 소프트웨어 개발, 제품 개발, 스타트업에 대한 인사이트를 공유합니다.",
+      "제품 주도 개발을 지향하는 개발자, 병스커의 기술 블로그. 소프트웨어 개발, 제품 개발, 스타트업에 대한 인사이트를 공유합니다.",
     images: [
       {
         url: `${siteUrl}/og-image.png`,
@@ -77,7 +85,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Byungsker Log",
-    description: "제품 주도 개발을 지향하는 개발자, 이병우의 기술 블로그",
+    description: "제품 주도 개발을 지향하는 개발자, 병스커의 기술 블로그",
     images: [`${siteUrl}/og-image.png`],
     creator: "@byungsker",
   },
@@ -97,6 +105,15 @@ export const metadata: Metadata = {
     other: {
       "naver-site-verification": "b5fe47a6ed7b521763b6c03524d676baba809a52",
     },
+  },
+  other: {
+    subject: "기술 블로그, 개발 블로그, 병스커로그",
+    classification: "Blog, Technology, Software Development",
+    rating: "General",
+    distribution: "Global",
+    "revisit-after": "7 days",
+    "article:author": "병스커 (Byungsker)",
+    "article:section": "Technology",
   },
   applicationName: "Byungsker Log",
   appleWebApp: {
@@ -159,7 +176,7 @@ export default function RootLayout({
                 <Footer />
               </div>
               <Toaster />
-                  <ImageProtection />
+              <ImageProtection />
             </Providers>
           </ThemeProvider>
         )}

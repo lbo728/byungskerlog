@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -13,6 +13,29 @@ import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import type { Components } from "react-markdown";
 import type { ReactElement, ReactNode } from "react";
+import type { ImageData } from "./ImageLightbox";
+import { useImageLightbox } from "./ImageLightboxContext";
+
+function extractImagesFromContent(content: string): ImageData[] {
+  const result: ImageData[] = [];
+
+  const markdownImgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+  let match;
+  while ((match = markdownImgRegex.exec(content)) !== null) {
+    result.push({ src: match[2], alt: match[1] || "이미지" });
+  }
+
+  const htmlImgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?[^>]*\/?>/gi;
+  while ((match = htmlImgRegex.exec(content)) !== null) {
+    const src = match[1];
+    const alt = match[2] || "이미지";
+    if (!result.some((img) => img.src === src)) {
+      result.push({ src, alt });
+    }
+  }
+
+  return result;
+}
 
 // 헤딩 텍스트를 ID로 변환하는 함수
 function generateHeadingId(text: string): string {
@@ -66,6 +89,33 @@ interface CodeComponentProps {
 
 const URL_LINE_REGEX = /^(https?:\/\/[^\s]+)$/;
 
+interface MarkdownContentProps {
+  segments: { type: "markdown" | "url"; content: string }[];
+  components: Components;
+  onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
+}
+
+const MarkdownContent = memo(function MarkdownContent({ segments, components, onClick }: MarkdownContentProps) {
+  return (
+    <div className="prose prose-lg dark:prose-invert max-w-none" onClick={onClick}>
+      {segments.map((segment, index) =>
+        segment.type === "url" ? (
+          <LinkCard key={index} url={segment.content} />
+        ) : (
+          <ReactMarkdown
+            key={index}
+            remarkPlugins={[remarkGfm, remarkBreaks]}
+            rehypePlugins={[rehypeRaw]}
+            components={components}
+          >
+            {segment.content}
+          </ReactMarkdown>
+        )
+      )}
+    </div>
+  );
+});
+
 function CodeBlock({ code, language }: { code: string; language: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -107,11 +157,29 @@ function CodeBlock({ code, language }: { code: string; language: string }) {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  // 마크다운 전처리: 볼드/이탤릭 수정 + 헤딩 ID 추가
+  const { registerImages, openLightbox } = useImageLightbox();
+
   const processedContent = useMemo(() => {
     const fixedBold = fixBoldItalicMarkdown(content);
     return preprocessHeadings(fixedBold);
   }, [content]);
+
+  const images = useMemo(() => extractImagesFromContent(content), [content]);
+
+  useEffect(() => {
+    registerImages(images, "content");
+  }, [images, registerImages]);
+
+  const handleProseClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "IMG") {
+        const imgElement = target as HTMLImageElement;
+        openLightbox(imgElement.src);
+      }
+    },
+    [openLightbox]
+  );
 
   const segments = useMemo(() => {
     const lines = processedContent.split("\n");
@@ -173,7 +241,14 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     ),
 
     // eslint-disable-next-line @next/next/no-img-element
-    img: ({ src, alt, ...props }) => <img src={src} alt={alt || ""} className="rounded-lg shadow-md my-6" {...props} />,
+    img: ({ src, alt, ...props }) => (
+      <img
+        src={src}
+        alt={alt || ""}
+        className="rounded-lg shadow-md my-6 cursor-pointer hover:opacity-90 transition-opacity"
+        {...props}
+      />
+    ),
     blockquote: ({ children, ...props }) => (
       <blockquote
         className="blockquote border-l-4 border-[oklch(0.8_0_0)] dark:border-[oklch(0.4_0_0)] pl-4 italic my-4 text-muted-foreground text-base md:text-lg leading-7 md:leading-9 [&>p]:my-0"
@@ -210,22 +285,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     ),
   };
 
-  return (
-    <div className="prose prose-lg dark:prose-invert max-w-none">
-      {segments.map((segment, index) =>
-        segment.type === "url" ? (
-          <LinkCard key={index} url={segment.content} />
-        ) : (
-          <ReactMarkdown
-            key={index}
-            remarkPlugins={[remarkGfm, remarkBreaks]}
-            rehypePlugins={[rehypeRaw]}
-            components={components}
-          >
-            {segment.content}
-          </ReactMarkdown>
-        )
-      )}
-    </div>
-  );
+  const memoizedComponents = useMemo(() => components, []);
+
+  return <MarkdownContent segments={segments} components={memoizedComponents} onClick={handleProseClick} />;
 }

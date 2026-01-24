@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { MarkdownRenderer } from "@/components/post/MarkdownRenderer";
 import { AboutPageActions } from "@/components/pages/AboutPageActions";
 import { ContributionGraph } from "@/components/analytics/ContributionGraph";
-import { Card, CardContent } from "@/components/ui/Card";
+
 import type { Metadata } from "next";
 
 export const revalidate = 3600;
@@ -12,13 +12,13 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel
 export const metadata: Metadata = {
   title: "About | Byungsker Log",
   description:
-    "제품 주도 개발을 지향하는 개발자, 이병우(Byungsker)에 대해 알아보세요. 소프트웨어 개발, 제품 개발, 스타트업에 대한 경험과 인사이트를 공유합니다.",
+    "제품 주도 개발을 지향하는 개발자, 병스커(Byungsker)에 대해 알아보세요. 소프트웨어 개발, 제품 개발, 스타트업에 대한 경험과 인사이트를 공유합니다.",
   alternates: {
     canonical: `${siteUrl}/about`,
   },
   openGraph: {
     title: "About | Byungsker Log",
-    description: "제품 주도 개발을 지향하는 개발자, 이병우(Byungsker)에 대해 알아보세요.",
+    description: "제품 주도 개발을 지향하는 개발자, 병스커(Byungsker)에 대해 알아보세요.",
     url: `${siteUrl}/about`,
     type: "profile",
   },
@@ -36,16 +36,36 @@ async function getAboutPage() {
   }
 }
 
-async function getPostDates() {
+export interface ContributionPost {
+  id: string;
+  title: string;
+  slug: string;
+  type: "LONG" | "SHORT";
+  createdAt: string;
+}
+
+async function getContributionPosts(): Promise<ContributionPost[]> {
   try {
     const posts = await prisma.post.findMany({
       where: { published: true },
-      select: { createdAt: true },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        type: true,
+        createdAt: true,
+      },
       orderBy: { createdAt: "desc" },
     });
-    return posts.map((post) => post.createdAt.toISOString());
+    return posts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      slug: post.slug,
+      type: post.type,
+      createdAt: post.createdAt.toISOString(),
+    }));
   } catch (error) {
-    console.error("Error fetching post dates:", error);
+    console.error("Error fetching contribution posts:", error);
     return [];
   }
 }
@@ -53,7 +73,7 @@ async function getPostDates() {
 const personSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
-  name: "이병우 (Byungsker)",
+  name: "병스커 (Byungsker)",
   url: siteUrl,
   jobTitle: "Software Developer",
   description: "제품 주도 개발을 지향하는 소프트웨어 개발자",
@@ -62,7 +82,7 @@ const personSchema = {
 };
 
 export default async function AboutPage() {
-  const [page, postDates] = await Promise.all([getAboutPage(), getPostDates()]);
+  const [page, contributionPosts] = await Promise.all([getAboutPage(), getContributionPosts()]);
 
   const title = page?.title || "About";
   const content = page?.content || "";
@@ -76,18 +96,12 @@ export default async function AboutPage() {
             <h1 className="text-4xl font-bold">{title}</h1>
             <AboutPageActions />
           </div>
-
           <div className="contribution-graph-section mb-8">
-            <ContributionGraph postDates={postDates} />
+            <ContributionGraph posts={contributionPosts} />
           </div>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="prose prose-lg dark:prose-invert max-w-none prose-p:leading-normal prose-li:leading-normal">
-                <MarkdownRenderer content={content} />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="prose prose-lg dark:prose-invert max-w-none prose-p:leading-normal prose-li:leading-normal">
+            <MarkdownRenderer content={content} />
+          </div>
         </div>
       </div>
     </>
