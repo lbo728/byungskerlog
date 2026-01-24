@@ -106,6 +106,15 @@ export const metadata: Metadata = {
       "naver-site-verification": "b5fe47a6ed7b521763b6c03524d676baba809a52",
     },
   },
+  other: {
+    subject: "기술 블로그, 개발 블로그, 병스커로그",
+    classification: "Blog, Technology, Software Development",
+    rating: "General",
+    distribution: "Global",
+    "revisit-after": "7 days",
+    "article:author": "병스커 (Byungsker)",
+    "article:section": "Technology",
+  },
   applicationName: "Byungsker Log",
   appleWebApp: {
     title: "Byungsker Log",
