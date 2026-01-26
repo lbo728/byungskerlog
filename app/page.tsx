@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { PostListLoader } from "@/components/post/PostListLoader";
 import { PostListSkeleton } from "@/components/skeleton/PostListSkeleton";
 import { AdSense } from "@/components/seo/Adsense";
-import { HomeClientWrapper } from "@/components/home/HomeClientWrapper";
+import { PageRefreshWrapper } from "@/components/common/PageRefreshWrapper";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <HomeClientWrapper>
+    <PageRefreshWrapper>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-5xl mx-auto">
           <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP || ""} className="mb-8" />
@@ -34,6 +34,6 @@ export default function Home() {
           <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM || ""} className="mt-8" />
         </div>
       </div>
-    </HomeClientWrapper>
+    </PageRefreshWrapper>
   );
 }

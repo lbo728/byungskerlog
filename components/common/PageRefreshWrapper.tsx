@@ -4,11 +4,11 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { PullToRefresh } from "@/components/common/PullToRefresh";
 
-interface HomeClientWrapperProps {
+interface PageRefreshWrapperProps {
   children: React.ReactNode;
 }
 
-export function HomeClientWrapper({ children }: HomeClientWrapperProps) {
+export function PageRefreshWrapper({ children }: PageRefreshWrapperProps) {
   const router = useRouter();
 
   const handleRefresh = useCallback(async () => {
