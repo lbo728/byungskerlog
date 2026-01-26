@@ -74,7 +74,12 @@ export function PostDetail({
       <div className="post-detail-layout relative py-12">
         <div className="post-content-center flex justify-center px-4 sm:px-6 lg:px-8">
           <div className={cn("post-main-content max-w-5xl w-full", post.type !== "SHORT" && "xl:pr-24")}>
-            <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_TOP || ""} className="mb-8" />
+            <AdSense
+              adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_TOP || ""}
+              adFormat="fluid"
+              adLayoutKey="-fb+5w+4e-db+86"
+              className="mb-8"
+            />
 
             <Link
               href={backLink}
@@ -154,7 +159,12 @@ export function PostDetail({
               </PostImageGallery>
             </article>
 
-            <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_MIDDLE || ""} className="my-8" />
+            <AdSense
+              adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_MIDDLE || ""}
+              adFormat="fluid"
+              adLayoutKey="-fb+5w+4e-db+86"
+              className="my-8"
+            />
 
             {post.series && seriesPosts.length > 0 && (
               <>
@@ -313,7 +323,12 @@ export function PostDetail({
             <Separator className="my-12" />
             <Comments postId={post.id} />
 
-            <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_BOTTOM || ""} className="mt-12" />
+            <AdSense
+              adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_BOTTOM || ""}
+              adFormat="fluid"
+              adLayoutKey="-fb+5w+4e-db+86"
+              className="mt-12"
+            />
           </div>
         </div>
 
