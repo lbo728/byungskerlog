@@ -58,12 +58,12 @@
 
 ### Definition of Done
 
-- [ ] `npm run build` 성공
-- [ ] `npm test -- --run __tests__/api/books.test.ts` 전체 통과
-- [ ] /books 페이지에서 책 목록 확인 가능
-- [ ] 책 클릭 시 /books/[slug] 상세 페이지로 이동
-- [ ] 상세 페이지에서 관련글 목록 표시
-- [ ] 관리자만 책 추가/수정/삭제 가능
+- [x] `npm run build` 성공
+- [x] `npm test -- --run __tests__/api/books.test.ts` 전체 통과
+- [x] /books 페이지에서 책 목록 확인 가능
+- [x] 책 클릭 시 /books/[slug] 상세 페이지로 이동
+- [x] 상세 페이지에서 관련글 목록 표시
+- [x] 관리자만 책 추가/수정/삭제 가능
 
 ### Must Have
 
@@ -553,10 +553,10 @@ npm run dev          # Expected: 서버 정상 실행
 
 ### Final Checklist
 
-- [ ] All "Must Have" present
-- [ ] All "Must NOT Have" absent
-- [ ] All tests pass
-- [ ] /books 페이지 정상 동작
-- [ ] /books/[slug] 상세 페이지 정상 동작
-- [ ] 헤더에 '책' 메뉴 표시
-- [ ] 관리자 CRUD 기능 동작
+- [x] All "Must Have" present
+- [x] All "Must NOT Have" absent
+- [x] All tests pass
+- [x] /books 페이지 정상 동작
+- [x] /books/[slug] 상세 페이지 정상 동작
+- [x] 헤더에 '책' 메뉴 표시
+- [x] 관리자 CRUD 기능 동작
