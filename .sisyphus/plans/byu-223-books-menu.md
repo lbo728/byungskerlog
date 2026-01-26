@@ -455,7 +455,7 @@ Task 10 (Integration)
 
 ---
 
-- [ ] 9. BookFormModal - 책 추가/수정 모달
+- [x] 9. BookFormModal - 책 추가/수정 모달
 
   **What to do**:
   - `components/books/BookFormModal.tsx` 생성
