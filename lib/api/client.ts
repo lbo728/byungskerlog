@@ -62,8 +62,12 @@ export const apiClient = {
     return handleResponse<T>(response);
   },
 
-  delete: async <T = void>(url: string): Promise<T> => {
-    const response = await fetch(url, { method: "DELETE" });
+  delete: async <T = void, D = unknown>(url: string, data?: D): Promise<T> => {
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: data ? { "Content-Type": "application/json" } : undefined,
+      body: data ? JSON.stringify(data) : undefined,
+    });
     if (response.status === 204) {
       return undefined as T;
     }

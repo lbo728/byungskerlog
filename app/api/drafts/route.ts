@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { ApiError, handleApiError } from "@/lib/api/errors";
@@ -43,5 +44,57 @@ export async function POST(request: Request) {
     return NextResponse.json(draft, { status: 201 });
   } catch (error) {
     return handleApiError(error, "Failed to create draft");
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const user = await getAuthUser();
+    if (!user) {
+      throw ApiError.unauthorized();
+    }
+
+    const body = await request.json();
+    const { ids, deleteAll } = body as { ids?: string[]; deleteAll?: boolean };
+
+    if (deleteAll) {
+      const result = await prisma.draft.deleteMany({
+        where: { authorId: user.id },
+      });
+
+      revalidatePath("/admin/drafts");
+      return NextResponse.json({ success: true, deletedCount: result.count });
+    }
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      throw ApiError.validationError("ids array is required");
+    }
+
+    const existingDrafts = await prisma.draft.findMany({
+      where: {
+        id: { in: ids },
+        authorId: user.id,
+      },
+      select: { id: true },
+    });
+
+    const existingIds = existingDrafts.map((d) => d.id);
+    const notFoundIds = ids.filter((id) => !existingIds.includes(id));
+
+    if (notFoundIds.length > 0) {
+      throw ApiError.notFound(`Drafts not found: ${notFoundIds.join(", ")}`);
+    }
+
+    const result = await prisma.draft.deleteMany({
+      where: {
+        id: { in: ids },
+        authorId: user.id,
+      },
+    });
+
+    revalidatePath("/admin/drafts");
+    return NextResponse.json({ success: true, deletedCount: result.count });
+  } catch (error) {
+    return handleApiError(error, "Failed to delete drafts");
   }
 }
