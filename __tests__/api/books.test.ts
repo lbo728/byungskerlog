@@ -144,3 +144,207 @@ describe("POST /api/books", () => {
     expect(response.status).toBe(400);
   });
 });
+
+// Helper functions for [id] endpoint tests
+function createGetByIdRequest(id: string): NextRequest {
+  return new NextRequest(new URL(`/api/books/${id}`, "http://localhost:3000"), {
+    method: "GET",
+  });
+}
+
+function createPutRequest(id: string, body: object): NextRequest {
+  return new NextRequest(new URL(`/api/books/${id}`, "http://localhost:3000"), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+function createDeleteRequest(id: string): NextRequest {
+  return new NextRequest(new URL(`/api/books/${id}`, "http://localhost:3000"), {
+    method: "DELETE",
+  });
+}
+
+describe("GET /api/books/[id]", () => {
+  beforeEach(() => {
+    resetPrismaMocks();
+  });
+
+  it("책 상세를 성공적으로 조회한다", async () => {
+    const mockBook = {
+      id: "book-1",
+      title: "클린 코드",
+      author: "로버트 C. 마틴",
+      slug: "clean-code",
+      coverImage: "https://example.com/clean-code.jpg",
+      readAt: new Date("2024-01-15"),
+      summary: "좋은 코드를 작성하는 방법",
+      createdAt: new Date("2024-01-01"),
+      updatedAt: new Date("2024-01-01"),
+      posts: [
+        { id: "post-1", title: "Chapter 1" },
+        { id: "post-2", title: "Chapter 2" },
+      ],
+    };
+
+    mockPrisma.book.findUnique.mockResolvedValue(mockBook);
+
+    const { GET: GET_BY_ID } = await import("@/app/api/books/[id]/route");
+    const response = await GET_BY_ID(createGetByIdRequest("book-1"), {
+      params: Promise.resolve({ id: "book-1" }),
+    });
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.title).toBe("클린 코드");
+    expect(data.posts).toHaveLength(2);
+    expect(mockPrisma.book.findUnique).toHaveBeenCalledWith({
+      where: { id: "book-1" },
+      include: { posts: true },
+    });
+  });
+
+  it("존재하지 않는 책은 404를 반환한다", async () => {
+    mockPrisma.book.findUnique.mockResolvedValue(null);
+
+    const { GET: GET_BY_ID } = await import("@/app/api/books/[id]/route");
+    const response = await GET_BY_ID(createGetByIdRequest("nonexistent"), {
+      params: Promise.resolve({ id: "nonexistent" }),
+    });
+
+    expect(response.status).toBe(404);
+  });
+});
+
+describe("PUT /api/books/[id]", () => {
+  beforeEach(() => {
+    resetPrismaMocks();
+    mockGetAuthUser.mockReset();
+  });
+
+  it("인증된 사용자가 책을 수정한다", async () => {
+    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as any);
+    mockPrisma.book.findUnique.mockResolvedValue({
+      id: "book-1",
+      title: "Old Title",
+      author: "Old Author",
+      slug: "old-title",
+      coverImage: null,
+      readAt: null,
+      summary: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    mockPrisma.book.update.mockResolvedValue({
+      id: "book-1",
+      title: "New Title",
+      author: "New Author",
+      slug: "old-title", // slug is immutable
+      coverImage: "https://example.com/cover.jpg",
+      readAt: new Date("2024-01-15"),
+      summary: "Updated summary",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const { PUT } = await import("@/app/api/books/[id]/route");
+    const request = createPutRequest("book-1", {
+      title: "New Title",
+      author: "New Author",
+      coverImage: "https://example.com/cover.jpg",
+      readAt: "2024-01-15",
+      summary: "Updated summary",
+    });
+    const response = await PUT(request, { params: Promise.resolve({ id: "book-1" }) });
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.title).toBe("New Title");
+    expect(data.author).toBe("New Author");
+  });
+
+  it("인증되지 않은 사용자는 401을 받는다", async () => {
+    mockGetAuthUser.mockResolvedValue(null);
+
+    const { PUT } = await import("@/app/api/books/[id]/route");
+    const request = createPutRequest("book-1", { title: "Test" });
+    const response = await PUT(request, { params: Promise.resolve({ id: "book-1" }) });
+
+    expect(response.status).toBe(401);
+  });
+
+  it("존재하지 않는 책은 404를 반환한다", async () => {
+    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as any);
+    mockPrisma.book.findUnique.mockResolvedValue(null);
+
+    const { PUT } = await import("@/app/api/books/[id]/route");
+    const request = createPutRequest("nonexistent", { title: "Test" });
+    const response = await PUT(request, { params: Promise.resolve({ id: "nonexistent" }) });
+
+    expect(response.status).toBe(404);
+  });
+});
+
+describe("DELETE /api/books/[id]", () => {
+  beforeEach(() => {
+    resetPrismaMocks();
+    mockGetAuthUser.mockReset();
+  });
+
+  it("인증된 사용자가 책을 삭제한다", async () => {
+    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as any);
+    mockPrisma.book.findUnique.mockResolvedValue({
+      id: "book-1",
+      title: "Test Book",
+      author: "Test Author",
+      slug: "test-book",
+      coverImage: null,
+      readAt: null,
+      summary: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    mockPrisma.book.delete.mockResolvedValue({
+      id: "book-1",
+      title: "Test Book",
+      author: "Test Author",
+      slug: "test-book",
+      coverImage: null,
+      readAt: null,
+      summary: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const { DELETE } = await import("@/app/api/books/[id]/route");
+    const request = createDeleteRequest("book-1");
+    const response = await DELETE(request, { params: Promise.resolve({ id: "book-1" }) });
+
+    expect(response.status).toBe(204);
+    expect(mockPrisma.book.delete).toHaveBeenCalledWith({
+      where: { id: "book-1" },
+    });
+  });
+
+  it("인증되지 않은 사용자는 401을 받는다", async () => {
+    mockGetAuthUser.mockResolvedValue(null);
+
+    const { DELETE } = await import("@/app/api/books/[id]/route");
+    const request = createDeleteRequest("book-1");
+    const response = await DELETE(request, { params: Promise.resolve({ id: "book-1" }) });
+
+    expect(response.status).toBe(401);
+  });
+
+  it("존재하지 않는 책은 404를 반환한다", async () => {
+    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as any);
+    mockPrisma.book.findUnique.mockResolvedValue(null);
+
+    const { DELETE } = await import("@/app/api/books/[id]/route");
+    const request = createDeleteRequest("nonexistent");
+    const response = await DELETE(request, { params: Promise.resolve({ id: "nonexistent" }) });
+
+    expect(response.status).toBe(404);
+  });
+});
