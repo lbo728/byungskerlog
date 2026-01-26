@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { ApiError, handleApiError } from "@/lib/api/errors";
@@ -92,6 +93,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     await prisma.draft.delete({
       where: { id },
     });
+
+    revalidatePath("/admin/drafts");
 
     return NextResponse.json({ success: true });
   } catch (error) {

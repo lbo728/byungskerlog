@@ -15,7 +15,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const post = await prisma.post.findUnique({
       where: { id },
-      select: { slug: true },
+      select: { slug: true, type: true },
     });
 
     if (!post) {
@@ -31,6 +31,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     revalidatePath("/short-posts");
     revalidatePath("/tags");
     revalidatePath(`/posts/${post.slug}`);
+    revalidatePath("/admin/posts");
+
+    if (post.type === "SHORT") {
+      revalidatePath(`/short/${post.slug}`);
+    }
 
     return NextResponse.json({ message: "Post deleted successfully" }, { status: 200 });
   } catch (error) {
