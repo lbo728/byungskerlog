@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { ShortPostsPageLoader } from "@/components/short-post/ShortPostsPageLoader";
 import { ShortPostsSkeleton } from "@/components/skeleton/ShortPostsSkeleton";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { PageRefreshWrapper } from "@/components/common/PageRefreshWrapper";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;
@@ -30,18 +31,20 @@ export default async function ShortPostsPage({ searchParams }: ShortPostsPagePro
   const page = parseInt(params.page || "1");
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="max-w-5xl mx-auto">
-        <div className="short-posts-header flex items-baseline gap-3 mb-8">
-          <h1 className="text-4xl font-bold">Shorts</h1>
-          <Suspense fallback={<Skeleton className="h-7 w-8" />}>
-            <ShortPostsPageLoader page={page} countOnly />
+    <PageRefreshWrapper>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-5xl mx-auto">
+          <div className="short-posts-header flex items-baseline gap-3 mb-8">
+            <h1 className="text-4xl font-bold">Shorts</h1>
+            <Suspense fallback={<Skeleton className="h-7 w-8" />}>
+              <ShortPostsPageLoader page={page} countOnly />
+            </Suspense>
+          </div>
+          <Suspense fallback={<ShortPostsSkeleton />}>
+            <ShortPostsPageLoader page={page} />
           </Suspense>
         </div>
-        <Suspense fallback={<ShortPostsSkeleton />}>
-          <ShortPostsPageLoader page={page} />
-        </Suspense>
       </div>
-    </div>
+    </PageRefreshWrapper>
   );
 }
