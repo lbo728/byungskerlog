@@ -12,21 +12,23 @@ This project uses **Neon PostgreSQL** with branch-based development workflow.
 
 ### Environment Structure
 
-| Environment | Neon Branch | Database Endpoint | Environment File | Usage |
-|-------------|-------------|-------------------|------------------|-------|
-| **Production** | `main` | `ep-old-poetry-a16nvu2i` | `.env` | Vercel production, CI/CD |
-| **Development** | `dev` | `ep-wandering-tree-a11ymokd` | `.env.local` | Local development |
+| Environment     | Neon Branch | Database Endpoint            | Environment File | Usage                    |
+| --------------- | ----------- | ---------------------------- | ---------------- | ------------------------ |
+| **Production**  | `main`      | `ep-old-poetry-a16nvu2i`     | `.env`           | Vercel production, CI/CD |
+| **Development** | `dev`       | `ep-wandering-tree-a11ymokd` | `.env.local`     | Local development        |
 
 **Key Point:** `.env.local` overrides `.env` during local development (`npm run dev`).
 
 ### Neon Branching Model
 
 Neon branches are **copy-on-write** snapshots of your database:
+
 - `main` branch: Production data (live)
 - `dev` branch: Development data (snapshot from main + local changes)
 - Each branch has independent data and schema
 
 **Benefits:**
+
 - ✅ Develop safely without affecting production
 - ✅ Test migrations on real-like data
 - ✅ Instant branch creation (COW snapshot)
@@ -35,14 +37,15 @@ Neon branches are **copy-on-write** snapshots of your database:
 
 This project uses **`prisma migrate`** for all schema changes. **NEVER use `prisma db push` for production.**
 
-| Command | Environment | Purpose |
-|---------|-------------|---------|
-| `npx prisma migrate dev` | Local dev | Create and apply migrations |
+| Command                     | Environment   | Purpose                        |
+| --------------------------- | ------------- | ------------------------------ |
+| `npx prisma migrate dev`    | Local dev     | Create and apply migrations    |
 | `npx prisma migrate deploy` | Production/CI | Apply existing migrations only |
-| `npx prisma generate` | All | Regenerate Prisma Client |
-| `npx prisma studio` | All | GUI database browser |
+| `npx prisma generate`       | All           | Regenerate Prisma Client       |
+| `npx prisma studio`         | All           | GUI database browser           |
 
 **Why `migrate` over `db push`?**
+
 - ✅ Migration history tracking (`prisma/migrations/`)
 - ✅ Safe rollback capability
 - ✅ Team collaboration (commit migration files)
@@ -122,6 +125,7 @@ npx prisma migrate deploy
 ### Migration Safety Rules (BLOCKING)
 
 ⛔ **NEVER:**
+
 - Use `prisma db push` on production
 - Use `--accept-data-loss` flag
 - Edit migration files after they're committed
@@ -129,6 +133,7 @@ npx prisma migrate deploy
 - Run `migrate dev` in CI/CD (use `migrate deploy` only)
 
 ✅ **ALWAYS:**
+
 - Create migrations with `migrate dev` locally
 - Review generated SQL before committing
 - Test migrations on dev branch first
@@ -156,6 +161,7 @@ npx prisma validate         # Validate schema.prisma syntax
 ### Environment Variable Management
 
 **Local (`.env.local`):**
+
 ```bash
 # Development Database (Neon dev branch)
 DATABASE_URL="postgresql://neondb_owner:password@ep-wandering-tree-a11ymokd-pooler.region.aws.neon.tech/neondb?sslmode=require"
@@ -163,6 +169,7 @@ DATABASE_URL_UNPOOLED="postgresql://neondb_owner:password@ep-wandering-tree-a11y
 ```
 
 **Production (`.env` - DO NOT MODIFY):**
+
 ```bash
 # Production Database (Neon main branch)
 DATABASE_URL="postgresql://neondb_owner:password@ep-old-poetry-a16nvu2i-pooler.region.aws.neon.tech/neondb?sslmode=require"
@@ -170,12 +177,14 @@ DATABASE_URL_UNPOOLED="postgresql://neondb_owner:password@ep-old-poetry-a16nvu2i
 ```
 
 **Vercel Environment Variables:**
+
 - Production: Uses `DATABASE_URL` secret (Neon main branch)
 - Preview: Can use dev branch for PR previews (optional)
 
 ### Troubleshooting
 
 #### "Migration already applied" error
+
 ```bash
 # Check migration status
 npx prisma migrate status
@@ -185,6 +194,7 @@ npx prisma migrate resolve --applied <migration_name>
 ```
 
 #### Schema drift detected
+
 ```bash
 # Compare schema with database
 npx prisma migrate status
@@ -194,6 +204,7 @@ npx prisma migrate reset
 ```
 
 #### Database connection errors
+
 ```bash
 # Verify DATABASE_URL
 echo $DATABASE_URL
@@ -307,6 +318,34 @@ export function usePost(id: string, options: UsePostOptions = {}) {
 - Test loading/success/error states for hooks
 - Test success/failure cases for API client
 - Use `renderHook` with `createWrapper()` for React Query hooks
+
+### API Route Tests (WHEN TO RUN)
+
+다음 API를 수정/리팩토링/버그수정할 때 **반드시** 테스트 실행:
+
+| API                         | 테스트 파일                      | 실행 명령                                          |
+| --------------------------- | -------------------------------- | -------------------------------------------------- |
+| `app/api/posts/route.ts`    | `__tests__/api/posts.test.ts`    | `npm test -- --run __tests__/api/posts.test.ts`    |
+| `app/api/comments/route.ts` | `__tests__/api/comments.test.ts` | `npm test -- --run __tests__/api/comments.test.ts` |
+| `app/api/drafts/route.ts`   | `__tests__/api/drafts.test.ts`   | `npm test -- --run __tests__/api/drafts.test.ts`   |
+| `app/api/series/route.ts`   | `__tests__/api/series.test.ts`   | `npm test -- --run __tests__/api/series.test.ts`   |
+
+**작업 흐름:**
+
+1. API 코드 수정 전: `npm test -- --run __tests__/api/해당파일.test.ts` (기존 동작 확인)
+2. API 코드 수정 후: 같은 명령 재실행 (기존 동작 유지 확인)
+3. PR 전: `npm test` (전체 테스트)
+
+**테스트 실패 시:**
+
+- API 로직 버그 → API 코드 수정
+- 테스트 코드가 잘못됨 (outdated, 잘못된 기대값) → 테스트 코드 수정
+- 새 기능 추가로 기존 동작 변경 → 테스트 코드 업데이트
+
+**테스트 커버리지가 없는 API 수정 시:**
+
+- 테스트 추가 필수 아님 (선택)
+- 단, 버그 수정 시에는 재발 방지용 테스트 추가 권장
 
 ## Git Conventions
 
