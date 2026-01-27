@@ -53,15 +53,16 @@ model Series {
 }
 
 model Book {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   title      String
   author     String
-  slug       String   @unique
+  slug       String    @unique
   coverImage String?
-  readAt     DateTime?
+  startedAt  DateTime?
+  finishedAt DateTime?
   summary    String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   posts      Post[]
 }
 

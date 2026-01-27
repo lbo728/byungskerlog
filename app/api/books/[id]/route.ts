@@ -43,7 +43,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         title: body.title,
         author: body.author,
         coverImage: body.coverImage,
-        readAt: body.readAt ? new Date(body.readAt) : null,
+        startedAt: body.startedAt ? new Date(body.startedAt) : null,
+        finishedAt: body.finishedAt ? new Date(body.finishedAt) : null,
         summary: body.summary,
       },
     });

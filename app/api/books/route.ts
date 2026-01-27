@@ -11,7 +11,7 @@ export async function GET() {
           select: { posts: true },
         },
       },
-      orderBy: { readAt: "desc" },
+      orderBy: { finishedAt: "desc" },
     });
 
     return NextResponse.json(books);
@@ -50,7 +50,8 @@ export async function POST(request: Request) {
         author: body.author || "",
         slug,
         coverImage: body.coverImage || null,
-        readAt: body.readAt ? new Date(body.readAt) : null,
+        startedAt: body.startedAt ? new Date(body.startedAt) : null,
+        finishedAt: body.finishedAt ? new Date(body.finishedAt) : null,
         summary: body.summary || null,
       },
     });
