@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { BookFormModal } from "@/components/books/BookFormModal";
+import { useDeleteBook } from "@/hooks/useDeleteBook";
 
 interface BookDetailPageClientProps {
   book: {
@@ -13,7 +15,8 @@ interface BookDetailPageClientProps {
     title: string;
     author: string | null;
     coverImage: string | null;
-    readAt: Date | null;
+    startedAt: Date | null;
+    finishedAt: Date | null;
     summary: string | null;
     posts: Array<{
       id: string;
@@ -30,6 +33,7 @@ export function BookDetailPageClient({ book, isAdmin }: BookDetailPageClientProp
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("edit");
+  const { deleteBook } = useDeleteBook({ redirectTo: "/books" });
 
   const handleEdit = () => {
     setModalMode("edit");
@@ -54,9 +58,13 @@ export function BookDetailPageClient({ book, isAdmin }: BookDetailPageClientProp
             <h1 className="text-3xl font-bold mb-2">{book.title}</h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-4">{book.author}</p>
 
-            {book.readAt && (
+            {(book.startedAt || book.finishedAt) && (
               <p className="text-sm text-gray-500 mb-4">
-                읽은 날짜: {new Date(book.readAt).toLocaleDateString("ko-KR")}
+                {book.startedAt && book.finishedAt
+                  ? `${new Date(book.startedAt).toLocaleDateString("ko-KR")} - ${new Date(book.finishedAt).toLocaleDateString("ko-KR")}`
+                  : book.startedAt
+                    ? `${new Date(book.startedAt).toLocaleDateString("ko-KR")} -`
+                    : `- ${new Date(book.finishedAt!).toLocaleDateString("ko-KR")}`}
               </p>
             )}
 
@@ -70,6 +78,10 @@ export function BookDetailPageClient({ book, isAdmin }: BookDetailPageClientProp
               <div className="admin-actions flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleEdit}>
                   수정
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => deleteBook(book.id, book.title)}>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  삭제
                 </Button>
               </div>
             )}

@@ -15,7 +15,7 @@ async function getBooks() {
         select: { posts: true },
       },
     },
-    orderBy: { readAt: "desc" },
+    orderBy: { finishedAt: "desc" },
   });
 }
 
@@ -24,5 +24,11 @@ export default async function BooksPage() {
   const user = await getAuthUser();
   const isAdmin = user != null;
 
-  return <BooksPageClient books={books} isAdmin={isAdmin} />;
+  return (
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto">
+        <BooksPageClient books={books} isAdmin={isAdmin} />
+      </div>
+    </div>
+  );
 }

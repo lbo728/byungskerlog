@@ -38,10 +38,18 @@ export default function BookCard({ book }: BookCardProps) {
         <p className="book-author text-sm text-gray-600 dark:text-gray-400 mb-2">{book.author || "저자 미상"}</p>
         <div className="book-meta flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 h-4">
           <span>관련글 {book._count.posts}개</span>
-          {book.readAt && (
+          {(book.startedAt || book.finishedAt) && (
             <>
               <span>·</span>
-              <span>{new Date(book.readAt).getFullYear()}년</span>
+              <span>
+                {book.startedAt && book.finishedAt
+                  ? `${new Date(book.startedAt).getFullYear()}년 - ${new Date(book.finishedAt).getFullYear()}년`
+                  : book.finishedAt
+                    ? `${new Date(book.finishedAt).getFullYear()}년`
+                    : book.startedAt
+                      ? `${new Date(book.startedAt).getFullYear()}년 -`
+                      : ""}
+              </span>
             </>
           )}
         </div>
