@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2, ArrowLeft, Search, X, Upload, Link as LinkIcon, Image as ImageIcon } from "lucide-react";
 
@@ -67,13 +69,14 @@ function validateUrl(value: string): string | null {
 }
 
 export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: BookFormModalProps) {
+  const isMobile = useMediaQuery("(max-width: 767px)");
   const [step, setStep] = useState<1 | 2>(mode === "edit" ? 2 : 1);
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
-  const [startedAt, setStartedAt] = useState("");
-  const [finishedAt, setFinishedAt] = useState("");
+  const [startedAt, setStartedAt] = useState<Date | undefined>(undefined);
+  const [finishedAt, setFinishedAt] = useState<Date | undefined>(undefined);
   const [summary, setSummary] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -99,8 +102,8 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
         setTitle(book.title);
         setAuthor(book.author || "");
         setCoverImage(book.coverImage || "");
-        setStartedAt(book.startedAt ? new Date(book.startedAt).toISOString().split("T")[0] : "");
-        setFinishedAt(book.finishedAt ? new Date(book.finishedAt).toISOString().split("T")[0] : "");
+        setStartedAt(book.startedAt ? new Date(book.startedAt) : undefined);
+        setFinishedAt(book.finishedAt ? new Date(book.finishedAt) : undefined);
         setSummary(book.summary || "");
         setStep(2);
       } else {
@@ -108,8 +111,8 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
         setAuthor("");
         setCoverImage("");
         setCoverImageFile(null);
-        setStartedAt("");
-        setFinishedAt("");
+        setStartedAt(undefined);
+        setFinishedAt(undefined);
         setSummary("");
         setStep(1);
         setSearchQuery("");
@@ -331,8 +334,8 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
         title: trimmedTitle,
         author: trimmedAuthor || null,
         coverImage: trimmedCoverImage || null,
-        startedAt: startedAt ? new Date(startedAt).toISOString() : null,
-        finishedAt: finishedAt ? new Date(finishedAt).toISOString() : null,
+        startedAt: startedAt?.toISOString() || null,
+        finishedAt: finishedAt?.toISOString() || null,
         summary: trimmedSummary || null,
       };
 
@@ -393,8 +396,8 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
     title !== (book?.title || "") ||
     author !== (book?.author || "") ||
     coverImage !== (book?.coverImage || "") ||
-    startedAt !== (book?.startedAt ? new Date(book.startedAt).toISOString().split("T")[0] : "") ||
-    finishedAt !== (book?.finishedAt ? new Date(book.finishedAt).toISOString().split("T")[0] : "") ||
+    startedAt?.getTime() !== (book?.startedAt ? new Date(book.startedAt).getTime() : undefined) ||
+    finishedAt?.getTime() !== (book?.finishedAt ? new Date(book.finishedAt).getTime() : undefined) ||
     summary !== (book?.summary || "");
 
   const handleDialogClose = (isOpen: boolean) => {
@@ -547,14 +550,13 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
   const inputStepContentDesktop = (
     <div className="book-input-step h-full flex flex-col overflow-hidden py-4">
       {mode === "add" && (
-        <Button type="button" variant="ghost" size="sm" onClick={() => setStep(1)} className="mb-2 flex-shrink-0">
+        <Button type="button" variant="ghost" size="sm" onClick={() => setStep(1)} className="mb-2 w-fit">
           <ArrowLeft className="h-4 w-4 mr-2" />
           뒤로가기
         </Button>
       )}
 
       <div className="book-form-content flex-1 flex flex-row gap-6 overflow-hidden">
-        {/* LEFT: Thumbnail section */}
         <div className="thumbnail-column w-[150px] flex-shrink-0 space-y-2">
           <Label className="text-sm font-medium">표지 이미지</Label>
           <button
@@ -602,29 +604,17 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
           </div>
 
           <div className="started-at-section space-y-2">
-            <Label htmlFor="startedAt" className="text-sm font-medium">
+            <Label className="text-sm font-medium">
               독서 시작일 <span className="text-muted-foreground font-normal">(선택)</span>
             </Label>
-            <Input
-              id="startedAt"
-              type="date"
-              value={startedAt}
-              onChange={(e) => setStartedAt(e.target.value)}
-              disabled={isLoading}
-            />
+            <DatePicker value={startedAt} onChange={setStartedAt} placeholder="시작일 선택" disabled={isLoading} />
           </div>
 
           <div className="finished-at-section space-y-2">
-            <Label htmlFor="finishedAt" className="text-sm font-medium">
+            <Label className="text-sm font-medium">
               독서 완료일 <span className="text-muted-foreground font-normal">(선택)</span>
             </Label>
-            <Input
-              id="finishedAt"
-              type="date"
-              value={finishedAt}
-              onChange={(e) => setFinishedAt(e.target.value)}
-              disabled={isLoading}
-            />
+            <DatePicker value={finishedAt} onChange={setFinishedAt} placeholder="완료일 선택" disabled={isLoading} />
           </div>
 
           <div className="summary-section space-y-2">
@@ -646,21 +636,21 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
   );
 
   const inputStepContentMobile = (
-    <div className="book-input-step h-full flex flex-col overflow-hidden py-4">
+    <div className="book-input-step h-full flex flex-col overflow-hidden">
       {mode === "add" && (
-        <Button type="button" variant="ghost" size="sm" onClick={() => setStep(1)} className="mb-2 flex-shrink-0">
+        <Button type="button" variant="ghost" size="sm" onClick={() => setStep(1)} className="mb-3 w-fit">
           <ArrowLeft className="h-4 w-4 mr-2" />
           뒤로가기
         </Button>
       )}
 
-      <div className="book-form-content flex-1 overflow-y-auto space-y-4">
+      <div className="book-form-content flex-1 overflow-y-auto space-y-5">
         <div className="thumbnail-section space-y-2">
           <Label className="text-sm font-medium">표지 이미지</Label>
           <button
             type="button"
             onClick={handleThumbnailClick}
-            className="thumbnail-preview w-full h-48 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center overflow-hidden hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+            className="thumbnail-preview w-full h-56 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center overflow-hidden hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
           >
             {coverImage ? (
               <img src={coverImage} alt="표지 미리보기" className="max-w-full max-h-full object-contain" />
@@ -675,11 +665,11 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
 
         <div className="inputs-section space-y-4">
           <div className="title-section space-y-2">
-            <Label htmlFor="title" className="text-sm font-medium">
+            <Label htmlFor="title-mobile" className="text-sm font-medium">
               제목 <span className="text-destructive">*</span>
             </Label>
             <Input
-              id="title"
+              id="title-mobile"
               placeholder="책 제목"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -688,11 +678,11 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
           </div>
 
           <div className="author-section space-y-2">
-            <Label htmlFor="author" className="text-sm font-medium">
+            <Label htmlFor="author-mobile" className="text-sm font-medium">
               저자 <span className="text-muted-foreground font-normal">(선택)</span>
             </Label>
             <Input
-              id="author"
+              id="author-mobile"
               placeholder="저자명"
               value={author}
               onChange={(e) => setAuthor(e.target.value)}
@@ -701,37 +691,25 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
           </div>
 
           <div className="started-at-section space-y-2">
-            <Label htmlFor="startedAt" className="text-sm font-medium">
+            <Label className="text-sm font-medium">
               독서 시작일 <span className="text-muted-foreground font-normal">(선택)</span>
             </Label>
-            <Input
-              id="startedAt"
-              type="date"
-              value={startedAt}
-              onChange={(e) => setStartedAt(e.target.value)}
-              disabled={isLoading}
-            />
+            <DatePicker value={startedAt} onChange={setStartedAt} placeholder="시작일 선택" disabled={isLoading} />
           </div>
 
           <div className="finished-at-section space-y-2">
-            <Label htmlFor="finishedAt" className="text-sm font-medium">
+            <Label className="text-sm font-medium">
               독서 완료일 <span className="text-muted-foreground font-normal">(선택)</span>
             </Label>
-            <Input
-              id="finishedAt"
-              type="date"
-              value={finishedAt}
-              onChange={(e) => setFinishedAt(e.target.value)}
-              disabled={isLoading}
-            />
+            <DatePicker value={finishedAt} onChange={setFinishedAt} placeholder="완료일 선택" disabled={isLoading} />
           </div>
 
           <div className="summary-section space-y-2">
-            <Label htmlFor="summary" className="text-sm font-medium">
+            <Label htmlFor="summary-mobile" className="text-sm font-medium">
               요약 <span className="text-muted-foreground font-normal">(선택)</span>
             </Label>
             <Textarea
-              id="summary"
+              id="summary-mobile"
               placeholder="책에 대한 간단한 요약이나 감상을 작성해주세요."
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
@@ -763,7 +741,7 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
 
   return (
     <>
-      <div className="hidden md:block">
+      {!isMobile && (
         <Dialog open={open} onOpenChange={handleDialogClose}>
           <DialogContent
             className="book-form-modal sm:max-w-[700px] h-[600px] max-h-[80vh] flex flex-col"
@@ -783,25 +761,28 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
             {step === 2 && <DialogFooter className="gap-2 flex-shrink-0">{footerContent}</DialogFooter>}
           </DialogContent>
         </Dialog>
-      </div>
+      )}
 
-      <div className="md:hidden">
+      {isMobile && (
         <Sheet open={open} onOpenChange={handleDialogClose}>
-          <SheetContent side="bottom" className="h-[90vh] flex flex-col" onInteractOutside={(e) => e.preventDefault()}>
-            <SheetHeader className="flex-shrink-0">
-              {headerIcon}
+          <SheetContent
+            side="bottom"
+            className="h-[90vh] flex flex-col px-6"
+            onInteractOutside={(e) => e.preventDefault()}
+          >
+            <SheetHeader className="flex-shrink-0 px-0 pt-2 pb-4">
               <SheetTitle>{headerTitle}</SheetTitle>
               <SheetDescription>{headerDescription}</SheetDescription>
             </SheetHeader>
 
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {step === 1 && mode === "add" ? searchStepContent : inputStepContentMobile}
             </div>
 
-            {step === 2 && <SheetFooter className="gap-2 flex-shrink-0">{footerContent}</SheetFooter>}
+            {step === 2 && <SheetFooter className="flex-row gap-3 pt-4 pb-2 p-0 border-t">{footerContent}</SheetFooter>}
           </SheetContent>
         </Sheet>
-      </div>
+      )}
 
       <AlertDialog open={showImageDialog} onOpenChange={setShowImageDialog}>
         <AlertDialogContent>
