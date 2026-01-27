@@ -1,35 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { BookFormModal } from "@/components/books/BookFormModal";
 import BookCard from "@/components/books/BookCard";
 
 interface BooksPageClientProps {
   books: any[];
-  isAdmin: boolean;
 }
 
-export function BooksPageClient({ books, isAdmin }: BooksPageClientProps) {
-  const router = useRouter();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"add" | "edit">("add");
-
-  const handleAddBook = () => {
-    setModalMode("add");
-    setIsModalOpen(true);
-  };
-
-  const handleSuccess = () => {
-    router.refresh();
-  };
-
+export function BooksPageClient({ books }: BooksPageClientProps) {
   return (
     <>
       <div className="books-header flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">읽은 책</h1>
-        {isAdmin && <Button onClick={handleAddBook}>책 추가</Button>}
       </div>
 
       {books.length === 0 ? (
@@ -43,8 +24,6 @@ export function BooksPageClient({ books, isAdmin }: BooksPageClientProps) {
           ))}
         </div>
       )}
-
-      <BookFormModal open={isModalOpen} onOpenChange={setIsModalOpen} mode={modalMode} onSuccess={handleSuccess} />
     </>
   );
 }

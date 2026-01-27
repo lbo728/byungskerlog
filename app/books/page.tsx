@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
 import { BooksPageClient } from "./BooksPageClient";
 
 export const metadata: Metadata = {
@@ -21,13 +20,11 @@ async function getBooks() {
 
 export default async function BooksPage() {
   const books = await getBooks();
-  const user = await getAuthUser();
-  const isAdmin = user != null;
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="max-w-7xl mx-auto">
-        <BooksPageClient books={books} isAdmin={isAdmin} />
+        <BooksPageClient books={books} />
       </div>
     </div>
   );
