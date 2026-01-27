@@ -98,7 +98,7 @@ export default function AdminPostsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
-  const validTabs = ["posts", "series", "analytics", "snippets", "knowledge", "calendar"];
+  const validTabs = ["posts", "series", "analytics", "snippets", "knowledge", "calendar", "books"];
   const activeTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "posts";
 
   const setActiveTab = useCallback(
@@ -550,6 +550,14 @@ export default function AdminPostsPage() {
               >
                 <CalendarDays className="h-4 w-4 mr-2" />
                 캘린더
+              </TabsTrigger>
+              <TabsTrigger
+                value="books"
+                data-tab="books"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4"
+                onClick={() => router.push("/admin/books")}
+              >
+                <BookOpen className="h-4 w-4 mr-2" />책 관리
               </TabsTrigger>
             </TabsList>
           </Tabs>
