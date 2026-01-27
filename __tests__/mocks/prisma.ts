@@ -46,6 +46,15 @@ export const mockPrisma = {
     delete: vi.fn(),
     count: vi.fn(),
   },
+  book: {
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
+  },
   postView: {
     findMany: vi.fn(),
     create: vi.fn(),

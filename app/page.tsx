@@ -23,13 +23,23 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="max-w-5xl mx-auto">
-        <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP || ""} className="mb-8" />
+        <AdSense
+          adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP || ""}
+          adFormat="fluid"
+          adLayoutKey="-fb+5w+4e-db+86"
+          className="mb-8"
+        />
 
         <Suspense fallback={<PostListSkeleton />}>
           <PostListLoader />
         </Suspense>
 
-        <AdSense adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM || ""} className="mt-8" />
+        <AdSense
+          adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM || ""}
+          adFormat="fluid"
+          adLayoutKey="-fb+5w+4e-db+86"
+          className="mt-8"
+        />
       </div>
     </div>
   );

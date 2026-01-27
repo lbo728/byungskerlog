@@ -34,6 +34,7 @@ export function Header() {
     { label: "Posts", href: "/posts" },
     { label: "Shorts", href: "/short-posts" },
     { label: "Series", href: "/series" },
+    { label: "Books", href: "/books" },
     { label: "Tags", href: "/tags" },
     { label: "Product", href: "/products" },
     { label: "About", href: "/about" },

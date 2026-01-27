@@ -5,7 +5,8 @@ import { useIsAdmin } from "@/lib/client-auth";
 
 interface AdSenseProps {
   adSlot: string;
-  adFormat?: string;
+  adFormat?: "auto" | "fluid";
+  adLayoutKey?: string; // Required for In-feed ads (fluid format)
   fullWidthResponsive?: boolean;
   style?: React.CSSProperties;
   className?: string;
@@ -13,7 +14,14 @@ interface AdSenseProps {
 
 type WindowWithAdsbygoogle = Window & { adsbygoogle?: unknown[] };
 
-export function AdSense({ adSlot, adFormat = "auto", fullWidthResponsive = true, style, className }: AdSenseProps) {
+export function AdSense({
+  adSlot,
+  adFormat = "auto",
+  adLayoutKey,
+  fullWidthResponsive = true,
+  style,
+  className,
+}: AdSenseProps) {
   const adClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
@@ -42,6 +50,9 @@ export function AdSense({ adSlot, adFormat = "auto", fullWidthResponsive = true,
     return null;
   }
 
+  // In-feed ad (fluid format) requires layout-key
+  const isInFeedAd = adFormat === "fluid" && adLayoutKey;
+
   return (
     <div className={className} style={style}>
       <ins
@@ -50,7 +61,8 @@ export function AdSense({ adSlot, adFormat = "auto", fullWidthResponsive = true,
         data-ad-client={adClient}
         data-ad-slot={adSlot}
         data-ad-format={adFormat}
-        data-full-width-responsive={fullWidthResponsive.toString()}
+        {...(isInFeedAd && { "data-ad-layout-key": adLayoutKey })}
+        {...(!isInFeedAd && { "data-full-width-responsive": fullWidthResponsive.toString() })}
       />
     </div>
   );

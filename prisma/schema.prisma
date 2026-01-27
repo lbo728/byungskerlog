@@ -18,6 +18,7 @@ model Post {
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
   seriesId              String?
+  bookId                String?
   thumbnail             String?
   subSlug               String?          @unique
   type                  PostType         @default(LONG)
@@ -26,6 +27,7 @@ model Post {
   linkedinContent       String?
   threadsContent        String[]         @default([])
   series                Series?          @relation(fields: [seriesId], references: [id])
+  book                  Book?            @relation(fields: [bookId], references: [id], onDelete: SetNull)
   views                 PostView[]
   readingSessions       ReadingSession[]
   tags                  Tag[]
@@ -36,6 +38,7 @@ model Post {
   linkedLongPost        Post?            @relation("LongToShort")
 
   @@index([seriesId])
+  @@index([bookId])
   @@index([type])
 }
 
@@ -47,6 +50,20 @@ model Series {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   posts       Post[]
+}
+
+model Book {
+  id         String    @id @default(cuid())
+  title      String
+  author     String
+  slug       String    @unique
+  coverImage String?
+  startedAt  DateTime?
+  finishedAt DateTime?
+  summary    String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  posts      Post[]
 }
 
 model PostView {
