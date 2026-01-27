@@ -44,6 +44,16 @@ function validateUrl(value: string): string | null {
   }
 }
 
+interface BookSearchResult {
+  title: string;
+  author: string;
+  isbn: string;
+  coverImage: string;
+  publisher: string;
+  publishDate: string;
+  description: string;
+}
+
 export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: BookFormModalProps) {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
@@ -53,6 +63,10 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
   const [isLoading, setIsLoading] = useState(false);
   const [coverImageError, setCoverImageError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<BookSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   if (open && !isInitialized) {
     if (mode === "edit" && book) {
@@ -74,11 +88,40 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
 
   if (!open && isInitialized) {
     setIsInitialized(false);
+    setSearchQuery("");
+    setSearchResults([]);
   }
 
   const handleCoverImageChange = (value: string) => {
     setCoverImage(value);
     setCoverImageError(validateUrl(value));
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(`/api/books/search?q=${encodeURIComponent(searchQuery)}`);
+      if (!response.ok) throw new Error("Search failed");
+
+      const data = await response.json();
+      setSearchResults(data.results || []);
+    } catch (error) {
+      toast.error("책 검색 중 오류가 발생했습니다");
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectBook = (book: BookSearchResult) => {
+    setTitle(book.title);
+    setAuthor(book.author);
+    setCoverImage(book.coverImage);
+    setSearchResults([]);
+    setSearchQuery("");
+    toast.success("책 정보가 입력되었습니다");
   };
 
   const handleSubmit = useCallback(async () => {
@@ -188,6 +231,47 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
         </DialogHeader>
 
         <div className="book-form space-y-4 py-4">
+          {mode === "add" && (
+            <div className="book-search-section space-y-2 pb-4 border-b">
+              <Label>책 검색</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="책 제목으로 검색"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  disabled={isLoading}
+                />
+                <Button type="button" onClick={handleSearch} disabled={isSearching || isLoading}>
+                  {isSearching ? "검색 중..." : "검색"}
+                </Button>
+              </div>
+              {searchResults.length > 0 && (
+                <div className="search-results max-h-60 overflow-y-auto space-y-2 mt-2">
+                  {searchResults.map((result) => (
+                    <button
+                      key={result.isbn}
+                      type="button"
+                      onClick={() => handleSelectBook(result)}
+                      className="w-full text-left p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <div className="flex gap-3">
+                        {result.coverImage && (
+                          <img src={result.coverImage} alt={result.title} className="w-12 h-16 object-cover rounded" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{result.title}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 truncate">{result.author}</div>
+                          <div className="text-xs text-gray-500">{result.publisher}</div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="title-section space-y-2">
             <Label htmlFor="title" className="text-sm font-medium">
               제목 <span className="text-destructive">*</span>
