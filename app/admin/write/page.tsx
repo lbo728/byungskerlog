@@ -475,7 +475,10 @@ export default function WritePage() {
 
   const handlePublishSuccess = (slug: string) => {
     clearAutoSave();
-    queryClient.invalidateQueries({ queryKey: queryKeys.posts.lists() });
+    // 최상위 키로 무효화하여 모든 하위 쿼리(posts.list, posts.home 등)를 무효화
+    queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.shortPosts.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.tags.all });
     const path = modalPostType === "SHORT" ? `/short/${slug}` : `/posts/${slug}`;
     router.push(path);
     router.refresh();

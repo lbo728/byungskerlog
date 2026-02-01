@@ -42,7 +42,7 @@ export function usePosts(options: UsePostsOptions = {}) {
     queryFn: () => fetchPosts(page, limit, sortBy),
     initialData,
     staleTime: 60 * 60 * 1000, // 1시간
-    refetchOnMount: !initialData, // initialData가 있으면 마운트 시 리패칭 안함
+    refetchOnMount: !initialData || initialData.posts?.length === 0, // 빈 데이터면 리패칭 허용
     refetchOnWindowFocus: false,
     enabled,
   });
@@ -63,7 +63,7 @@ export function useHomePosts(options: UseHomePostsOptions = {}) {
     },
     initialData,
     staleTime: 60 * 60 * 1000, // 1시간
-    refetchOnMount: !initialData,
+    refetchOnMount: !initialData || initialData?.length === 0, // 빈 데이터면 리패칭 허용
     refetchOnWindowFocus: false,
   });
 }

@@ -73,10 +73,10 @@ export async function POST(request: NextRequest) {
                     tagName
                       .toLowerCase()
                       .trim()
-                      .replace(/[^a-z0-9가-힣\s-]/g, "")
+                      .replace(/[^a-z0-9가-힣ㄱ-ㅎㅏ-ㅣ\s-]/g, "")
                       .replace(/\s+/g, "-")
                       .replace(/-+/g, "-")
-                      .replace(/^-|-$/g, "") || "tag",
+                      .replace(/^-|-$/g, "") || `tag-${Date.now()}`,
                 },
               })),
             }
@@ -114,10 +114,10 @@ export async function POST(request: NextRequest) {
                       tagName
                         .toLowerCase()
                         .trim()
-                        .replace(/[^a-z0-9가-힣\s-]/g, "")
+                        .replace(/[^a-z0-9가-힣ㄱ-ㅎㅏ-ㅣ\s-]/g, "")
                         .replace(/\s+/g, "-")
                         .replace(/-+/g, "-")
-                        .replace(/^-|-$/g, "") || "tag",
+                        .replace(/^-|-$/g, "") || `tag-${Date.now()}`,
                   },
                 })),
               }
@@ -148,7 +148,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(post, { status: 201 });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-      return ApiError.duplicateEntry("post with this slug").toResponse();
+      const meta = (error as { meta?: { target?: string[] } }).meta;
+      const target = meta?.target?.join(", ") || "unknown field";
+      return ApiError.duplicateEntry(`entry (${target})`).toResponse();
     }
     return handleApiError(error, "Failed to create post");
   }
