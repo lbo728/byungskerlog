@@ -28,6 +28,7 @@ export function AdSense({
   const pushRef = useRef(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Mount detection for SSR hydration
     setMounted(true);
   }, []);
 

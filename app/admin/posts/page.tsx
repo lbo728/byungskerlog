@@ -181,7 +181,9 @@ export default function AdminPostsPage() {
         break;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Derived state calculation based on periodPreset selection
     setAnalyticsStartDate(startDate.toISOString().split("T")[0]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Derived state calculation based on periodPreset selection
     setAnalyticsEndDate(now.toISOString().split("T")[0]);
   }, [periodPreset]);
 

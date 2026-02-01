@@ -41,11 +41,9 @@ export function CommentForm({
   const [isEditingNickname, setIsEditingNickname] = useState(false);
 
   useEffect(() => {
-    if (forceNewIdentity) {
-      setIdentity(getRandomIdentity());
-    } else {
-      setIdentity(getOrCreateIdentity());
-    }
+    const newIdentity = forceNewIdentity ? getRandomIdentity() : getOrCreateIdentity();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial identity setup requires localStorage access
+    setIdentity(newIdentity);
   }, [forceNewIdentity]);
 
   const isDisabled = disabled || isSubmitting;

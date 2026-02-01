@@ -24,6 +24,7 @@ export function CommentList({ postId, isAdmin = false }: CommentListProps) {
 
   useEffect(() => {
     const id = getOrCreateAnonymousId();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial anonymousId setup requires localStorage access
     setAnonymousId(id);
   }, []);
 

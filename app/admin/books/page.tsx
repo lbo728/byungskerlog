@@ -212,7 +212,7 @@ export default function AdminBooksPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>책 삭제</AlertDialogTitle>
             <AlertDialogDescription>
-              "{bookToDelete?.title}"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+              &quot;{bookToDelete?.title}&quot;을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

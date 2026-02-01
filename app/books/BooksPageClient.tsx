@@ -2,8 +2,16 @@
 
 import BookCard from "@/components/books/BookCard";
 
+import type { Book } from "@prisma/client";
+
+type BookWithCount = Book & {
+  _count: {
+    posts: number;
+  };
+};
+
 interface BooksPageClientProps {
-  books: any[];
+  books: BookWithCount[];
 }
 
 export function BooksPageClient({ books }: BooksPageClientProps) {

@@ -1,7 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-
 interface CommentSkeletonProps {
   count?: number;
 }
