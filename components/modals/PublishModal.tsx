@@ -147,6 +147,10 @@ export function PublishModal({
   const [shortPostContent, setShortPostContent] = useState("");
   const [shortPostSlug, setShortPostSlug] = useState("");
 
+  // 중복 slug 에러 시 새 포스트에서도 slug 입력 허용
+  const [showSlugInputForNewPost, setShowSlugInputForNewPost] = useState(false);
+  const [newPostSlug, setNewPostSlug] = useState("");
+
   const { mutate: convertWithAI, isPending: isAILoading } = useSocialMediaConvert();
   const { data: presets } = useKnowledgePresets();
 
@@ -160,6 +164,8 @@ export function PublishModal({
       setCreateShortPost(false);
       setShortPostContent(formatSnsContent(title, content));
       setShortPostSlug("");
+      setShowSlugInputForNewPost(false);
+      setNewPostSlug("");
 
       if (isEditMode && postType === "SHORT") {
         if (initialLinkedinContent) {
@@ -388,7 +394,7 @@ export function PublishModal({
           body: JSON.stringify(editData),
         });
       } else {
-        const newSlug = generateSlug(title);
+        const newSlug = showSlugInputForNewPost && newPostSlug ? newPostSlug : generateSlug(title);
         response = await fetch("/api/posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -414,7 +420,16 @@ export function PublishModal({
       onOpenChange(false);
       onPublishSuccess(post.slug);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "발행에 실패했습니다.");
+      const errorMessage = err instanceof Error ? err.message : "발행에 실패했습니다.";
+      if (errorMessage.toLowerCase().includes("slug") || errorMessage.includes("DUPLICATE")) {
+        setShowSlugInputForNewPost(true);
+        if (!newPostSlug) {
+          setNewPostSlug(generateSlug(title));
+        }
+        setError("이 URL은 이미 사용 중입니다. 아래에서 URL을 수정해주세요.");
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsPublishing(false);
     }
@@ -439,6 +454,8 @@ export function PublishModal({
     createShortPost,
     shortPostContent,
     shortPostSlug,
+    showSlugInputForNewPost,
+    newPostSlug,
   ]);
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -483,69 +500,80 @@ export function PublishModal({
 
       <SeriesSelect value={seriesId} onChange={onSeriesIdChange} disabled={isPublishing} />
 
-      {isEditMode && (
+      {(isEditMode || showSlugInputForNewPost) && (
         <div className="slug-edit-section space-y-4 border-t pt-4">
           <div className="main-slug-field space-y-2">
-            <Label className="text-sm font-medium">Main Slug</Label>
+            <Label className="text-sm font-medium">{isEditMode ? "Main Slug" : "URL"}</Label>
             <div className="text-xs text-muted-foreground mb-1">
-              /posts/<span className="text-foreground font-medium">{slug || "your-slug"}</span>
+              /posts/
+              <span className="text-foreground font-medium">
+                {isEditMode ? slug || "your-slug" : newPostSlug || "your-slug"}
+              </span>
             </div>
             <Input
               placeholder="main-slug"
-              value={slug}
-              onChange={(e) => handleSlugInputChange(e.target.value)}
+              value={isEditMode ? slug : newPostSlug}
+              onChange={(e) => {
+                const normalized = e.target.value.toLowerCase().replace(/\s+/g, "-");
+                if (isEditMode) {
+                  handleSlugInputChange(normalized);
+                } else {
+                  setNewPostSlug(normalized);
+                }
+              }}
               disabled={isPublishing}
               className="font-mono"
             />
           </div>
 
-          {showSubSlugInput ? (
-            <div className="sub-slug-field space-y-2">
-              <Label className="text-sm font-medium">
-                Sub Slug <span className="text-muted-foreground font-normal">(선택)</span>
-              </Label>
-              <div className="text-xs text-muted-foreground mb-1">
-                /posts/<span className="text-foreground font-medium">{subSlug || "sub-slug"}</span>
+          {isEditMode &&
+            (showSubSlugInput ? (
+              <div className="sub-slug-field space-y-2">
+                <Label className="text-sm font-medium">
+                  Sub Slug <span className="text-muted-foreground font-normal">(선택)</span>
+                </Label>
+                <div className="text-xs text-muted-foreground mb-1">
+                  /posts/<span className="text-foreground font-medium">{subSlug || "sub-slug"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="sub-slug (영문, 숫자, 하이픈만)"
+                    value={subSlug}
+                    onChange={(e) => handleSubSlugInputChange(e.target.value)}
+                    disabled={isPublishing}
+                    className="font-mono flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-destructive hover:text-destructive h-9 px-3"
+                    onClick={() => {
+                      setShowSubSlugInput(false);
+                      onSubSlugChange?.("");
+                    }}
+                    disabled={isPublishing}
+                  >
+                    삭제
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  검색 최적화를 위한 보조 URL입니다. 영문 소문자, 숫자, 하이픈만 사용 가능합니다.
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Input
-                  placeholder="sub-slug (영문, 숫자, 하이픈만)"
-                  value={subSlug}
-                  onChange={(e) => handleSubSlugInputChange(e.target.value)}
-                  disabled={isPublishing}
-                  className="font-mono flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs text-destructive hover:text-destructive h-9 px-3"
-                  onClick={() => {
-                    setShowSubSlugInput(false);
-                    onSubSlugChange?.("");
-                  }}
-                  disabled={isPublishing}
-                >
-                  삭제
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                검색 최적화를 위한 보조 URL입니다. 영문 소문자, 숫자, 하이픈만 사용 가능합니다.
-              </p>
-            </div>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => setShowSubSlugInput(true)}
-              disabled={isPublishing}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Sub Slug 추가
-            </Button>
-          )}
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => setShowSubSlugInput(true)}
+                disabled={isPublishing}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Sub Slug 추가
+              </Button>
+            ))}
         </div>
       )}
     </div>
