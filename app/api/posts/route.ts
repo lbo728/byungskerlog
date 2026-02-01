@@ -15,6 +15,8 @@ async function generateUniqueSlug(baseSlug: string): Promise<string> {
       },
     });
 
+    console.log(`[generateUniqueSlug] Checking "${slug}": exists=${!!existing}`);
+
     if (!existing) {
       return slug;
     }
@@ -56,6 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     const slug = await generateUniqueSlug(requestedSlug);
+    console.log("[POST /api/posts] Creating post with:", { requestedSlug, finalSlug: slug, title, tags });
 
     const post = await prisma.post.create({
       data: {
@@ -73,10 +76,10 @@ export async function POST(request: NextRequest) {
                     tagName
                       .toLowerCase()
                       .trim()
-                      .replace(/[^a-z0-9가-힣\s-]/g, "")
+                      .replace(/[^a-z0-9가-힣ㄱ-ㅎㅏ-ㅣ\s-]/g, "")
                       .replace(/\s+/g, "-")
                       .replace(/-+/g, "-")
-                      .replace(/^-|-$/g, "") || "tag",
+                      .replace(/^-|-$/g, "") || `tag-${Date.now()}`,
                 },
               })),
             }
@@ -114,10 +117,10 @@ export async function POST(request: NextRequest) {
                       tagName
                         .toLowerCase()
                         .trim()
-                        .replace(/[^a-z0-9가-힣\s-]/g, "")
+                        .replace(/[^a-z0-9가-힣ㄱ-ㅎㅏ-ㅣ\s-]/g, "")
                         .replace(/\s+/g, "-")
                         .replace(/-+/g, "-")
-                        .replace(/^-|-$/g, "") || "tag",
+                        .replace(/^-|-$/g, "") || `tag-${Date.now()}`,
                   },
                 })),
               }
@@ -148,7 +151,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(post, { status: 201 });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-      return ApiError.duplicateEntry("post with this slug").toResponse();
+      const meta = (error as { meta?: { target?: string[] } }).meta;
+      const target = meta?.target?.join(", ") || "unknown field";
+      console.error("P2002 Unique constraint violation:", { target, error });
+      return ApiError.duplicateEntry(`entry (${target})`).toResponse();
     }
     return handleApiError(error, "Failed to create post");
   }
