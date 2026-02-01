@@ -15,8 +15,6 @@ async function generateUniqueSlug(baseSlug: string): Promise<string> {
       },
     });
 
-    console.log(`[generateUniqueSlug] Checking "${slug}": exists=${!!existing}`);
-
     if (!existing) {
       return slug;
     }
@@ -58,7 +56,6 @@ export async function POST(request: NextRequest) {
     }
 
     const slug = await generateUniqueSlug(requestedSlug);
-    console.log("[POST /api/posts] Creating post with:", { requestedSlug, finalSlug: slug, title, tags });
 
     const post = await prisma.post.create({
       data: {
@@ -153,7 +150,6 @@ export async function POST(request: NextRequest) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
       const meta = (error as { meta?: { target?: string[] } }).meta;
       const target = meta?.target?.join(", ") || "unknown field";
-      console.error("P2002 Unique constraint violation:", { target, error });
       return ApiError.duplicateEntry(`entry (${target})`).toResponse();
     }
     return handleApiError(error, "Failed to create post");
