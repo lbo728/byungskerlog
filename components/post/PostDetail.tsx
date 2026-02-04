@@ -11,7 +11,7 @@ import { ReadingTracker } from "@/components/analytics/ReadingTracker";
 import { PostActions } from "./PostActions";
 import { ReadingProgress } from "./ReadingProgress";
 import { AdSense } from "@/components/seo/Adsense";
-import { Comments } from "./Comments";
+
 import { ArrowLeft, ArrowRight, BookOpen, FileText, Zap } from "lucide-react";
 import { ShortPostsNav } from "@/components/short-post/ShortPostsNav";
 import { SocialMediaLinks } from "./SocialMediaLinks";
@@ -321,7 +321,6 @@ export function PostDetail({
             )}
 
             <Separator className="my-12" />
-            <Comments postId={post.id} />
 
             <AdSense
               adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_POST_BOTTOM || ""}
