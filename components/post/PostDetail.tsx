@@ -11,6 +11,7 @@ import { ReadingTracker } from "@/components/analytics/ReadingTracker";
 import { PostActions } from "./PostActions";
 import { ReadingProgress } from "./ReadingProgress";
 import { AdSense } from "@/components/seo/Adsense";
+import { Giscus } from "./Giscus";
 
 import { ArrowLeft, ArrowRight, BookOpen, FileText, Zap } from "lucide-react";
 import { ShortPostsNav } from "@/components/short-post/ShortPostsNav";
@@ -328,6 +329,10 @@ export function PostDetail({
               adLayoutKey="-fb+5w+4e-db+86"
               className="mt-12"
             />
+
+            <Separator className="my-12" />
+
+            <Giscus slug={post.slug} />
           </div>
         </div>
 
