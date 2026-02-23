@@ -477,7 +477,7 @@ export function BookFormModal({ open, onOpenChange, mode, book, onSuccess }: Boo
 
           {!isSearching && searchResults.length === 0 && searchQuery.trim().length > 0 && (
             <div className="empty-state p-6 text-center text-gray-500">
-              <p className="font-medium">"{searchQuery}" 검색 결과가 없습니다</p>
+              <p className="font-medium">{"\u201C"}{searchQuery}{"\u201D"} 검색 결과가 없습니다</p>
               <p className="text-sm mt-1">다른 검색어로 시도하거나 직접 입력해주세요</p>
             </div>
           )}

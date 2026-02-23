@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useIsAdmin } from "@/lib/client-auth";
 
 interface AdSenseProps {
@@ -14,6 +14,8 @@ interface AdSenseProps {
 
 type WindowWithAdsbygoogle = Window & { adsbygoogle?: unknown[] };
 
+const emptySubscribe = () => () => {};
+
 export function AdSense({
   adSlot,
   adFormat = "auto",
@@ -24,12 +26,12 @@ export function AdSense({
 }: AdSenseProps) {
   const adClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
   const isAdmin = useIsAdmin();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
   const pushRef = useRef(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!mounted || !adClient || pushRef.current) return;
