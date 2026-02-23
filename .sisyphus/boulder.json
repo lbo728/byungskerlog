@@ -1,6 +1,8 @@
 {
-  "active_plan": "/Users/byungskersmacbook/Documents/GitHub/byungskerlog/.sisyphus/plans/fix-publish-cache-invalidation.md",
-  "started_at": "2026-02-01T13:45:47.780Z",
-  "session_ids": ["ses_3e6bb7154ffeBsBE5LQDUoo7Os"],
-  "plan_name": "fix-publish-cache-invalidation"
+  "active_plan": "/Users/byungskersmacbook/Documents/GitHub/byungskerlog/.sisyphus/plans/comment-to-giscus.md",
+  "started_at": "2026-02-04T01:04:40.671Z",
+  "session_ids": [
+    "ses_3ddc512e4ffekneEdiHkGSfN9f"
+  ],
+  "plan_name": "comment-to-giscus"
 }

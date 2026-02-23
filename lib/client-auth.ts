@@ -2,7 +2,7 @@
 
 import { useUser } from "@stackframe/stack";
 
-export const ADMIN_EMAILS = ["extreme0728@gmail.com"];
+export const ADMIN_EMAILS = ["extreme0728@gmail.com", "admin@byungskerlog.com"];
 
 export function useIsAdmin(): boolean {
   const user = useUser();

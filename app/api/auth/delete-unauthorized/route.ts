@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth";
 
-const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
+const ALLOWED_EMAILS = ["extreme0728@gmail.com", "admin@byungskerlog.com"];
 
 export async function POST() {
   try {

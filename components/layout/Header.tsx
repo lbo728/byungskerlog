@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { SwipeDrawer, SwipeDrawerHeader, SwipeDrawerContent } from "@/components/ui/SwipeDrawer";
 import { PenSquare, LogOut, Menu, FileText, FolderOpen, ChevronDown, ChevronsRight } from "lucide-react";
 
-const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
+const ALLOWED_EMAILS = ["extreme0728@gmail.com", "admin@byungskerlog.com"];
 
 export function Header() {
   const pathname = usePathname();
