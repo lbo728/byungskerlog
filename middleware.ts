@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stackServerApp } from "@/stack/server";
 
-const ALLOWED_EMAILS = ["extreme0728@gmail.com"];
+const ALLOWED_EMAILS = ["extreme0728@gmail.com", "admin@byungskerlog.com"];
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;

@@ -100,7 +100,7 @@ describe("POST /api/books", () => {
   });
 
   it("인증된 사용자가 책을 생성한다", async () => {
-    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as unknown as Awaited<ReturnType<typeof mockGetAuthUser>>);
+    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as Awaited<ReturnType<typeof getAuthUser>>);
     mockPrisma.book.findUnique.mockResolvedValue(null); // slug not exists
     mockPrisma.book.create.mockResolvedValue({
       id: "book-1",
@@ -136,7 +136,7 @@ describe("POST /api/books", () => {
   });
 
   it("title 없이 요청 시 400을 받는다", async () => {
-    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as unknown as Awaited<ReturnType<typeof mockGetAuthUser>>);
+    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as Awaited<ReturnType<typeof getAuthUser>>);
 
     const request = createPostRequest({ author: "Test Author" });
     const response = await POST(request);
@@ -224,7 +224,7 @@ describe("PUT /api/books/[id]", () => {
   });
 
   it("인증된 사용자가 책을 수정한다", async () => {
-    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as unknown as Awaited<ReturnType<typeof mockGetAuthUser>>);
+    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as Awaited<ReturnType<typeof getAuthUser>>);
     mockPrisma.book.findUnique.mockResolvedValue({
       id: "book-1",
       title: "Old Title",
@@ -275,7 +275,7 @@ describe("PUT /api/books/[id]", () => {
   });
 
   it("존재하지 않는 책은 404를 반환한다", async () => {
-    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as unknown as Awaited<ReturnType<typeof mockGetAuthUser>>);
+    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as Awaited<ReturnType<typeof getAuthUser>>);
     mockPrisma.book.findUnique.mockResolvedValue(null);
 
     const { PUT } = await import("@/app/api/books/[id]/route");
@@ -293,7 +293,7 @@ describe("DELETE /api/books/[id]", () => {
   });
 
   it("인증된 사용자가 책을 삭제한다", async () => {
-    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as unknown as Awaited<ReturnType<typeof mockGetAuthUser>>);
+    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as Awaited<ReturnType<typeof getAuthUser>>);
     mockPrisma.book.findUnique.mockResolvedValue({
       id: "book-1",
       title: "Test Book",
@@ -338,7 +338,7 @@ describe("DELETE /api/books/[id]", () => {
   });
 
   it("존재하지 않는 책은 404를 반환한다", async () => {
-    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as unknown as Awaited<ReturnType<typeof mockGetAuthUser>>);
+    mockGetAuthUser.mockResolvedValue({ id: "user-1" } as Awaited<ReturnType<typeof getAuthUser>>);
     mockPrisma.book.findUnique.mockResolvedValue(null);
 
     const { DELETE } = await import("@/app/api/books/[id]/route");

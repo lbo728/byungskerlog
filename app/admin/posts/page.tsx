@@ -130,8 +130,12 @@ export default function AdminPostsPage() {
 
   const [analyticsTab, setAnalyticsTab] = useState<"category" | "views" | "count" | "reading">("category");
   const [periodPreset, setPeriodPreset] = useState<"7d" | "30d" | "90d" | "1y" | "all" | "custom">("30d");
-  const [analyticsStartDate, setAnalyticsStartDate] = useState<string>("");
-  const [analyticsEndDate, setAnalyticsEndDate] = useState<string>("");
+  const [analyticsStartDate, setAnalyticsStartDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split("T")[0];
+  });
+  const [analyticsEndDate, setAnalyticsEndDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
   const [analyticsType, setAnalyticsType] = useState<"all" | "LONG" | "SHORT">("all");
 
   const categoryChartRef = useRef<ChartExportHandle>(null);
@@ -157,35 +161,34 @@ export default function AdminPostsPage() {
     }
   }, [activeTab]);
 
-  useEffect(() => {
-    if (periodPreset === "custom") return;
-
-    const now = new Date();
-    let startDate = new Date();
-
-    switch (periodPreset) {
-      case "7d":
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case "30d":
-        startDate.setDate(now.getDate() - 30);
-        break;
-      case "90d":
-        startDate.setDate(now.getDate() - 90);
-        break;
-      case "1y":
-        startDate.setFullYear(now.getFullYear() - 1);
-        break;
-      case "all":
-        startDate = new Date("2020-01-01");
-        break;
-    }
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Derived state calculation based on periodPreset selection
-    setAnalyticsStartDate(startDate.toISOString().split("T")[0]);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Derived state calculation based on periodPreset selection
-    setAnalyticsEndDate(now.toISOString().split("T")[0]);
-  }, [periodPreset]);
+  const handlePeriodPresetChange = useCallback(
+    (preset: typeof periodPreset) => {
+      setPeriodPreset(preset);
+      if (preset === "custom") return;
+      const now = new Date();
+      let start = new Date();
+      switch (preset) {
+        case "7d":
+          start.setDate(now.getDate() - 7);
+          break;
+        case "30d":
+          start.setDate(now.getDate() - 30);
+          break;
+        case "90d":
+          start.setDate(now.getDate() - 90);
+          break;
+        case "1y":
+          start.setFullYear(now.getFullYear() - 1);
+          break;
+        case "all":
+          start = new Date("2020-01-01");
+          break;
+      }
+      setAnalyticsStartDate(start.toISOString().split("T")[0]);
+      setAnalyticsEndDate(now.toISOString().split("T")[0]);
+    },
+    []
+  );
 
   const handleExportAllCharts = useCallback(
     (scale: ExportScale, aspectRatio: ExportAspectRatio) => {
@@ -993,7 +996,7 @@ export default function AdminPostsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium mb-1.5 block">기간</label>
-                <Select value={periodPreset} onValueChange={(v) => setPeriodPreset(v as typeof periodPreset)}>
+                <Select value={periodPreset} onValueChange={(v) => handlePeriodPresetChange(v as typeof periodPreset)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

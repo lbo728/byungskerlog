@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 /**
  * React hook for responsive behavior based on media queries.
@@ -14,18 +14,16 @@ import { useState, useEffect } from "react";
  * const isDesktop = useMediaQuery('(min-width: 768px)');
  */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      const media = window.matchMedia(query);
+      media.addEventListener("change", callback);
+      return () => media.removeEventListener("change", callback);
+    },
+    [query]
+  );
 
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial media query state requires browser API
-    setMatches(media.matches);
+  const getSnapshot = useCallback(() => window.matchMedia(query).matches, [query]);
 
-    const listener = (event: MediaQueryListEvent) => setMatches(event.matches);
-    media.addEventListener("change", listener);
-
-    return () => media.removeEventListener("change", listener);
-  }, [query]);
-
-  return matches;
+  return useSyncExternalStore(subscribe, getSnapshot, () => false);
 }
