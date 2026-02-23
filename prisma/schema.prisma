@@ -9,32 +9,32 @@ datasource db {
 }
 
 model Post {
-  id                    String           @id @default(cuid())
-  slug                  String           @unique
-  title                 String
-  content               String
-  excerpt               String?
-  published             Boolean          @default(false)
-  createdAt             DateTime         @default(now())
-  updatedAt             DateTime         @updatedAt
-  seriesId              String?
-  bookId                String?
-  thumbnail             String?
-  subSlug               String?          @unique
-  type                  PostType         @default(LONG)
-  linkedinUrl           String?
-  threadsUrl            String?
-  linkedinContent       String?
-  threadsContent        String[]         @default([])
-  series                Series?          @relation(fields: [seriesId], references: [id])
-  book                  Book?            @relation(fields: [bookId], references: [id], onDelete: SetNull)
-  views                 PostView[]
-  readingSessions       ReadingSession[]
-  tags                  Tag[]
-
-  linkedShortPostId     String?          @unique
-  linkedShortPost       Post?            @relation("LongToShort", fields: [linkedShortPostId], references: [id], onDelete: SetNull)
-  linkedLongPost        Post?            @relation("LongToShort")
+  id                String           @id @default(cuid())
+  slug              String           @unique
+  title             String
+  content           String
+  excerpt           String?
+  published         Boolean          @default(false)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  seriesId          String?
+  thumbnail         String?
+  subSlug           String?          @unique
+  type              PostType         @default(LONG)
+  linkedinUrl       String?
+  threadsUrl        String?
+  linkedinContent   String?
+  threadsContent    String[]         @default([])
+  linkedShortPostId String?          @unique
+  bookId            String?
+  Comment           Comment[]
+  book              Book?            @relation(fields: [bookId], references: [id])
+  linkedShortPost   Post?            @relation("LongToShort", fields: [linkedShortPostId], references: [id])
+  linkedLongPost    Post?            @relation("LongToShort")
+  series            Series?          @relation(fields: [seriesId], references: [id])
+  views             PostView[]
+  readingSessions   ReadingSession[]
+  tags              Tag[]            @relation("PostToTag")
 
   @@index([seriesId])
   @@index([bookId])
@@ -109,7 +109,7 @@ model Draft {
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  tags      Tag[]
+  tags      Tag[]    @relation("DraftToTag")
 
   @@index([authorId])
 }
@@ -124,44 +124,83 @@ model CustomSnippet {
   updatedAt DateTime @updatedAt
 }
 
-enum PostType {
-  LONG
-  SHORT
-}
-
 model Tag {
   id        String   @id @default(cuid())
   name      String   @unique
   slug      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  posts     Post[]
-  drafts    Draft[]
+  drafts    Draft[]  @relation("DraftToTag")
+  posts     Post[]   @relation("PostToTag")
 
   @@index([name])
   @@index([slug])
 }
 
 model AIKnowledgePreset {
-  id          String   @id @default(cuid())
+  id          String                 @id @default(cuid())
   name        String
-  instruction String   @db.Text
+  instruction String
   lastUsedAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
   references  AIKnowledgeReference[]
 }
 
 model AIKnowledgeReference {
-  id        String   @id @default(cuid())
+  id        String            @id @default(cuid())
   title     String
-  content   String   @db.Text
+  content   String
   presetId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
   preset    AIKnowledgePreset @relation(fields: [presetId], references: [id], onDelete: Cascade)
 
   @@index([presetId])
 }
 
+model Comment {
+  id              String            @id
+  content         String
+  postId          String
+  authorId        String
+  authorName      String?
+  authorImage     String?
+  parentId        String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  Comment         Comment?          @relation("CommentToComment", fields: [parentId], references: [id], onDelete: Cascade)
+  other_Comment   Comment[]         @relation("CommentToComment")
+  Post            Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
+  CommentReaction CommentReaction[]
 
+  @@index([authorId])
+  @@index([createdAt])
+  @@index([parentId])
+  @@index([postId])
+}
+
+model CommentReaction {
+  id        String       @id
+  commentId String
+  userId    String
+  type      ReactionType
+  createdAt DateTime     @default(now())
+  Comment   Comment      @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, type])
+  @@index([commentId])
+  @@index([userId])
+}
+
+enum PostType {
+  LONG
+  SHORT
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  CELEBRATE
+  INSIGHTFUL
+}

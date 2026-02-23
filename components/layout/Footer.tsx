@@ -1,20 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
+import { siteConfig, socialLinks } from "@/lib/site-config";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
-
-  const socialLinks = [
-    { icon: "/logo-github.svg", href: "https://github.com", label: "GitHub" },
-    { icon: "/logo-linkedin.svg", href: "https://linkedin.com", label: "LinkedIn" },
-    { icon: "/logo-x.svg", href: "https://x.com", label: "X (Twitter)" },
-  ];
 
   return (
     <footer className="border-t border-border bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">© {currentYear} Byungsker Log. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground">© {currentYear} {siteConfig.name}. All rights reserved.</p>
 
           <div className="flex items-center gap-4">
             {socialLinks.map((link) => (
