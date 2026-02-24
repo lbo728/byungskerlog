@@ -47,6 +47,7 @@ export default function WritePage() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const isProgrammaticUpdate = useRef(false);
 
   const postId = searchParams.get("id");
   const draftIdParam = searchParams.get("draft");
@@ -212,6 +213,12 @@ export default function WritePage() {
     content,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
+      // Skip if this update was triggered programmatically (from useEffect below)
+      // to prevent onUpdate ↔ useEffect feedback loop
+      if (isProgrammaticUpdate.current) {
+        isProgrammaticUpdate.current = false;
+        return;
+      }
       interface EditorStorageWithMarkdown extends Record<string, unknown> {
         markdown?: {
           getMarkdown: () => string;
@@ -246,6 +253,8 @@ export default function WritePage() {
       const storage = editor.storage as unknown as EditorStorageWithMarkdown;
       const currentMarkdown = storage.markdown?.getMarkdown() || editor.getText();
       if (content !== currentMarkdown) {
+        // Set flag before programmatic update so onUpdate skips this change
+        isProgrammaticUpdate.current = true;
         editor.commands.setContent(content);
       }
     }
