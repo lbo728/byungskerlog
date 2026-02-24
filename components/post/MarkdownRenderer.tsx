@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, memo } from "react";
+import { useState, useMemo, useCallback, useEffect, memo, isValidElement } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -66,8 +66,8 @@ function extractText(children: ReactNode): string {
   if (typeof children === "string") return children;
   if (typeof children === "number") return String(children);
   if (Array.isArray(children)) return children.map(extractText).join("");
-  if (typeof children === "object" && children !== null && "props" in (children as object)) {
-    return extractText((children as ReactElement).props.children);
+  if (isValidElement(children)) {
+    return extractText((children.props as { children?: ReactNode }).children);
   }
   return "";
 }
