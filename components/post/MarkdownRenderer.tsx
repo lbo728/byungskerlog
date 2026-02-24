@@ -45,36 +45,46 @@ function generateHeadingId(text: string): string {
     .replace(/[^\w가-힣-]/g, "");
 }
 
-// 잘못된 마크다운 볼드/이탤릭 패턴 수정
-// ** text ** → **text** (공백 문제로 파싱되지 않는 볼드 수정)
+// 마크다운 볼드/이탤릭 패턴 및 list item 직렬화 버그 수정
 function fixBoldItalicMarkdown(content: string): string {
   return (
     content
-      // **text ** → **text** (닫는 ** 앞 공백 제거, 시작은 공백 아닌 문자)
+      // list item 직렬화 버그: -**text** → - **text** (공백 누락 수정)
+      .replace(/^(\s*)-(\*{1,2}\S)/gm, "$1- $2")
+      // **text ** → **text** (닫는 ** 앞 공백 제거)
       .replace(/\*\*(\S[^*]*?)\s+\*\*/g, "**$1**")
-      // ** text** → **text** (여는 ** 뒤 공백 제거, 끝은 공백 아닌 문자)
+      // ** text** → **text** (여는 ** 뒤 공백 제거)
       .replace(/\*\*\s+([^*]*?\S)\*\*/g, "**$1**")
-      // *text * → *text* (이탤릭도 동일하게)
+      // *text * → *text* (이탤릭)
       .replace(/\*(\S[^*]*?)\s+\*/g, "*$1*")
       .replace(/\*\s+([^*]*?\S)\*/g, "*$1*")
   );
 }
 
-// 마크다운 헤딩을 HTML 태그로 변환 (고유 ID 포함)
+// 헤딩 처리: markdown `##` 및 DB에 저장된 HTML heading 태그 모두 처리
 function preprocessHeadings(content: string): string {
   const idCounts: Record<string, number> = {};
 
-  return content.replace(/^(#{1,3})\s+(.+)$/gm, (_, hashes, text) => {
-    const level = hashes.length;
+  const assignId = (level: number, text: string): string => {
     const trimmedText = text.trim();
     const baseId = generateHeadingId(trimmedText);
-
     const count = idCounts[baseId] || 0;
     const id = count === 0 ? baseId : `${baseId}-${count}`;
     idCounts[baseId] = count + 1;
-
     return `<h${level} id="${id}" class="scroll-mt-24">${trimmedText}</h${level}>`;
-  });
+  };
+
+  return (
+    content
+      // 1. tiptap-markdown이 <hr>를 ---로 직렬화할 때 setext heading으로 오파싱되는 것 방지
+      .replace(/^---\s*$/gm, "<hr />")
+      // 2. markdown ATX heading → HTML with id/class
+      .replace(/^(#{1,3})\s+(.+)$/gm, (_, hashes, text) => assignId(hashes.length, text.trim()))
+      // 3. DB에 HTML heading이 저장된 경우 id/class 추가 (scroll-mt-24 없는 것만 처리)
+      .replace(/<h([1-3])(?![^>]*scroll-mt-24)[^>]*>(.*?)<\/h\1>/gi, (_, level, innerText) =>
+        assignId(parseInt(level), innerText.replace(/<[^>]*>/g, "").trim())
+      )
+  );
 }
 
 interface MarkdownRendererProps {
@@ -82,9 +92,9 @@ interface MarkdownRendererProps {
 }
 
 interface CodeComponentProps {
-  inline?: boolean;
   className?: string;
   children?: ReactNode;
+  // inline prop은 react-markdown v8+에서 deprecated. className으로만 block/inline 구분
 }
 
 const URL_LINE_REGEX = /^(https?:\/\/[^\s]+)$/;
@@ -156,6 +166,85 @@ function CodeBlock({ code, language }: { code: string; language: string }) {
   );
 }
 
+const markdownComponents: Components = {
+  code: ({ className, children, ...props }: CodeComponentProps): ReactElement => {
+    const match = /language-(\w+)/.exec(className || "");
+    // language 클래스가 있으면 block code, 없으면 inline code
+    if (match) {
+      const codeContent = String(children).replace(/\n$/, "");
+      return <CodeBlock code={codeContent} language={match[1]} />;
+    }
+    return (
+      <code
+        className={cn(
+          "inline-code relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm",
+          "bg-[oklch(0.97_0_0)] text-[oklch(0.45_0.15_30)]",
+          "dark:bg-[oklch(0.269_0_0)] dark:text-[oklch(0.85_0.15_30)]",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  },
+  a: ({ children, href, ...props }) => (
+    <a
+      href={href}
+      className="text-primary hover:underline font-medium transition-all"
+      target={href?.startsWith("http") ? "_blank" : undefined}
+      rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
+      {...props}
+    >
+      {children}
+    </a>
+  ),
+
+  // eslint-disable-next-line @next/next/no-img-element
+  img: ({ src, alt, ...props }) => (
+    <img
+      src={src}
+      alt={alt || ""}
+      className="rounded-lg shadow-md my-6 cursor-pointer hover:opacity-90 transition-opacity"
+      {...props}
+    />
+  ),
+  blockquote: ({ children, ...props }) => (
+    <blockquote
+      className="blockquote border-l-4 border-[oklch(0.8_0_0)] dark:border-[oklch(0.4_0_0)] pl-4 italic my-4 text-muted-foreground text-base md:text-lg leading-7 md:leading-9 [&>p]:my-0"
+      {...props}
+    >
+      {children}
+    </blockquote>
+  ),
+  br: () => <br className="my-2" />,
+  pre: ({ children, ...props }) => (
+    <pre className="p-0" {...props}>
+      {children}
+    </pre>
+  ),
+  p: ({ children, ...props }) => (
+    <p className="text-base md:text-lg leading-7 md:leading-9 mt-2 mb-2" {...props}>
+      {children}
+    </p>
+  ),
+  ul: ({ children, ...props }) => (
+    <ul className="list-disc pl-6 my-2 [&>li]:my-0.5 [&>li>p]:my-0" {...props}>
+      {children}
+    </ul>
+  ),
+  ol: ({ children, ...props }) => (
+    <ol className="list-decimal pl-6 my-2 [&>li]:my-0.5 [&>li>p]:my-0" {...props}>
+      {children}
+    </ol>
+  ),
+  li: ({ children, ...props }) => (
+    <li className="text-base md:text-lg leading-7 md:leading-9 my-0.5 [&>p]:my-0" {...props}>
+      {children}
+    </li>
+  ),
+};
+
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   const { registerImages, openLightbox } = useImageLightbox();
 
@@ -207,85 +296,5 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     return result;
   }, [processedContent]);
 
-  const components: Components = {
-    code: ({ inline, className, children, ...props }: CodeComponentProps): ReactElement => {
-      const match = /language-(\w+)/.exec(className || "");
-      if (!inline && match) {
-        const codeContent = String(children).replace(/\n$/, "");
-        return <CodeBlock code={codeContent} language={match[1]} />;
-      }
-      return (
-        <code
-          className={cn(
-            "inline-code relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm",
-            "bg-[oklch(0.97_0_0)] text-[oklch(0.45_0.15_30)]",
-            "dark:bg-[oklch(0.269_0_0)] dark:text-[oklch(0.85_0.15_30)]",
-            className
-          )}
-          {...props}
-        >
-          {children}
-        </code>
-      );
-    },
-    a: ({ children, href, ...props }) => (
-      <a
-        href={href}
-        className="text-primary hover:underline font-medium transition-all"
-        target={href?.startsWith("http") ? "_blank" : undefined}
-        rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
-        {...props}
-      >
-        {children}
-      </a>
-    ),
-
-    // eslint-disable-next-line @next/next/no-img-element
-    img: ({ src, alt, ...props }) => (
-      <img
-        src={src}
-        alt={alt || ""}
-        className="rounded-lg shadow-md my-6 cursor-pointer hover:opacity-90 transition-opacity"
-        {...props}
-      />
-    ),
-    blockquote: ({ children, ...props }) => (
-      <blockquote
-        className="blockquote border-l-4 border-[oklch(0.8_0_0)] dark:border-[oklch(0.4_0_0)] pl-4 italic my-4 text-muted-foreground text-base md:text-lg leading-7 md:leading-9 [&>p]:my-0"
-        {...props}
-      >
-        {children}
-      </blockquote>
-    ),
-    br: () => <br className="my-2" />,
-    pre: ({ children, ...props }) => (
-      <pre className="p-0" {...props}>
-        {children}
-      </pre>
-    ),
-    p: ({ children, ...props }) => (
-      <p className="text-base md:text-lg leading-7 md:leading-9 mt-3 mb-3" {...props}>
-        {children}
-      </p>
-    ),
-    ul: ({ children, ...props }) => (
-      <ul className="list-disc pl-6 my-2 [&>li]:my-0.5 [&>li>p]:my-0" {...props}>
-        {children}
-      </ul>
-    ),
-    ol: ({ children, ...props }) => (
-      <ol className="list-decimal pl-6 my-2 [&>li]:my-0.5 [&>li>p]:my-0" {...props}>
-        {children}
-      </ol>
-    ),
-    li: ({ children, ...props }) => (
-      <li className="text-base md:text-lg leading-7 md:leading-9 my-0.5 [&>p]:my-0" {...props}>
-        {children}
-      </li>
-    ),
-  };
-
-  const memoizedComponents = useMemo(() => components, []);
-
-  return <MarkdownContent segments={segments} components={memoizedComponents} onClick={handleProseClick} />;
+  return <MarkdownContent segments={segments} components={markdownComponents} onClick={handleProseClick} />;
 }
