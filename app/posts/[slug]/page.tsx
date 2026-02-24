@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import { PostDetailLoader } from "@/components/post/PostDetailLoader";
 import { PostDetailSkeleton } from "@/components/skeleton/PostDetailSkeleton";
+import { StructuredData } from "@/components/seo/StructuredData";
 
 export const revalidate = 3600;
 
@@ -35,6 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const decodedSlug = decodeURIComponent(slug);
   const postData = await prisma.post.findFirst({
     where: {
+      published: true,
       OR: [{ slug: decodedSlug }, { subSlug: decodedSlug }],
     },
     include: {
@@ -54,7 +56,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const description = post.excerpt || post.content.replace(/[#*`\n]/g, "").substring(0, 200) + "...";
 
   return {
-    title: `${post.title} written by Byungsker`,
+    title: post.title,
     description,
     keywords: post.tags,
     authors: [{ name: "병스커 (Byungsker)" }],
@@ -64,7 +66,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       alternateLocale: ["en_US"],
       url: canonicalUrl,
       siteName: "Byungsker Log",
-      title: `${post.title} written by Byungsker`,
+      title: post.title,
       description,
       publishedTime: post.createdAt.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
@@ -81,7 +83,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     },
     twitter: {
       card: "summary_large_image",
-      title: `${post.title} written by Byungsker`,
+      title: post.title,
       description,
       images: [ogImageUrl],
       creator: "@byungsker",
@@ -94,10 +96,42 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
 
+  const postData = await prisma.post.findFirst({
+    where: {
+      published: true,
+      OR: [{ slug: decodedSlug }, { subSlug: decodedSlug }],
+    },
+    select: {
+      slug: true,
+      title: true,
+      excerpt: true,
+      content: true,
+      createdAt: true,
+      updatedAt: true,
+      tags: { select: { name: true } },
+    },
+  });
+
+  const seoData = postData
+    ? {
+        title: postData.title,
+        description:
+          postData.excerpt || postData.content.replace(/[#*`\n]/g, "").substring(0, 200) + "...",
+        image: `${siteUrl}/posts/${encodeURIComponent(postData.slug)}/opengraph-image`,
+        slug: postData.slug,
+        datePublished: postData.createdAt.toISOString(),
+        dateModified: postData.updatedAt.toISOString(),
+        tags: postData.tags.map((t) => t.name),
+      }
+    : undefined;
   return (
-    <Suspense fallback={<PostDetailSkeleton />}>
-      <PostDetailLoader slug={slug} isFromShort={false} />
-    </Suspense>
+    <>
+      {seoData && <StructuredData type="article" data={seoData} />}
+      <Suspense fallback={<PostDetailSkeleton />}>
+        <PostDetailLoader slug={slug} isFromShort={false} />
+      </Suspense>
+    </>
   );
 }
