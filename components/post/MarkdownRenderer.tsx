@@ -61,30 +61,26 @@ function fixBoldItalicMarkdown(content: string): string {
   );
 }
 
-// 헤딩 처리: markdown `##` 및 DB에 저장된 HTML heading 태그 모두 처리
+// Extract plain text from React children for heading ID generation
+function extractText(children: ReactNode): string {
+  if (typeof children === "string") return children;
+  if (typeof children === "number") return String(children);
+  if (Array.isArray(children)) return children.map(extractText).join("");
+  if (typeof children === "object" && children !== null && "props" in (children as object)) {
+    return extractText((children as ReactElement).props.children);
+  }
+  return "";
+}
+
+// 헤딩 처리: DB에 HTML 형식으로 저장된 heading을 markdown 형식으로 변환
+// (custom h1/h2/h3 컴포넌트가 ID를 직접 생성하므로 HTML 변환 불필요)
 function preprocessHeadings(content: string): string {
-  const idCounts: Record<string, number> = {};
-
-  const assignId = (level: number, text: string): string => {
-    const trimmedText = text.trim();
-    const baseId = generateHeadingId(trimmedText);
-    const count = idCounts[baseId] || 0;
-    const id = count === 0 ? baseId : `${baseId}-${count}`;
-    idCounts[baseId] = count + 1;
-    return `<h${level} id="${id}" class="scroll-mt-24">${trimmedText}</h${level}>`;
-  };
-
-  return (
-    content
-      // 1. tiptap-markdown이 <hr>를 ---로 직렬화할 때 setext heading으로 오파싱되는 것 방지
-      .replace(/^---\s*$/gm, "<hr />")
-      // 2. markdown ATX heading → HTML with id/class
-      .replace(/^(#{1,3})\s+(.+)$/gm, (_, hashes, text) => assignId(hashes.length, text.trim()))
-      // 3. DB에 HTML heading이 저장된 경우 id/class 추가 (scroll-mt-24 없는 것만 처리)
-      .replace(/<h([1-3])(?![^>]*scroll-mt-24)[^>]*>(.*?)<\/h\1>/gi, (_, level, innerText) =>
-        assignId(parseInt(level), innerText.replace(/<[^>]*>/g, "").trim())
-      )
-  );
+  // DB에 저장된 HTML heading 태그를 markdown ATX heading으로 변환
+  // 예: <h2 id="..." class="...">텍스트</h2> → ## 텍스트
+  return content.replace(/<h([1-3])[^>]*>(.*?)<\/h\1>/gi, (_, level, innerText) => {
+    const text = innerText.replace(/<[^>]*>/g, "").trim();
+    return "#".repeat(parseInt(level)) + " " + text;
+  });
 }
 
 interface MarkdownRendererProps {
@@ -243,6 +239,30 @@ const markdownComponents: Components = {
       {children}
     </li>
   ),
+  h1: ({ children, ...props }) => {
+    const id = generateHeadingId(extractText(children));
+    return (
+      <h1 id={id} className="heading-h1 scroll-mt-24" {...props}>
+        {children}
+      </h1>
+    );
+  },
+  h2: ({ children, ...props }) => {
+    const id = generateHeadingId(extractText(children));
+    return (
+      <h2 id={id} className="heading-h2 scroll-mt-24" {...props}>
+        {children}
+      </h2>
+    );
+  },
+  h3: ({ children, ...props }) => {
+    const id = generateHeadingId(extractText(children));
+    return (
+      <h3 id={id} className="heading-h3 scroll-mt-24" {...props}>
+        {children}
+      </h3>
+    );
+  },
 };
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
