@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { PostListLoader } from "@/components/post/PostListLoader";
 import { PostListSkeleton } from "@/components/skeleton/PostListSkeleton";
 import { AdSense } from "@/components/seo/Adsense";
-import BbaengguGreeting from "@/components/common/BbaengguGreeting";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;
@@ -24,9 +23,6 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="max-w-5xl mx-auto">
-        <div className="mb-8 flex justify-center">
-          <BbaengguGreeting />
-        </div>
 
         <AdSense
           adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP || ""}
