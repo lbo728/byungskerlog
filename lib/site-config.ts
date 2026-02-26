@@ -7,7 +7,7 @@ export const siteConfig = {
 
   // SNS 링크
   social: {
-    github: "https://github.com/lbo728",
+    github: "https://github.com/byungsker",
     linkedin: "https://linkedin.com/in/byungsker",
     twitter: "https://x.com/byungskers",
   },

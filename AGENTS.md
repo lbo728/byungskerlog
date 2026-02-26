@@ -349,7 +349,7 @@ export function usePost(id: string, options: UsePostOptions = {}) {
 
 ## Git Conventions
 
-- Commit as **lbo728**, English conventional commits with Korean bullets
+- Commit as **byungsker**, English conventional commits with Korean bullets
 - Create feature branches, PR to main/dev (see CLAUDE.md template)
 - Push only when work chunk is complete, use "Merge Pull Request" (not squash)
 

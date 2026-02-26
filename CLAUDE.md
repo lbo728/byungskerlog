@@ -25,7 +25,7 @@ This is a Next.js 16-based personal blog application with admin capabilities. Th
 
 ## Git Rules
 
-- 반드시 **lbo728** 계정으로 커밋, 푸시, PR을 진행해야해.
+- 반드시 **byungsker** 계정으로 커밋, 푸시, PR을 진행해야해.
 - 커밋 메세지는 영문 컨벤셔널 커밋으로 해야해.(단, description은 한글 불릿 포인트로 작성해.)
 
 ### Branch Strategy
@@ -361,7 +361,7 @@ Stack Auth:
 
 Giscus Comments:
 
-- `NEXT_PUBLIC_GISCUS_REPO` - GitHub repository (e.g., `lbo728/byungskerlog`)
+- `NEXT_PUBLIC_GISCUS_REPO` - GitHub repository (e.g., `byungsker/byungskerlog`)
 - `NEXT_PUBLIC_GISCUS_REPO_ID` - Repository ID (from giscus.app)
 - `NEXT_PUBLIC_GISCUS_CATEGORY` - Discussion category name
 - `NEXT_PUBLIC_GISCUS_CATEGORY_ID` - Category ID (from giscus.app)

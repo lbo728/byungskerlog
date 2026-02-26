@@ -79,7 +79,7 @@ const personSchema = {
   jobTitle: "Software Developer",
   description: "제품 주도 개발을 지향하는 소프트웨어 개발자",
   knowsAbout: ["소프트웨어 개발", "제품 개발", "스타트업", "Next.js", "React", "TypeScript"],
-  sameAs: ["https://github.com/lbo728", "https://linkedin.com/in/byungsker"],
+  sameAs: ["https://github.com/byungsker", "https://linkedin.com/in/byungsker"],
 };
 
 export default async function AboutPage() {
