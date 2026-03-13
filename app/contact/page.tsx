@@ -32,21 +32,8 @@ export default function ContactPage() {
           <div className="contact-card rounded-lg border border-border bg-card p-6">
             <h2 className="text-lg font-semibold mb-2">이메일</h2>
             <p className="text-muted-foreground mb-4">일반적인 문의에 가장 빠르게 응답합니다.</p>
-            <a href="mailto:byungsker@gmail.com" className="text-primary hover:underline font-medium">
-              byungsker@gmail.com
-            </a>
-          </div>
-
-          <div className="contact-card rounded-lg border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold mb-2">GitHub</h2>
-            <p className="text-muted-foreground mb-4">코드 관련 문의나 오픈소스 협업은 GitHub를 통해 연락해 주세요.</p>
-            <a
-              href="https://github.com/byungsker"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline font-medium"
-            >
-              github.com/byungsker
+            <a href="mailto:extreme0728@gmail.com" className="text-primary hover:underline font-medium">
+              extreme0728@gmail.com
             </a>
           </div>
 
@@ -63,18 +50,6 @@ export default function ContactPage() {
             </a>
           </div>
 
-          <div className="contact-card rounded-lg border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold mb-2">블로그 피드백</h2>
-            <p className="text-muted-foreground mb-4">블로그 글에 대한 피드백이나 오류 제보는 언제든 환영합니다.</p>
-            <a
-              href="https://github.com/byungsker/byungskerlog/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline font-medium"
-            >
-              GitHub Issues
-            </a>
-          </div>
         </div>
 
         <div className="contact-note mt-8 rounded-lg border border-border bg-muted/50 p-6">
