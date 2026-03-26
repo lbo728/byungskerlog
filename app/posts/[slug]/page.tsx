@@ -6,28 +6,13 @@ import { PostDetailLoader } from "@/components/post/PostDetailLoader";
 import { PostDetailSkeleton } from "@/components/skeleton/PostDetailSkeleton";
 
 export const revalidate = 3600;
+export const dynamicParams = true; // 빌드에 없는 slug도 ISR로 처리
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel.app";
 
 export async function generateStaticParams() {
-  try {
-    const posts = await prisma.post.findMany({
-      where: { published: true },
-      select: { slug: true, subSlug: true },
-    });
-
-    const params: { slug: string }[] = [];
-
-    posts.forEach((post: { slug: string; subSlug: string | null }) => {
-      params.push({ slug: post.slug });
-      if (post.subSlug) {
-        params.push({ slug: post.subSlug });
-      }
-    });
-
-    return params;
-  } catch {
-    return [];
+  // 빌드 시 프리렌더링 스킵 → 첫 접속 시 ISR 생성 (Neon 무료 티어 OOM 방지)
+  return [];
   }
 }
 
