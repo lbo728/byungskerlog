@@ -294,6 +294,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     const lines = processedContent.split("\n");
     const result: { type: "markdown" | "url"; content: string }[] = [];
     let markdownBuffer: string[] = [];
+    let inCodeBlock = false;
+    let codeBlockFence = "";
 
     const flushMarkdown = () => {
       if (markdownBuffer.length > 0) {
@@ -303,8 +305,21 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     };
 
     for (const line of lines) {
+      // 코드블록 상태 추적 (``` 또는 ~~~)
+      const fenceMatch = line.trim().match(/^(`{3,}|~{3,})/);
+      if (fenceMatch) {
+        if (!inCodeBlock) {
+          inCodeBlock = true;
+          codeBlockFence = fenceMatch[1];
+        } else if (line.trim().startsWith(codeBlockFence)) {
+          inCodeBlock = false;
+          codeBlockFence = "";
+        }
+      }
+
       const trimmed = line.trim();
-      if (URL_LINE_REGEX.test(trimmed)) {
+      // 코드블록 안에 있는 URL은 LinkCard로 분리하지 않음
+      if (!inCodeBlock && URL_LINE_REGEX.test(trimmed)) {
         flushMarkdown();
         result.push({ type: "url", content: trimmed });
       } else {
