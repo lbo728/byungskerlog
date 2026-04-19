@@ -43,6 +43,7 @@ export async function generateMetadata({ params }: BookDetailPageProps): Promise
   return {
     title: `${book.title} | Byungskerlog`,
     description: book.summary || `${book.author}의 ${book.title}`,
+    robots: { index: false, follow: true },
     alternates: {
       canonical: canonicalUrl,
     },
