@@ -7,6 +7,7 @@ import { PostDetailSkeleton } from "@/components/skeleton/PostDetailSkeleton";
 import { getPost } from "@/lib/post-data";
 
 export const revalidate = 3600;
+export const dynamicParams = true; // 빌드에 없는 slug도 ISR로 처리
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel.app";
 
@@ -17,16 +18,9 @@ function stripMarkdown(content: string): string {
 }
 
 export async function generateStaticParams() {
-  try {
-    const posts = await prisma.post.findMany({
-      where: { published: true, type: "SHORT" },
-      select: { slug: true },
-    });
-
-    return posts.map((post: { slug: string }) => ({ slug: post.slug }));
-  } catch {
-    return [];
-  }
+  // 빌드 시 프리렌더링 스킵 → 첫 접속 시 ISR 생성 (Neon 무료 티어 OOM 방지)
+  // subSlug 접근은 런타임 redirect 로직으로 처리됨
+  return [];
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
