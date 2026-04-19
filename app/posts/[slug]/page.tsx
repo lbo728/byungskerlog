@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { PostDetailLoader } from "@/components/post/PostDetailLoader";
 import { PostDetailSkeleton } from "@/components/skeleton/PostDetailSkeleton";
@@ -12,6 +12,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel
 
 export async function generateStaticParams() {
   // 빌드 시 프리렌더링 스킵 → 첫 접속 시 ISR 생성 (Neon 무료 티어 OOM 방지)
+  // SHORT 포스트 및 subSlug는 런타임 redirect 로직으로 처리됨
   return [];
 }
 
@@ -29,6 +30,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!postData) {
     notFound();
+  }
+
+  if (postData.type === "SHORT") {
+    return {
+      robots: { index: false, follow: true },
+      alternates: { canonical: `${siteUrl}/short/${postData.slug}` },
+    };
+  }
+
+  if (postData.slug !== decodedSlug) {
+    return {
+      robots: { index: false, follow: true },
+      alternates: { canonical: `${siteUrl}/posts/${postData.slug}` },
+    };
   }
 
   const post = { ...postData, tags: postData.tags.map((t) => t.name) };
@@ -77,6 +92,23 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
+
+  const post = await prisma.post.findFirst({
+    where: {
+      OR: [{ slug: decodedSlug }, { subSlug: decodedSlug }],
+    },
+    select: { slug: true, type: true },
+  });
+
+  if (post) {
+    if (post.type === "SHORT") {
+      permanentRedirect(`/short/${post.slug}`);
+    }
+    if (post.slug !== decodedSlug) {
+      permanentRedirect(`/posts/${post.slug}`);
+    }
+  }
 
   return (
     <Suspense fallback={<PostDetailSkeleton />}>

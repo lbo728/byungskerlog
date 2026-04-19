@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { PostDetailLoader } from "@/components/post/PostDetailLoader";
 import { PostDetailSkeleton } from "@/components/skeleton/PostDetailSkeleton";
@@ -11,8 +11,15 @@ export const dynamicParams = true; // 빌드에 없는 slug도 ISR로 처리
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://byungskerlog.vercel.app";
 
+const SHORT_NOINDEX_THRESHOLD = 300;
+
+function stripMarkdown(content: string): string {
+  return content.replace(/[#*`~>\[\]()!\-_]/g, "").replace(/\s+/g, " ").trim();
+}
+
 export async function generateStaticParams() {
   // 빌드 시 프리렌더링 스킵 → 첫 접속 시 ISR 생성 (Neon 무료 티어 OOM 방지)
+  // subSlug 접근은 런타임 redirect 로직으로 처리됨
   return [];
 }
 
@@ -31,6 +38,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!postData) {
     notFound();
   }
+
+  if (postData.slug !== decodedSlug) {
+    return {
+      robots: { index: false, follow: true },
+      alternates: { canonical: `${siteUrl}/short/${postData.slug}` },
+    };
+  }
+
+  const plainTextLength = stripMarkdown(postData.content).length;
+  const isThin = plainTextLength < SHORT_NOINDEX_THRESHOLD;
 
   const post = { ...postData, tags: postData.tags.map((t) => t.name) };
   const canonicalUrl = `${siteUrl}/short/${post.slug}`;
@@ -73,11 +90,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     alternates: {
       canonical: canonicalUrl,
     },
+    ...(isThin && { robots: { index: false, follow: true } }),
   };
 }
 
 export default async function ShortPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
+
+  const baseMatch = await prisma.post.findFirst({
+    where: {
+      OR: [{ slug: decodedSlug }, { subSlug: decodedSlug }],
+    },
+    select: { slug: true, type: true },
+  });
+
+  if (baseMatch && baseMatch.slug !== decodedSlug) {
+    permanentRedirect(`/short/${baseMatch.slug}`);
+  }
+
   const post = await getPost(slug);
 
   if (!post) {
